@@ -37,6 +37,10 @@ defmodule Telephony.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [
+      {:ex_twilio, "~> 0.2.1"},
+      {:ex_ngrok, "~> 0.3.0", only: [:dev]},
+      {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]}
+    ]
   end
 end

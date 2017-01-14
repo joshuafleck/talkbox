@@ -12,6 +12,7 @@ defmodule Telephony.Application do
     children = [
       # Starts a worker by calling: Telephony.Worker.start_link(arg1, arg2, arg3)
       # worker(Telephony.Worker, [arg1, arg2, arg3]),
+      worker(Telephony.Conference, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
