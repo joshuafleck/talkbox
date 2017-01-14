@@ -24,7 +24,7 @@ defmodule Telephony do
 
   defp call_chair(conference, participant) do
     {:ok, _call} = get_env(:provider).call(
-        to: "client:" <> conference.chair,
+        to: conference.chair,
         from: get_env(:cli),
         url: Telephony.Callbacks.chair_answered(conference, participant))
   end

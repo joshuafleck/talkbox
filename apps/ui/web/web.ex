@@ -16,12 +16,6 @@ defmodule Ui.Web do
   below.
   """
 
-  def model do
-    quote do
-      # Define common model functionality
-    end
-  end
-
   def controller do
     quote do
       use Phoenix.Controller

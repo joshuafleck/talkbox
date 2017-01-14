@@ -11,6 +11,6 @@ defmodule Telephony.Callbacks do
   end
 
   defp webhook_url do
-    Telephony.get_env(:webhook_url) <> "/callbacks"
+    Telephony.get_env(:webhook_url) <> Telephony.get_env(:provider_callback_url_prefix)
   end
 end

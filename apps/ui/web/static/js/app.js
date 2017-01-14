@@ -19,3 +19,45 @@ import "phoenix_html"
 // paths "./socket" or full ones "web/static/js/socket".
 
 // import socket from "./socket"
+
+var node = document.getElementById('elm-main');
+var app = Elm.App.embed(node, {
+    clientName: window.location.search.split('client_name=')[1]
+});
+
+app.ports.setup.subscribe(function(token) {
+
+  /* Create the Client with a Capability Token */
+  Twilio.Device.setup(token, {debug: true, closeProtection: false});
+
+  /* Let us know when the client is ready. */
+  Twilio.Device.ready(function (device) {
+    app.ports.statusChanged.send("Ready");
+  });
+
+  /* Report any errors on the screen */
+  Twilio.Device.error(function (error) {
+    app.ports.statusChanged.send("Error: " + error.message);
+  });
+
+  Twilio.Device.connect(function (conn) {
+    app.ports.statusChanged.send("Connected");
+  });
+
+  Twilio.Device.offline(function () {
+    app.ports.statusChanged.send("Offline");
+  });
+
+  /* Log a message when a call disconnects. */
+  Twilio.Device.disconnect(function (conn) {
+    app.ports.statusChanged.send("Disconnected");
+  });
+
+  /* Listen for incoming connections */
+  Twilio.Device.incoming(function (conn) {
+    app.ports.statusChanged.send("Incoming connection from " + conn.parameters.From);
+    // accept the incoming connection and start two-way audio
+    conn.accept();
+  });
+});
+

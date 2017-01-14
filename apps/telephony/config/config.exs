@@ -21,6 +21,9 @@ use Mix.Config
 #     config :logger, level: :info
 #
 
+config :ex_twilio, account_sid: System.get_env("TWILIO_ACCOUNT_SID") || "${TWILIO_ACCOUNT_SID}",
+                   auth_token:  System.get_env("TWILIO_AUTH_TOKEN") || "${TWILIO_AUTH_TOKEN}"
+
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
 # by uncommenting the line below and defining dev.exs, test.exs and such.
@@ -28,6 +31,3 @@ use Mix.Config
 # here (which is why it is important to import them last).
 #
 import_config "#{Mix.env}.exs"
-
-config :ex_twilio, account_sid: System.get_env("TWILIO_ACCOUNT_SID") || "${TWILIO_ACCOUNT_SID}",
-                   auth_token:  System.get_env("TWILIO_AUTH_TOKEN") || "${TWILIO_AUTH_TOKEN}"

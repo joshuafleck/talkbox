@@ -14,4 +14,5 @@ config :ex_twilio_bootstrap,
 config :telephony,
   cli: fn -> TwilioBootstrap.TelephoneNumber.get.phone_number end,
   webhook_url: fn -> Ngrok.public_url end,
-  provider: Telephony.Twilio
+  provider: Telephony.Twilio,
+  provider_callback_url_prefix: "/callbacks/twilio"
