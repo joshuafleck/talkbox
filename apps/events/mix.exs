@@ -1,8 +1,8 @@
-defmodule Router.Mixfile do
+defmodule Events.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :router,
+    [app: :events,
      version: "0.1.0",
      build_path: "../../_build",
      config_path: "../../config/config.exs",
@@ -19,8 +19,7 @@ defmodule Router.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     # Specify extra applications you'll use from Erlang/Elixir
-    [extra_applications: [:logger],
-     mod: {Router.Application, []}]
+    [extra_applications: [:logger]]
   end
 
   # Dependencies can be Hex packages:
@@ -38,11 +37,8 @@ defmodule Router.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:telephony, in_umbrella: true},
-      {:callbacks, in_umbrella: true},
-      {:ui, in_umbrella: true},
-      {:events, in_umbrella: true},
-      {:amqp, github: "keisisqrl/amqp"} # For consuming from RabbitMQ (note: this is a patched forked version)
+      {:poison, "~> 2.0"}, # For [de]serializing event data with JSON
+      {:amqp, github: "keisisqrl/amqp"} # For publishing to RabbitMQ (note: this is a patched forked version)
     ]
   end
 end

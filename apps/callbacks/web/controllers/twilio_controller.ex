@@ -1,11 +1,11 @@
 defmodule Callbacks.TwilioController do
   use Callbacks.Web, :controller
 
-  def chair_answered(conn, %{"conference" => conference, "participant" => participant}) do
-    response = Callbacks.Twiml.join_conference(conference)
+  def chair_answered(conn, %{"conference" => conference, "chair" => chair}) do
+    Events.publish(%Events.ChairJoiningConference{conference: conference, chair: chair})
 
     conn
     |> put_resp_content_type("text/xml")
-    |> text(response)
+    |> text(Callbacks.Twiml.join_conference(conference))
   end
 end

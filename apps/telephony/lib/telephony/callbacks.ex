@@ -3,11 +3,11 @@ defmodule Telephony.Callbacks do
   Builds callback URLs for the telephony provider's webhooks
   """
 
-  def chair_answered(conference, participant) do
+  def chair_answered(conference) do
     webhook_url() <>
     "/chair_answered?" <>
     "conference=" <> conference.identifier <>
-    "&participant=" <> participant
+    "&chair=" <> conference.chair
   end
 
   defp webhook_url do

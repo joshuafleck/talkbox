@@ -19,14 +19,14 @@ defmodule Telephony do
   def add_participant_to_conference(chair, participant) do
     conference = Telephony.Conference.create(chair, participant)
     conference
-    |> call_chair(participant)
+    |> call_chair()
   end
 
-  defp call_chair(conference, participant) do
+  defp call_chair(conference) do
     {:ok, _call} = get_env(:provider).call(
         to: conference.chair,
         from: get_env(:cli),
-        url: Telephony.Callbacks.chair_answered(conference, participant))
+        url: Telephony.Callbacks.chair_answered(conference))
   end
 
   def get_env(name) do

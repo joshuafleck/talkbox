@@ -6,17 +6,17 @@ defmodule Telephony.Conference do
   defstruct [
     identifier: nil,
     chair: nil,
+    pending_participant: nil,
     participants: [],
-    created_at: nil,
-    chair_sid: nil
+    created_at: nil
   ]
 
   @type t :: %__MODULE__{
     identifier: String.t,
     chair: String.t,
+    pending_participant: String.t,
     participants: list,
-    created_at: non_neg_integer,
-    chair_sid: String.t | nil
+    created_at: non_neg_integer
   }
 
   def start_link do
@@ -27,8 +27,9 @@ defmodule Telephony.Conference do
     current_unix_time = DateTime.utc_now
 
     %__MODULE__{
-      chair: chair,
       identifier: generate_identifier(chair, current_unix_time),
+      chair: chair,
+      pending_participant: participant,
       created_at: current_unix_time
     }
   end
