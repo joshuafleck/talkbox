@@ -27,14 +27,18 @@ defmodule Telephony do
     {:ok, _call} = get_env(:provider).call(
         to: conference.pending_participant,
         from: get_env(:cli),
-        url: Telephony.Callbacks.pending_participant_answered(conference))
+        url: Telephony.Callbacks.pending_participant_answered(conference),
+        status_callback: Telephony.Callbacks.participant_status_callback(conference),
+        status_callback_events: ~w(initiated ringing completed))
   end
 
   defp call_chair(conference) do
     {:ok, _call} = get_env(:provider).call(
         to: conference.chair,
         from: get_env(:cli),
-        url: Telephony.Callbacks.chair_answered(conference))
+        url: Telephony.Callbacks.chair_answered(conference),
+        status_callback: Telephony.Callbacks.chair_status_callback(conference),
+        status_callback_events: ~w(completed))
   end
 
   def get_env(name) do

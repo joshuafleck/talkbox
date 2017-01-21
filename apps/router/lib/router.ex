@@ -21,15 +21,35 @@ defmodule Router do
     def routing(event)
   end
 
+  defimpl Routing, for: Events.UserRequestsCall do
+    def routing(event) do
+      Telephony.initiate_conference(chair: event.user, participant: event.callee)
+    end
+  end
+
   defimpl Routing, for: Events.ChairJoiningConference do
     def routing(event) do
       Telephony.call_pending_participant(chair: event.chair, conference: event.conference)
     end
   end
 
-  defimpl Routing, for: Events.UserRequestsCall do
+  defimpl Routing, for: Events.ChairFailedToJoinConference do
     def routing(event) do
-      Telephony.initiate_conference(chair: event.user, participant: event.callee)
+      # TODO: remove conference in telephony app
+      # TODO: notify of failed call in ui app
+    end
+  end
+
+  defimpl Routing, for: Events.PendingParticipantFailedToJoinConference do
+    def routing(event) do
+      # TODO: remove pending participant from conference in telephony app
+      # TODO: notify of failed call in ui app
+    end
+  end
+
+  defimpl Routing, for: Events.PendingParticipantCallStatusChanged do
+    def routing(event) do
+      # TODO: notify of status change for call in ui app
     end
   end
 end

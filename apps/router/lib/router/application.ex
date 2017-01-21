@@ -12,7 +12,7 @@ defmodule Router.Application do
     children = [
       # Starts a worker by calling: Router.Worker.start_link(arg1, arg2, arg3)
       # worker(Router.Worker, [arg1, arg2, arg3]),
-      worker(Router.Consumer, [])
+      worker(Router.Consumer, []) # TODO: how many consumers should we run?
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
