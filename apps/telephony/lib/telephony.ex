@@ -16,10 +16,18 @@ defmodule Telephony do
     :world
   end
 
-  def add_participant_to_conference(chair, participant) do
+  def initiate_conference(chair: chair, participant: participant) do
     conference = Telephony.Conference.create(chair, participant)
     conference
     |> call_chair()
+  end
+
+  def call_pending_participant(chair: chair, conference: conference) do
+    conference = %{identifier: ^conference} = Telephony.Conference.get(chair)
+    {:ok, _call} = get_env(:provider).call(
+        to: conference.pending_participant,
+        from: get_env(:cli),
+        url: Telephony.Callbacks.pending_participant_answered(conference))
   end
 
   defp call_chair(conference) do

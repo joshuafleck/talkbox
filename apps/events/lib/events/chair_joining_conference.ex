@@ -3,6 +3,7 @@ defmodule Events.ChairJoiningConference do
   Documentation for Events.
   """
   @derive [Poison.Encoder]
+  @enforce_keys [:conference, :chair]
   defstruct [
     conference: nil,
     chair: nil

@@ -33,6 +33,7 @@ defmodule Callbacks.Router do
       pipe_through :twilio
 
       post "/chair_answered", TwilioController, :chair_answered
+      post "/pending_participant_answered", TwilioController, :pending_participant_answered
     end
   end
 end

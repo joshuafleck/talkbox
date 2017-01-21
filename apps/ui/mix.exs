@@ -39,7 +39,8 @@ defmodule Ui.Mixfile do
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
-      {:ex_twilio, "~> 0.2.1"} # For generating Twilio client tokens
+      {:ex_twilio, "~> 0.2.1"}, # For generating Twilio client tokens
+      {:events, in_umbrella: true} # For publishing events from the UI
     ]
   end
 end

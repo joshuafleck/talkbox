@@ -2,6 +2,7 @@ defmodule Events do
   @moduledoc """
   Documentation for Events.
   """
+  require Logger
 
   @doc """
   Hello world.
@@ -40,6 +41,7 @@ defmodule Events do
 
   # TODO: properly manage connections, set headers and publishing options
   defp publish_to_rabbit(event_json, routing_key) do
+    Logger.debug "#{__MODULE__} publishing #{event_json}"
     {:ok, conn} = AMQP.Connection.open
     {:ok, chan} = AMQP.Channel.open(conn)
     :ok = AMQP.Basic.publish(chan, "", routing_key, event_json, persistent: true, mandatory: true)

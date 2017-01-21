@@ -21,6 +21,11 @@ defmodule Ui.TwilioChannel do
     {:noreply, socket}
   end
 
+  def handle_in("start_call", %{"callee" => callee, "caller" => user}, socket) do
+    Events.publish(%Events.UserRequestsCall{user: user, callee: callee})
+    {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
+  end
+
   # Channels can be used in a request/response fashion
   # by sending replies to requests from the client
   def handle_in("ping", payload, socket) do

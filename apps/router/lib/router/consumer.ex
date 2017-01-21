@@ -1,5 +1,6 @@
 defmodule Router.Consumer do
   use GenServer
+  require Logger
 
   def start_link do
     GenServer.start_link(__MODULE__, [], [])
@@ -44,21 +45,18 @@ defmodule Router.Consumer do
 
   defp consume(channel, tag, redelivered, payload) do
     try do
-      number = String.to_integer(payload)
-      if number <= 10 do
-        AMQP.Basic.ack channel, tag
-        IO.puts "Consumed a #{number}."
-      else
-        AMQP.Basic.reject channel, tag, requeue: false
-        IO.puts "#{number} is too big and was rejected."
-      end
+      Logger.debug "#{__MODULE__} consuming #{payload}"
+      event = Events.decode(payload)
+      Router.Routing.routing(event)
+      AMQP.Basic.ack channel, tag
     rescue
-      _ ->
+      error ->
         # Requeue unless it's a redelivered message.
         # This means we will retry consuming a message once in case of exception
         # before we give up and have it moved to the error queue
         AMQP.Basic.reject channel, tag, requeue: not redelivered
-        IO.puts "Error converting #{payload} to integer"
+        Logger.error "Error consuming #{payload}"
+        Logger.error Exception.message(error)
     end
   end
 end
