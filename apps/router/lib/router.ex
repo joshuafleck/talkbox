@@ -49,6 +49,7 @@ defmodule Router do
 
   defimpl Routing, for: Events.PendingParticipantCallStatusChanged do
     def routing(event) do
+      # TODO: update status in telephony app iff the sequence numbers are in order
       # TODO: notify of status change for call in ui app
     end
   end

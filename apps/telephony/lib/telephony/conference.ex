@@ -3,6 +3,7 @@ defmodule Telephony.Conference do
   Conference storage: chair -> conference
   """
 
+  @enforce_keys [:identifier, :chair, :pending_participant, :created_at]
   defstruct [
     identifier: nil,
     chair: nil,
@@ -13,8 +14,8 @@ defmodule Telephony.Conference do
 
   @type t :: %__MODULE__{
     identifier: String.t,
-    chair: String.t,
-    pending_participant: String.t,
+    chair: Telephony.Participant.t,
+    pending_participant: Telephony.Participant.t,
     participants: list,
     created_at: non_neg_integer
   }
@@ -28,8 +29,8 @@ defmodule Telephony.Conference do
 
     %__MODULE__{
       identifier: generate_identifier(chair, current_unix_time),
-      chair: chair,
-      pending_participant: participant,
+      chair: %Telephony.Participant{identifier: chair},
+      pending_participant: %Telephony.Participant{identifier: participant},
       created_at: current_unix_time
     }
   end
@@ -44,9 +45,9 @@ defmodule Telephony.Conference do
     Agent.get(__MODULE__, &Map.get(&1, chair))
   end
 
-  # def update(chair, function) do
-  #   Agent.get_and_update(__MODULE__, )
-  # end
+  def update(chair, function) do
+    Agent.get_and_update(__MODULE__, &Map.get_and_update(&1, chair, function))
+  end
 
   defp generate_identifier(chair, current_unix_time) do
     current_unix_time = current_unix_time |> DateTime.to_unix(:milliseconds) |> Integer.to_string
@@ -54,6 +55,6 @@ defmodule Telephony.Conference do
   end
 
   defp create(conference) do
-    Agent.update(__MODULE__, &Map.put(&1, conference.chair, conference))
+    Agent.update(__MODULE__, &Map.put(&1, conference.chair.identifier, conference))
   end
 end

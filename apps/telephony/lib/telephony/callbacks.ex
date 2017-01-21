@@ -6,7 +6,7 @@ defmodule Telephony.Callbacks do
   def chair_answered(conference) do
     build_url("chair_answered", %{
       conference: conference.identifier,
-      chair: conference.chair,
+      chair: conference.chair.identifier,
       conference_status_callback: conference_status_callback(conference)
     })
   end
@@ -14,30 +14,30 @@ defmodule Telephony.Callbacks do
   def conference_status_callback(conference) do
     build_url("conference_status_changed", %{
       conference: conference.identifier,
-      chair: conference.chair
+      chair: conference.chair.identifier
     })
   end
 
   def chair_status_callback(conference) do
     build_url("chair_call_status_changed", %{
       conference: conference.identifier,
-      chair: conference.chair
+      chair: conference.chair.identifier
     })
   end
 
   def pending_participant_answered(conference) do
     build_url("pending_participant_answered", %{
       conference: conference.identifier,
-      chair: conference.chair,
-      pending_participant: conference.pending_participant
+      chair: conference.chair.identifier,
+      pending_participant: conference.pending_participant.identifier
     })
   end
 
   def participant_status_callback(conference) do
     build_url("participant_call_status_changed", %{
       conference: conference.identifier,
-      chair: conference.chair,
-      participant: conference.pending_participant
+      chair: conference.chair.identifier,
+      participant: conference.pending_participant.identifier
     })
   end
 
