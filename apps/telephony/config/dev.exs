@@ -1,7 +1,8 @@
 use Mix.Config
 
 config :ex_ngrok,
-  options: "--region eu"
+  options: "--region eu",
+  sleep_between_attempts: 1000
 
 config :ex_twilio_bootstrap,
   # The friendly name of the Twilio application
