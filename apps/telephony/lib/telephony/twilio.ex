@@ -10,7 +10,7 @@ defmodule Telephony.Twilio do
     url: url,
     status_callback: status_callback,
     status_callback_events: status_callback_events
-  ) do
+  ) do # TODO: handle when the call is not successfully created
     Logger.debug "#{__MODULE__} calling #{to} from #{from} on #{url}"
     {:ok, call} = ExTwilio.Call.create([
       {:to, format_if_client(to)},

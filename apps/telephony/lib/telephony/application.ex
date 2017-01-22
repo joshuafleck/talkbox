@@ -5,6 +5,7 @@ defmodule Telephony.Application do
 
   use Application
 
+  # TODO: Read conferences from Twilio upon startup to prepopulate the conferences
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 

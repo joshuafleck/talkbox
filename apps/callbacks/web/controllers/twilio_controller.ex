@@ -28,20 +28,21 @@ defmodule Callbacks.TwilioController do
   end
 
   def chair_call_status_changed(conn, _params) do
+    # NOT A TODO: Don't remove conference when chair call is completed - chair may have dropped off
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
   end
 
   def pending_participant_answered(conn, %{"conference" => conference, "chair" => chair, "pending_participant" => pending_participant}) do
-    # TODO: probably do not need this event - Events.publish(%Events.PendingParticipantJoiningConference{conference: conference, chair: chair, pending_participant: pending_participant})
+    Events.publish(%Events.PendingParticipantJoiningConference{conference: conference, chair: chair, pending_participant: pending_participant})
     conn
     |> put_resp_content_type("text/xml")
     |> text(Callbacks.Twiml.join_conference(conference))
   end
 
-  def participant_call_status_changed(conn, %{"conference" => conference, "chair" => chair, "participant" => pending_participant, "CallStatus" => call_status}) when call_progressing(call_status) do
-    Events.publish(%Events.PendingParticipantCallStatusChanged{conference: conference, chair: chair, pending_participant: pending_participant, call_status: call_status})
+  def participant_call_status_changed(conn, %{"conference" => conference, "chair" => chair, "participant" => pending_participant, "CallStatus" => call_status, "SequenceNumber" => sequence_number}) when call_progressing(call_status) do
+    Events.publish(%Events.PendingParticipantCallStatusChanged{conference: conference, chair: chair, pending_participant: pending_participant, call_status: call_status, sequence_number: String.to_integer(sequence_number)})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
