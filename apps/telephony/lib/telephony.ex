@@ -36,8 +36,12 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
-    Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
-    # TODO: End the chair's call if there are no other participants. Also, remove the conference (depends if we receive a conference-end update)??
+    conference = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
+    unless Enum.count(conference.participants) > 0 do
+      find_and_remove_conference(chair: chair, conference: conference_identifier)
+      # TODO: what if the call sid has yet to be set on the chair??
+      get_env(:provider).hangup(conference.chair.call_sid)
+    end
   end
 
   def find_and_promote_pending_participant(

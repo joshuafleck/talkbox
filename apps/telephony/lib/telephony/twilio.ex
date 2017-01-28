@@ -21,6 +21,12 @@ defmodule Telephony.Twilio do
     call.sid
   end
 
+  def hangup(call_sid) do # TODO: handle when the call is not successfully ended
+    Logger.debug "#{__MODULE__} ending call with sid #{call_sid}"
+    {:ok, call} = ExTwilio.Call.complete(%{sid: call_sid})
+    call.sid
+  end
+
   defp to_status_callback_event_tuple(status_callback_event) do
     {:status_callback_event, status_callback_event}
   end
