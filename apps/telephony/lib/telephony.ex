@@ -2,6 +2,7 @@ defmodule Telephony do
   @moduledoc """
   Documentation for Telephony.
   """
+  require Logger
 
   @doc """
   Hello world.
@@ -24,8 +25,10 @@ defmodule Telephony do
 
   def call_pending_participant(chair: chair, conference: conference_identifier) do
     conference = Telephony.Conference.fetch(chair, conference_identifier)
+    # TODO: this should set the sid for the chair's call if it has not already been set
     call_sid = initiate_call_to_pending_participant(conference)
-    Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, call_sid)
+    # NOTE: this could fail if the participant has already been promoted (unlikely but possible)
+    Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, call_sid)
   end
 
   def remove_conference(chair: chair, conference: conference_identifier) do
@@ -36,12 +39,16 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
-    conference = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
-    unless Enum.count(conference.participants) > 0 do
+    %{participants: participants, chair: %{call_sid: call_sid}} = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
+    unless Enum.count(participants) > 0 do
       remove_conference(chair: chair, conference: conference_identifier)
-      # TODO: what if the call sid has yet to be set on the chair??
-      # TODO: rather than hangup the chair, can/should we just remove him from the conference??
-      get_env(:provider).hangup(conference.chair.call_sid)
+      unless call_sid == nil do
+        # Note: rather than hangup the chair, we could remove him from the conference (but it depends on having the conference sid set)
+        get_env(:provider).hangup(call_sid)
+      else
+        # NOTE: this is unlikely but possible if this call is made before the chair's sid could be set
+        Logger.warn "#{__MODULE__} unable to hangup chair's leg due to missing call sid for conference: #{conference_identifier}"
+      end
     end
   end
 
@@ -49,10 +56,14 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
-      conference = Telephony.Conference.fetch(chair, conference_identifier, pending_participant)
-      # TODO: what if the call sid has yet to be set on the pending participant??
-      get_env(:provider).hangup(conference.pending_participant.call_sid)
-      # NOTE: we'll receive a call status update event when the participant leaves, which will trigger the actual removal of the participant
+      %{pending_participant: %{call_sid: call_sid}} = Telephony.Conference.fetch_by_pending_participant(chair, conference_identifier, pending_participant)
+      unless call_sid == nil do
+        get_env(:provider).hangup(call_sid)
+      else
+        # NOTE: this is unlikely but possible if this call is made before the participant's sid could be set
+        Logger.warn "#{__MODULE__} unable to hangup pending participant's leg due to missing call sid for conference: #{conference_identifier}"
+      end
+      # NOTE: we'll receive a call status update event when the participant's call ends, which will trigger the actual removal of the participant
   end
 
   def add_participant(chair: chair, conference: conference_identifier, participant: participant) do
@@ -64,6 +75,7 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
+    # TODO: This should attempt to set the participant's call sid if it hasn't already been set
     Telephony.Conference.promote_pending_participant(chair, conference_identifier, pending_participant)
   end
 
