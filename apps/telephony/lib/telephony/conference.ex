@@ -71,13 +71,23 @@ defmodule Telephony.Conference do
     {conference, Map.put(conferences, chair, conference)}
   end
 
+  def add_pending_participant(chair, identifier, pending_participant_identifier) do
+    Agent.get_and_update(__MODULE__, &add_pending_participant(&1, chair, identifier, pending_participant_identifier))
+  end
+
+  defp add_pending_participant(conferences, chair, identifier, participant) do
+    conference = %{pending_participant: nil} = fetch(conferences, chair, identifier)
+    conference = %{conference | pending_participant: %Telephony.Participant{identifier: participant}}
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
   def promote_pending_participant(chair, identifier, pending_participant_identifier) do
     Agent.get_and_update(__MODULE__, &promote_pending_participant(&1, chair, identifier, pending_participant_identifier))
   end
 
   defp promote_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
     conference = fetch(conferences, chair, identifier, pending_participant_identifier)
-    conference = %{conference | pending_participant: nil, participants: conference.participants ++ conference.pending_participant}
+    conference = %{conference | pending_participant: nil, participants: conference.participants ++ [conference.pending_participant]}
     {conference, Map.put(conferences, chair, conference)}
   end
 

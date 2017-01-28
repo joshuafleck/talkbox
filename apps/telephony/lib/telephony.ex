@@ -28,30 +28,46 @@ defmodule Telephony do
     Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, call_sid)
   end
 
-  def find_and_remove_conference(chair: chair, conference: conference_identifier) do
+  def remove_conference(chair: chair, conference: conference_identifier) do
     Telephony.Conference.remove(chair, conference_identifier)
   end
 
-  def find_and_remove_pending_participant(
+  def remove_pending_participant(
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
     conference = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
     unless Enum.count(conference.participants) > 0 do
-      find_and_remove_conference(chair: chair, conference: conference_identifier)
+      remove_conference(chair: chair, conference: conference_identifier)
       # TODO: what if the call sid has yet to be set on the chair??
+      # TODO: rather than hangup the chair, can/should we just remove him from the conference??
       get_env(:provider).hangup(conference.chair.call_sid)
     end
   end
 
-  def find_and_promote_pending_participant(
+  def hangup_pending_participant(
+        chair: chair,
+        conference: conference_identifier,
+        pending_participant: pending_participant) do
+      conference = Telephony.Conference.fetch(chair, conference_identifier, pending_participant)
+      # TODO: what if the call sid has yet to be set on the pending participant??
+      get_env(:provider).hangup(conference.pending_participant.call_sid)
+      # NOTE: we'll receive a call status update event when the participant leaves, which will trigger the actual removal of the participant
+  end
+
+  def add_participant(chair: chair, conference: conference_identifier, participant: participant) do
+    Telephony.Conference.add_pending_participant(chair, conference_identifier, participant)
+    call_pending_participant(chair: chair, conference: conference_identifier)
+  end
+
+  def promote_pending_participant(
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
     Telephony.Conference.promote_pending_participant(chair, conference_identifier, pending_participant)
   end
 
-  def find_and_update_call_status_of_pending_participant(
+  def update_call_status_of_pending_participant(
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant,

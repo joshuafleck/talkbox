@@ -38,7 +38,7 @@ defmodule Router do
   defimpl Routing, for: Events.ChairFailedToJoinConference do
     def routing(event) do
       # TODO: What if they are attempting to rejoin an ongoing conference (it's probably okay, though)?
-      Telephony.find_and_remove_conference(
+      Telephony.remove_conference(
         chair: event.chair, conference: event.conference)
       # TODO: notify of failed call in ui app
     end
@@ -46,7 +46,7 @@ defmodule Router do
 
   defimpl Routing, for: Events.PendingParticipantFailedToJoinConference do
     def routing(event) do
-      Telephony.find_and_remove_pending_participant(
+      Telephony.remove_pending_participant(
         chair: event.chair,
         conference: event.conference,
         pending_participant: event.pending_participant)
@@ -56,7 +56,7 @@ defmodule Router do
 
   defimpl Routing, for: Events.PendingParticipantJoiningConference do
     def routing(event) do
-      Telephony.find_and_promote_pending_participant(
+      Telephony.promote_pending_participant(
         chair: event.chair,
         conference: event.conference,
         pending_participant: event.pending_participant)
@@ -66,7 +66,7 @@ defmodule Router do
 
   defimpl Routing, for: Events.PendingParticipantCallStatusChanged do
     def routing(event) do
-      Telephony.find_and_update_call_status_of_pending_participant(
+      Telephony.update_call_status_of_pending_participant(
         chair: event.chair,
         conference: event.conference,
         pending_participant: event.pending_participant,
