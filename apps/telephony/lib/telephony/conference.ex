@@ -41,12 +41,87 @@ defmodule Telephony.Conference do
     conference
   end
 
-  def get(chair) do
-    Agent.get(__MODULE__, &Map.get(&1, chair))
+  def set_call_sid_on_chair(chair, identifier, call_sid) do
+    Agent.get_and_update(__MODULE__, &set_call_sid_on_chair(&1, chair, identifier, call_sid))
   end
 
-  def update(chair, function) do
-    Agent.get_and_update(__MODULE__, &Map.get_and_update(&1, chair, function))
+  defp set_call_sid_on_chair(conferences, chair, identifier, call_sid) do
+    conference = fetch(conferences, chair, identifier)
+    conference = %{conference | chair: %{conference.chair | call_sid: call_sid}}
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
+  def set_call_sid_on_pending_participant(chair, identifier, call_sid) do
+    Agent.get_and_update(__MODULE__, &set_call_sid_on_pending_participant(&1, chair, identifier, call_sid))
+  end
+
+  defp set_call_sid_on_pending_participant(conferences, chair, identifier, call_sid) do
+    conference = fetch(conferences, chair, identifier)
+    conference = %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
+  def remove_pending_participant(chair, identifier, pending_participant_identifier) do
+    Agent.get_and_update(__MODULE__, &remove_pending_participant(&1, chair, identifier, pending_participant_identifier))
+  end
+
+  defp remove_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
+    conference = fetch(conferences, chair, identifier, pending_participant_identifier)
+    conference = %{conference | pending_participant: nil}
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
+  def promote_pending_participant(chair, identifier, pending_participant_identifier) do
+    Agent.get_and_update(__MODULE__, &promote_pending_participant(&1, chair, identifier, pending_participant_identifier))
+  end
+
+  defp promote_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
+    conference = fetch(conferences, chair, identifier, pending_participant_identifier)
+    conference = %{conference | pending_participant: nil, participants: conference.participants ++ conference.pending_participant}
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
+  def update_call_status_of_pending_participant(chair, identifier, pending_participant_identifier, call_status, sequence_number) do
+    Agent.get_and_update(__MODULE__, &update_call_status_of_pending_participant(&1, chair, identifier, pending_participant_identifier, call_status, sequence_number))
+  end
+
+  defp update_call_status_of_pending_participant(conferences, chair, identifier, pending_participant_identifier, call_status, sequence_number) do
+    conference = fetch(conferences, chair, identifier, pending_participant_identifier)
+    if elem(conference.pending_participant.call_status, 1) < sequence_number do
+      updated_conference = %{conference | pending_participant: %{conference.pending_participant | call_status: {call_status, sequence_number}}}
+      {updated_conference, Map.put(conferences, chair, updated_conference)}
+    else
+      {conference, conferences}
+    end
+  end
+
+  def remove(chair, identifier) do
+    Agent.get_and_update(__MODULE__, &remove(&1, chair, identifier))
+  end
+
+  defp remove(conferences, chair, identifier) do
+    conference = fetch(conferences, chair, identifier)
+    {conference, Map.pop(conferences, chair)}
+  end
+
+  def fetch(chair, identifier) do
+    Agent.get(__MODULE__, &fetch(&1, chair, identifier))
+  end
+
+  def fetch(conferences, chair, identifier) when is_map(conferences) do
+    %{identifier: ^identifier} = Map.get(conferences, chair)
+  end
+
+  def fetch(chair, identifier, pending_participant_identifier) do
+    Agent.get(__MODULE__, &fetch(&1, chair, identifier, pending_participant_identifier))
+  end
+
+  defp fetch(conferences, chair, identifier, pending_participant_identifier) do
+    %{
+      pending_participant: %{
+        identifier: ^pending_participant_identifier
+      }
+    } = fetch(conferences, chair, identifier)
   end
 
   defp generate_identifier(chair, current_unix_time) do
