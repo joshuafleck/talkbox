@@ -51,13 +51,41 @@ defmodule Telephony.Conference do
     Enum.any?(conference.participants)
   end
 
+  def chair_in_conference?(conference) do
+    conference.chair.call_sid != nil
+  end
+
+  def chairs_call_sid?(conference, call_sid) do
+    conference.chair.call_sid == call_sid
+  end
+
   def set_call_sid_on_chair(chair, identifier, call_sid) do
     Agent.get_and_update(__MODULE__, &set_call_sid_on_chair(&1, chair, identifier, call_sid))
   end
 
   defp set_call_sid_on_chair(conferences, chair, identifier, call_sid) do
     conference = fetch(conferences, chair, identifier)
-    conference = %{conference | chair: %{conference.chair | call_sid: call_sid}}
+    conference = case conference.chair.call_sid do
+      nil ->
+        %{conference | chair: %{conference.chair | call_sid: call_sid}}
+      ^call_sid ->
+        conference
+    end
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
+  def remove_call_sid_on_chair(chair, identifier, call_sid) do
+    Agent.get_and_update(__MODULE__, &remove_call_sid_on_chair(&1, chair, identifier, call_sid))
+  end
+
+  defp remove_call_sid_on_chair(conferences, chair, identifier, call_sid) do
+    conference = fetch(conferences, chair, identifier)
+    conference = case conference.chair.call_sid do
+      nil ->
+        conference
+      ^call_sid ->
+        %{conference | chair: %{conference.chair | call_sid: nil}}
+    end
     {conference, Map.put(conferences, chair, conference)}
   end
 
@@ -67,7 +95,12 @@ defmodule Telephony.Conference do
 
   defp set_conference_sid(conferences, chair, identifier, conference_sid) do
     conference = fetch(conferences, chair, identifier)
-    conference = %{conference | sid: conference_sid}
+    conference = case conference.sid do
+      nil ->
+        %{conference | sid: conference_sid}
+      ^conference_sid ->
+        conference
+    end
     {conference, Map.put(conferences, chair, conference)}
   end
 
@@ -128,6 +161,16 @@ defmodule Telephony.Conference do
     else
       {conference, conferences}
     end
+  end
+
+  def remove_participant(chair, identifier, call_sid) do
+    Agent.get_and_update(__MODULE__, &remove_participant(&1, chair, identifier, call_sid))
+  end
+
+  defp remove_participant(conferences, chair, identifier, call_sid) do
+    conference = fetch(conferences, chair, identifier)
+    conference = %{conference | participants: Map.delete(conference.participants, call_sid)}
+    {conference, Map.put(conferences, chair, conference)}
   end
 
   def remove(chair, identifier) do

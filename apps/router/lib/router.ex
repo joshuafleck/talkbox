@@ -66,30 +66,26 @@ defmodule Router do
         conference: event.conference,
         call_sid: event.call_sid,
         conference_sid: event.conference_sid)
-      # TODO: notify of joining in ui app - here or on conference update??
+      # TODO: notify of joining in ui app
     end
   end
 
   defimpl Routing, for: Events.ParticipantLeftConference do
     def routing(event) do
-      # TODO
-      # Telephony.call_or_promote_pending_participant(
-      #   chair: event.chair,
-      #   conference: event.conference,
-      #   call_sid: event.call_sid,
-      #   conference_sid: event.conference_sid)
-      # TODO: notify of joining in ui app - here or on conference update??
+      Telephony.remove_chair_or_participant(
+        chair: event.chair,
+        conference: event.conference,
+        call_sid: event.call_sid)
+      # TODO: notify of leaving in ui app
     end
   end
 
   defimpl Routing, for: Events.ConferenceEnded do
     def routing(event) do
-      # TODO
-      # Telephony.call_or_promote_pending_participant(
-      #   chair: event.chair,
-      #   conference: event.conference,
-      #   conference_sid: event.conference_sid)
-      # TODO: notify of joining in ui app - here or on conference update??
+      Telephony.remove_conference(
+        chair: event.chair,
+        conference: event.conference)
+      # TODO: notify of ending in ui app
     end
   end
 end

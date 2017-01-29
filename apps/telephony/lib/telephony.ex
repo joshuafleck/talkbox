@@ -39,6 +39,19 @@ defmodule Telephony do
     end
   end
 
+  def remove_chair_or_participant(
+        chair: chair,
+        conference: conference_identifier,
+        call_sid: call_sid) do
+    conference = Telephony.Conference.fetch(chair, conference_identifier)
+    conference = if Telephony.Conference.chairs_call_sid?(conference, call_sid) do
+      Telephony.Conference.remove_call_sid_on_chair(chair, conference_identifier, call_sid)
+    else
+      Telephony.Conference.remove_participant(chair, conference_identifier, call_sid)
+    end
+    clear_pointless_conference(conference, chair, conference_identifier)
+  end
+
   def remove_conference(chair: chair, conference: conference_identifier) do
     Telephony.Conference.remove(chair, conference_identifier)
   end
@@ -48,10 +61,7 @@ defmodule Telephony do
         conference: conference_identifier,
         pending_participant: pending_participant) do
     conference = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
-    unless Telephony.Conference.any_participants?(conference) do
-      remove_conference(chair: chair, conference: conference_identifier)
-      get_env(:provider).kick_participant_from_conference(conference.sid, conference.chair.call_sid)
-    end
+    clear_pointless_conference(conference, chair, conference_identifier)
   end
 
   def hangup_pending_participant(
@@ -78,6 +88,15 @@ defmodule Telephony do
         call_status: call_status,
         sequence_number: sequence_number) do
     Telephony.Conference.update_call_status_of_pending_participant(chair, conference_identifier, pending_participant, call_status, sequence_number)
+  end
+
+  defp clear_pointless_conference(conference, chair, conference_identifier) do
+    unless Telephony.Conference.any_participants?(conference) do
+      remove_conference(chair: chair, conference: conference_identifier)
+      if Telephony.Conference.chair_in_conference?(conference) do
+        get_env(:provider).kick_participant_from_conference(conference.sid, conference.chair.call_sid)
+      end
+    end
   end
 
   defp call_pending_participant(conference, chair, conference_identifier) do
