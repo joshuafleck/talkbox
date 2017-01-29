@@ -1,22 +1,20 @@
-defmodule Events.PendingParticipantFailedToJoinConference do
+defmodule Events.ParticipantJoinedConference do
   @moduledoc """
   Documentation for Events.
   """
   @derive [Poison.Encoder]
-  @enforce_keys [:conference, :chair, :call_sid, :pending_participant, :reason]
+  @enforce_keys [:conference, :chair, :call_sid, :conference_sid]
   defstruct [
     conference: nil,
     chair: nil,
     call_sid: nil,
-    pending_participant: nil,
-    reason: nil
+    conference_sid: nil
   ]
 
   @type t :: %__MODULE__{
     conference: String.t,
     chair: String.t,
     call_sid: String.t,
-    pending_participant: String.t,
-    reason: String.t
+    conference_sid: String.t
   }
 end

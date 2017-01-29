@@ -3,10 +3,11 @@ defmodule Events.PendingParticipantCallStatusChanged do
   Documentation for Events.
   """
   @derive [Poison.Encoder]
-  @enforce_keys [:conference, :chair, :pending_participant, :call_status, :sequence_number]
+  @enforce_keys [:conference, :chair, :call_sid, :pending_participant, :call_status, :sequence_number]
   defstruct [
     conference: nil,
     chair: nil,
+    call_sid: nil,
     pending_participant: nil,
     call_status: nil,
     sequence_number: nil
@@ -15,6 +16,7 @@ defmodule Events.PendingParticipantCallStatusChanged do
   @type t :: %__MODULE__{
     conference: String.t,
     chair: String.t,
+    call_sid: String.t,
     pending_participant: String.t,
     call_status: String.t,
     sequence_number: non_neg_integer

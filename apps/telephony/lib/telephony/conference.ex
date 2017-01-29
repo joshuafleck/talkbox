@@ -7,16 +7,18 @@ defmodule Telephony.Conference do
   defstruct [
     identifier: nil,
     chair: nil,
+    sid: nil,
     pending_participant: nil,
-    participants: [],
+    participants: %{},
     created_at: nil
   ]
 
   @type t :: %__MODULE__{
     identifier: String.t,
     chair: Telephony.Participant.t,
+    sid: String.t,
     pending_participant: Telephony.Participant.t,
-    participants: list,
+    participants: map,
     created_at: non_neg_integer
   }
 
@@ -41,6 +43,14 @@ defmodule Telephony.Conference do
     conference
   end
 
+  def chair_joined_conference?(conference) do
+    conference.sid != nil
+  end
+
+  def any_participants?(conference) do
+    Enum.any?(conference.participants)
+  end
+
   def set_call_sid_on_chair(chair, identifier, call_sid) do
     Agent.get_and_update(__MODULE__, &set_call_sid_on_chair(&1, chair, identifier, call_sid))
   end
@@ -51,13 +61,28 @@ defmodule Telephony.Conference do
     {conference, Map.put(conferences, chair, conference)}
   end
 
+  def set_conference_sid(chair, identifier, conference_sid) do
+    Agent.get_and_update(__MODULE__, &set_conference_sid(&1, chair, identifier, conference_sid))
+  end
+
+  defp set_conference_sid(conferences, chair, identifier, conference_sid) do
+    conference = fetch(conferences, chair, identifier)
+    conference = %{conference | sid: conference_sid}
+    {conference, Map.put(conferences, chair, conference)}
+  end
+
   def set_call_sid_on_pending_participant(chair, identifier, pending_participant_identifier, call_sid) do
     Agent.get_and_update(__MODULE__, &set_call_sid_on_pending_participant(&1, chair, identifier, pending_participant_identifier, call_sid))
   end
 
   defp set_call_sid_on_pending_participant(conferences, chair, identifier, pending_participant_identifier, call_sid) do
     conference = fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier)
-    conference = %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
+    conference = case conference.pending_participant.call_sid do
+      nil ->
+        %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
+      ^call_sid ->
+        conference
+    end
     {conference, Map.put(conferences, chair, conference)}
   end
 
@@ -87,7 +112,7 @@ defmodule Telephony.Conference do
 
   defp promote_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
     conference = fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier)
-    conference = %{conference | pending_participant: nil, participants: conference.participants ++ [conference.pending_participant]}
+    conference = %{conference | pending_participant: nil, participants: Map.put(conference.participants, conference.pending_participant.call_sid, conference.pending_participant)}
     {conference, Map.put(conferences, chair, conference)}
   end
 

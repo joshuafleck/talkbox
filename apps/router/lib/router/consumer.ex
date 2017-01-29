@@ -57,6 +57,7 @@ defmodule Router.Consumer do
         AMQP.Basic.reject channel, tag, requeue: not redelivered
         Logger.error "Error consuming #{payload}"
         Logger.error Exception.message(error)
+        Logger.error Exception.format_stacktrace(System.stacktrace())
     end
   end
 end

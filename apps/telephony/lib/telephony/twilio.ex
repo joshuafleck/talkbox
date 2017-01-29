@@ -27,6 +27,11 @@ defmodule Telephony.Twilio do
     call.sid
   end
 
+  def kick_participant_from_conference(conference_sid, call_sid) do # TODO: handle when the participant is not successfully kicked
+    Logger.debug "#{__MODULE__} kicking participant with sid #{call_sid} from conference #{conference_sid}"
+    :ok = ExTwilio.Participant.destroy(call_sid, %{conference: conference_sid})
+  end
+
   defp to_status_callback_event_tuple(status_callback_event) do
     {:status_callback_event, status_callback_event}
   end
