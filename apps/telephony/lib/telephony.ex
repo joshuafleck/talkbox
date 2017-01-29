@@ -20,7 +20,7 @@ defmodule Telephony do
   def initiate_conference(chair: chair, participant: participant) do
     conference = Telephony.Conference.create(chair, participant)
     call_sid = initiate_call_to_chair(conference)
-    Telephony.Conference.set_call_sid_on_chair(chair, conference.identifier, call_sid)
+    {:ok, _} = Telephony.Conference.set_call_sid_on_chair(chair, conference.identifier, call_sid)
   end
 
   # TODO: turn this pattern of args into a struct: conference_participant_reference
@@ -29,15 +29,15 @@ defmodule Telephony do
         conference: conference_identifier,
         call_sid: call_sid,
         conference_sid: conference_sid) do
-    conference = Telephony.Conference.fetch(chair, conference_identifier)
+    {:ok, conference} = Telephony.Conference.fetch(chair, conference_identifier)
     if Telephony.Conference.chair_joined_conference?(conference) do
       # It's the participant that joined
-      Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, call_sid)
-      Telephony.Conference.promote_pending_participant(chair, conference_identifier, conference.pending_participant.identifier)
+      {:ok, _} = Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, call_sid)
+      {:ok, _} = Telephony.Conference.promote_pending_participant(chair, conference_identifier, conference.pending_participant.identifier)
     else
       # It's the chair that joined
-      Telephony.Conference.set_call_sid_on_chair(chair, conference_identifier, call_sid)
-      Telephony.Conference.set_conference_sid(chair, conference_identifier, conference_sid)
+      {:ok, _} = Telephony.Conference.set_call_sid_on_chair(chair, conference_identifier, call_sid)
+      {:ok, _} = Telephony.Conference.set_conference_sid(chair, conference_identifier, conference_sid)
       call_pending_participant(conference, chair, conference_identifier)
     end
   end
@@ -46,8 +46,8 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         call_sid: call_sid) do
-    conference = Telephony.Conference.fetch(chair, conference_identifier)
-    conference = if Telephony.Conference.chairs_call_sid?(conference, call_sid) do
+    {:ok, conference} = Telephony.Conference.fetch(chair, conference_identifier)
+    {:ok, conference} = if Telephony.Conference.chairs_call_sid?(conference, call_sid) do
       # It's the chair that left
       Telephony.Conference.remove_call_sid_on_chair(chair, conference_identifier, call_sid)
     else
@@ -66,7 +66,7 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
-    conference = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
+    {:ok, conference} = Telephony.Conference.remove_pending_participant(chair, conference_identifier, pending_participant)
     clear_pointless_conference(conference, chair, conference_identifier)
   end
 
@@ -74,7 +74,8 @@ defmodule Telephony do
         chair: chair,
         conference: conference_identifier,
         pending_participant: pending_participant) do
-    %{pending_participant: %{call_sid: call_sid}} = Telephony.Conference.fetch_by_pending_participant(chair, conference_identifier, pending_participant)
+    {:ok, conference} = Telephony.Conference.fetch_by_pending_participant(chair, conference_identifier, pending_participant)
+    %{pending_participant: %{call_sid: call_sid}} = conference
     case call_sid do
       call_sid when not is_nil(call_sid) ->
         # NOTE: we'll receive a call status update event when the participant's call ends, which will trigger the actual removal of the participant
@@ -83,7 +84,7 @@ defmodule Telephony do
   end
 
   def add_participant(chair: chair, conference: conference_identifier, participant: participant) do
-    conference = Telephony.Conference.add_pending_participant(chair, conference_identifier, participant)
+    {:ok, conference} = Telephony.Conference.add_pending_participant(chair, conference_identifier, participant)
     call_pending_participant(conference, chair, conference_identifier)
   end
 
@@ -93,7 +94,7 @@ defmodule Telephony do
         pending_participant: pending_participant,
         call_status: call_status,
         sequence_number: sequence_number) do
-    Telephony.Conference.update_call_status_of_pending_participant(chair, conference_identifier, pending_participant, call_status, sequence_number)
+    {:ok, _} = Telephony.Conference.update_call_status_of_pending_participant(chair, conference_identifier, pending_participant, call_status, sequence_number)
   end
 
   defp clear_pointless_conference(conference, chair, conference_identifier) do
@@ -108,7 +109,7 @@ defmodule Telephony do
   defp call_pending_participant(conference, chair, conference_identifier) do
     pending_participant_call_sid = initiate_call_to_pending_participant(conference)
     # NOTE: this could fail if the participant has already been promoted (unlikely but possible)
-    Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, pending_participant_call_sid)
+    {:ok, _} = Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, pending_participant_call_sid)
   end
 
   defp initiate_call_to_chair(conference) do

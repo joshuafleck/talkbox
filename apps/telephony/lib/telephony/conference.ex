@@ -64,15 +64,17 @@ defmodule Telephony.Conference do
   end
 
   defp set_call_sid_on_chair(conferences, chair, identifier, call_sid) do
-    conference = fetch(conferences, chair, identifier)
-    conference = case conference.chair.call_sid do
-      nil ->
-        %{conference | chair: %{conference.chair | call_sid: call_sid}}
-      ^call_sid ->
-        conference
-      # TODO: return an :error code in the catch-all case
-    end
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference(conferences, chair, identifier, fn conference ->
+      case conference.chair.call_sid do
+        nil ->
+          conference = %{conference | chair: %{conference.chair | call_sid: call_sid}}
+          {{:ok, conference}, Map.put(conferences, chair, conference)}
+        ^call_sid ->
+          {{:ok, conference}, conferences}
+        _ ->
+          {{:error, "call_sid already set"}, conferences}
+      end
+    end)
   end
 
   def remove_call_sid_on_chair(chair, identifier, call_sid) do
@@ -80,15 +82,17 @@ defmodule Telephony.Conference do
   end
 
   defp remove_call_sid_on_chair(conferences, chair, identifier, call_sid) do
-    conference = fetch(conferences, chair, identifier)
-    conference = case conference.chair.call_sid do
-      nil ->
-        conference
-      ^call_sid ->
-        %{conference | chair: %{conference.chair | call_sid: nil}}
-      # TODO: return an :error code in the catch-all case
-    end
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference(conferences, chair, identifier, fn conference ->
+      case conference.chair.call_sid do
+        nil ->
+          {{:ok, conference}, conferences}
+        ^call_sid ->
+          conference = %{conference | chair: %{conference.chair | call_sid: nil}}
+          {{:ok, conference}, Map.put(conferences, chair, conference)}
+        _ ->
+          {{:error, "call_sid does not match"}, conferences}
+      end
+    end)
   end
 
   def set_conference_sid(chair, identifier, conference_sid) do
@@ -96,15 +100,17 @@ defmodule Telephony.Conference do
   end
 
   defp set_conference_sid(conferences, chair, identifier, conference_sid) do
-    conference = fetch(conferences, chair, identifier)
-    conference = case conference.sid do
-      nil ->
-        %{conference | sid: conference_sid}
-      ^conference_sid ->
-        conference
-      # TODO: return an :error code in the catch-all case
-    end
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference(conferences, chair, identifier, fn conference ->
+      case conference.sid do
+        nil ->
+          conference = %{conference | sid: conference_sid}
+          {{:ok, conference}, Map.put(conferences, chair, conference)}
+        ^conference_sid ->
+          {{:ok, conference}, conferences}
+        _ ->
+          {{:error, "conference_sid already set"}, conferences}
+      end
+    end)
   end
 
   def set_call_sid_on_pending_participant(chair, identifier, pending_participant_identifier, call_sid) do
@@ -112,15 +118,17 @@ defmodule Telephony.Conference do
   end
 
   defp set_call_sid_on_pending_participant(conferences, chair, identifier, pending_participant_identifier, call_sid) do
-    conference = fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier)
-    conference = case conference.pending_participant.call_sid do
-      nil ->
-        %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
-      ^call_sid ->
-        conference
-      # TODO: return an :error code in the catch-all case
-    end
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference_by_pending_participant(conferences, chair, identifier, pending_participant_identifier, fn conference ->
+      case conference.pending_participant.call_sid do
+        nil ->
+          conference = %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
+          {{:ok, conference}, Map.put(conferences, chair, conference)}
+        ^call_sid ->
+          {{:ok, conference}, conferences}
+        _ ->
+          {{:error, "call_sid already set"}, conferences}
+      end
+    end)
   end
 
   def remove_pending_participant(chair, identifier, pending_participant_identifier) do
@@ -128,9 +136,10 @@ defmodule Telephony.Conference do
   end
 
   defp remove_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
-    conference = fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier)
-    conference = %{conference | pending_participant: nil}
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference_by_pending_participant(conferences, chair, identifier, pending_participant_identifier, fn conference ->
+      conference = %{conference | pending_participant: nil}
+      {{:ok, conference}, Map.put(conferences, chair, conference)}
+    end)
   end
 
   def add_pending_participant(chair, identifier, participant) do
@@ -138,9 +147,15 @@ defmodule Telephony.Conference do
   end
 
   defp add_pending_participant(conferences, chair, identifier, participant) do
-    conference = %{pending_participant: nil} = fetch(conferences, chair, identifier)
-    conference = %{conference | pending_participant: %Telephony.Participant{identifier: participant}}
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference(conferences, chair, identifier, fn conference ->
+      case conference do
+        %{pending_participant: nil} ->
+          conference = %{conference | pending_participant: %Telephony.Participant{identifier: participant}}
+          {{:ok, conference}, Map.put(conferences, chair, conference)}
+        _ ->
+          {{:error, "pending participant already set"}, conferences}
+      end
+    end)
   end
 
   def promote_pending_participant(chair, identifier, pending_participant_identifier) do
@@ -148,9 +163,10 @@ defmodule Telephony.Conference do
   end
 
   defp promote_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
-    conference = fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier)
-    conference = %{conference | pending_participant: nil, participants: Map.put(conference.participants, conference.pending_participant.call_sid, conference.pending_participant)}
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference_by_pending_participant(conferences, chair, identifier, pending_participant_identifier, fn conference ->
+      conference = %{conference | pending_participant: nil, participants: Map.put(conference.participants, conference.pending_participant.call_sid, conference.pending_participant)}
+      {{:ok, conference}, Map.put(conferences, chair, conference)}
+    end)
   end
 
   def update_call_status_of_pending_participant(chair, identifier, pending_participant_identifier, call_status, sequence_number) do
@@ -158,13 +174,14 @@ defmodule Telephony.Conference do
   end
 
   defp update_call_status_of_pending_participant(conferences, chair, identifier, pending_participant_identifier, call_status, sequence_number) do
-    conference = fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier)
-    if elem(conference.pending_participant.call_status, 1) < sequence_number do
-      updated_conference = %{conference | pending_participant: %{conference.pending_participant | call_status: {call_status, sequence_number}}}
-      {updated_conference, Map.put(conferences, chair, updated_conference)}
-    else
-      {conference, conferences}
-    end
+    with_conference_by_pending_participant(conferences, chair, identifier, pending_participant_identifier, fn conference ->
+      if elem(conference.pending_participant.call_status, 1) < sequence_number do
+        conference = %{conference | pending_participant: %{conference.pending_participant | call_status: {call_status, sequence_number}}}
+        {{:ok, conference}, Map.put(conferences, chair, conference)}
+      else
+        {{:error, "call status has been superceded"}, conferences}
+      end
+    end)
   end
 
   def remove_participant(chair, identifier, call_sid) do
@@ -172,9 +189,10 @@ defmodule Telephony.Conference do
   end
 
   defp remove_participant(conferences, chair, identifier, call_sid) do
-    conference = fetch(conferences, chair, identifier)
-    conference = %{conference | participants: Map.delete(conference.participants, call_sid)}
-    {conference, Map.put(conferences, chair, conference)}
+    with_conference(conferences, chair, identifier, fn conference ->
+      conference = %{conference | participants: Map.delete(conference.participants, call_sid)}
+      {{:ok, conference}, Map.put(conferences, chair, conference)}
+    end)
   end
 
   def remove(chair, identifier) do
@@ -182,32 +200,52 @@ defmodule Telephony.Conference do
   end
 
   defp remove(conferences, chair, identifier) do
-    _conference = fetch(conferences, chair, identifier)
-    Map.pop(conferences, chair)
+    with_conference(conferences, chair, identifier, fn _ ->
+      Map.pop(conferences, chair)
+    end)
   end
 
   def fetch(chair, identifier) do
-    Agent.get(__MODULE__, &fetch(&1, chair, identifier))
-  end
-
-  # TODO: can this be turned into a method that yields to a block?
-  # TODO: return an :error type rather than letting a no match exception bubble up
-  defp fetch(conferences, chair, identifier) do
-    %{identifier: ^identifier} = Map.get(conferences, chair)
+    with_conference(chair, identifier, fn conference -> {:ok, conference} end)
   end
 
   def fetch_by_pending_participant(chair, identifier, pending_participant_identifier) do
-    Agent.get(__MODULE__, &fetch_by_pending_participant(&1, chair, identifier, pending_participant_identifier))
+    with_conference_by_pending_participant(chair, identifier, pending_participant_identifier, fn conference -> {:ok, conference} end)
+  end
+
+  defp with_conference(chair, identifier, block) do
+    Agent.get(__MODULE__, &with_conference(&1, chair, identifier, block))
   end
 
   # TODO: can this be turned into a method that yields to a block?
   # TODO: return an :error type rather than letting a no match exception bubble up
-  defp fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
-    %{
-      pending_participant: %{
-        identifier: ^pending_participant_identifier
-      }
-    } = fetch(conferences, chair, identifier)
+  defp with_conference(conferences, chair, identifier, block) do
+    conference = Map.get(conferences, chair)
+    case conference do
+      %{identifier: ^identifier} ->
+        block.(conference)
+      _ ->
+        {{:error, "matching conference not found"}, conferences}
+    end
+  end
+
+  defp with_conference_by_pending_participant(chair, identifier, pending_participant_identifier, block) do
+    Agent.get(__MODULE__, &with_conference_by_pending_participant(&1, chair, identifier, pending_participant_identifier, block))
+  end
+
+  defp with_conference_by_pending_participant(conferences, chair, identifier, pending_participant_identifier, block) do
+    with_conference(conferences, chair, identifier, fn conference ->
+      case conference do
+        %{
+          pending_participant: %{
+            identifier: ^pending_participant_identifier
+          }
+        } ->
+          block.(conference)
+        _ ->
+          {{:error, "matching conference not found"}, conferences}
+      end
+    end)
   end
 
   defp generate_identifier(chair, current_unix_time) do
