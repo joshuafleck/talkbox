@@ -23,6 +23,7 @@ defmodule Telephony do
     Telephony.Conference.set_call_sid_on_chair(chair, conference.identifier, call_sid)
   end
 
+  # TODO: turn this pattern of args into a struct: conference_participant_reference
   def call_or_promote_pending_participant(
         chair: chair,
         conference: conference_identifier,
@@ -30,9 +31,11 @@ defmodule Telephony do
         conference_sid: conference_sid) do
     conference = Telephony.Conference.fetch(chair, conference_identifier)
     if Telephony.Conference.chair_joined_conference?(conference) do
+      # It's the participant that joined
       Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, call_sid)
       Telephony.Conference.promote_pending_participant(chair, conference_identifier, conference.pending_participant.identifier)
     else
+      # It's the chair that joined
       Telephony.Conference.set_call_sid_on_chair(chair, conference_identifier, call_sid)
       Telephony.Conference.set_conference_sid(chair, conference_identifier, conference_sid)
       call_pending_participant(conference, chair, conference_identifier)
@@ -45,8 +48,10 @@ defmodule Telephony do
         call_sid: call_sid) do
     conference = Telephony.Conference.fetch(chair, conference_identifier)
     conference = if Telephony.Conference.chairs_call_sid?(conference, call_sid) do
+      # It's the chair that left
       Telephony.Conference.remove_call_sid_on_chair(chair, conference_identifier, call_sid)
     else
+      # It's a participant that left
       Telephony.Conference.remove_participant(chair, conference_identifier, call_sid)
     end
     clear_pointless_conference(conference, chair, conference_identifier)
@@ -56,6 +61,7 @@ defmodule Telephony do
     Telephony.Conference.remove(chair, conference_identifier)
   end
 
+  # TODO: turn this pattern of args into a struct: conference_pending_participant_reference
   def remove_pending_participant(
         chair: chair,
         conference: conference_identifier,

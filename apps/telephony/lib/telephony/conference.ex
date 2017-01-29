@@ -70,6 +70,7 @@ defmodule Telephony.Conference do
         %{conference | chair: %{conference.chair | call_sid: call_sid}}
       ^call_sid ->
         conference
+      # TODO: return an :error code in the catch-all case
     end
     {conference, Map.put(conferences, chair, conference)}
   end
@@ -85,6 +86,7 @@ defmodule Telephony.Conference do
         conference
       ^call_sid ->
         %{conference | chair: %{conference.chair | call_sid: nil}}
+      # TODO: return an :error code in the catch-all case
     end
     {conference, Map.put(conferences, chair, conference)}
   end
@@ -100,6 +102,7 @@ defmodule Telephony.Conference do
         %{conference | sid: conference_sid}
       ^conference_sid ->
         conference
+      # TODO: return an :error code in the catch-all case
     end
     {conference, Map.put(conferences, chair, conference)}
   end
@@ -115,6 +118,7 @@ defmodule Telephony.Conference do
         %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
       ^call_sid ->
         conference
+      # TODO: return an :error code in the catch-all case
     end
     {conference, Map.put(conferences, chair, conference)}
   end
@@ -186,6 +190,8 @@ defmodule Telephony.Conference do
     Agent.get(__MODULE__, &fetch(&1, chair, identifier))
   end
 
+  # TODO: can this be turned into a method that yields to a block?
+  # TODO: return an :error type rather than letting a no match exception bubble up
   defp fetch(conferences, chair, identifier) do
     %{identifier: ^identifier} = Map.get(conferences, chair)
   end
@@ -194,6 +200,8 @@ defmodule Telephony.Conference do
     Agent.get(__MODULE__, &fetch_by_pending_participant(&1, chair, identifier, pending_participant_identifier))
   end
 
+  # TODO: can this be turned into a method that yields to a block?
+  # TODO: return an :error type rather than letting a no match exception bubble up
   defp fetch_by_pending_participant(conferences, chair, identifier, pending_participant_identifier) do
     %{
       pending_participant: %{
