@@ -9,6 +9,7 @@ defmodule Router.Consumer do
   @queue       "talkbox_routing"
   @queue_error "#{@queue}_error"
 
+  # TODO: do we need RabbitMQ, or could we leverage Erlang's [Queue](http://erlang.org/doc/man/queue.html)
   def init(_opts) do
     {:ok, conn} = AMQP.Connection.open
     {:ok, chan} = AMQP.Channel.open(conn)

@@ -6,6 +6,14 @@ Components
 - **Callbacks** Webhook that accepts callbacks issued by Twilio
 - **Telephony** Manages the core business logic for the system
 - **Router** Accepts events produced by the components and routes them to other components
+- **Events** Contains event definitions used to communicate between apps and facilitates publishing of events
+
+Open-source Checklist
+
+1. Implment UI
+1. Unit and Integration tests
+1. Document functions/modules
+1. Complete README files that describe architecture
 
 Competitive Advantages
 

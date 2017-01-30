@@ -16,6 +16,7 @@ defmodule Router do
     :world
   end
 
+  # TODO: can this same functionality be achieved using the [Registry](https://hexdocs.pm/elixir/master/Registry.html#module-using-as-a-pubsub)?
   defprotocol Routing do
     @doc "TODO"
     def routing(event)

@@ -22,6 +22,7 @@ defmodule Telephony.Conference do
     created_at: non_neg_integer
   }
 
+  # TODO: should this be a plain old gen server?
   def start_link do
     Agent.start_link(fn -> %{} end, name: __MODULE__)
   end
