@@ -32,6 +32,8 @@ defmodule Telephony do
     {:ok, conference} = Telephony.Conference.fetch(chair, conference_identifier)
     if Telephony.Conference.chair_joined_conference?(conference) do
       # It's the participant that joined
+      # TODO: what if it's a replay of the chair's joining event? Need to assert that the call sid is different from the chair's.
+      #       What about reintroducing the pending participant joining event to handle this? At least we'd have the participant identifier from the event in that case.
       {:ok, _} = Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, call_sid)
       {:ok, _} = Telephony.Conference.promote_pending_participant(chair, conference_identifier, conference.pending_participant.identifier)
     else

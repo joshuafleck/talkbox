@@ -44,6 +44,7 @@ defmodule Telephony.Conference do
     conference
   end
 
+  # TODO: combine with &chair_in_conference? to be one method
   def chair_joined_conference?(conference) do
     conference.sid != nil
   end
