@@ -83,11 +83,9 @@ defmodule Router do
 
   defimpl Routing, for: Events.ConferenceEnded do
     def routing(event) do
-      # TODO: not sure if this is strictly necessary as &remove_chair_or_participant takes care of removing the conference already,
-      #       Also, we don't want to remove the conference before we get a chance to end any remaining call legs
-      # Telephony.remove_conference(
-      #   chair: event.chair,
-      #   conference: event.conference)
+      Telephony.remove_conference(
+        chair: event.chair,
+        conference: event.conference)
       # TODO: notify of ending in ui app
     end
   end

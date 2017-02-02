@@ -53,6 +53,7 @@ defmodule Callbacks.Twilio.CallController do
     |> text("ok")
   end
 
+  # TODO: is it possible for the participant leg to connect without actually entering the conference? If so, we should send an event upon the participant's leg completion
   def participant_status_changed(conn, _params) do
     conn
     |> put_resp_content_type("text/xml")

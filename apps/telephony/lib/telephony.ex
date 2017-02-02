@@ -33,9 +33,7 @@ defmodule Telephony do
     if Telephony.Conference.chair_joined_conference?(conference) do
       # It's the participant that joined
       # TODO: what if it's a replay of the chair's joining event (or even an external participant)?
-      #       - Assert that the call sid is different from the chair's. OR
-      #       - Reintroduce the pending participant joining event to handle this? At least we'd have the participant identifier from the event in that case. OR
-      #       - Change the URL of the conference callback when joining the participant to signify that the chair has since joined.
+      #       - Assert that the call sid is different from the chair's.
       {:ok, _} = Telephony.Conference.set_call_sid_on_pending_participant(chair, conference_identifier, conference.pending_participant.identifier, call_sid)
       {:ok, _} = Telephony.Conference.promote_pending_participant(chair, conference_identifier, conference.pending_participant.identifier)
     else
@@ -62,6 +60,7 @@ defmodule Telephony do
   end
 
   def remove_conference(chair: chair, conference: conference_identifier) do
+    # TODO: check for pending participant sid and hangup pending participant first
     Telephony.Conference.remove(chair, conference_identifier)
   end
 
@@ -102,6 +101,7 @@ defmodule Telephony do
   end
 
   defp clear_pointless_conference(conference, chair, conference_identifier) do
+    # TODO: what if there is a pending participant (probably do not want to clear)?
     unless Telephony.Conference.any_participants?(conference) do
       remove_conference(chair: chair, conference: conference_identifier)
       if Telephony.Conference.chair_in_conference?(conference) do
