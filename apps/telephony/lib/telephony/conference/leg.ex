@@ -25,7 +25,7 @@ defmodule Telephony.Conference.Leg do
   """
   @type t :: %__MODULE__{
     identifier: String.t,
-    call_sid: String.t,
-    call_status: {String.t, integer}
+    call_sid: String.t | nil,
+    call_status: {String.t | nil, integer}
   }
 end

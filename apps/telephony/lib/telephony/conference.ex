@@ -36,7 +36,7 @@ defmodule Telephony.Conference do
   @type t :: %__MODULE__{
     identifier: String.t,
     chair: Telephony.Conference.Leg.t,
-    sid: String.t,
+    sid: String.t | nil,
     pending_participant: Telephony.Conference.Leg.t,
     participants: %{required(String.t) => Telephony.Conference.Leg.t}
   }
