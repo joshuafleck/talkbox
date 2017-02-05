@@ -28,7 +28,7 @@ defmodule Telephony.Conference do
   Internal representation of a conference.
   Fields:
     * `identifier` - The conference identifier we generate when a conference is requested
-    * `chair` - The name of the conference chairperson
+    * `chair` - Information about the call leg of the conference chairperson
     * `sid` - The conference sid provided by the telephony provider, which we use when manipulating the conference state
     * `pending_participant` - Information about the call leg of the pending participant (i.e. the participant we wish to join to the conference)
     * `participants` - A map of call sid to call leg information about the conference participants
@@ -40,7 +40,7 @@ defmodule Telephony.Conference do
     sid: String.t,
     pending_participant: Telephony.Conference.Leg.t,
     participants: %{required(String.t) => Telephony.Conference.Leg.t},
-    created_at: non_neg_integer
+    created_at: DateTime.t
   }
 
   @type success :: {:ok, t}
@@ -80,16 +80,39 @@ defmodule Telephony.Conference do
     conference.chair.call_sid == call_sid
   end
 
+  @doc """
+  Turns the conference into a reference that can be passed between applications
+  """
+  @spec reference(t) :: Telephony.Conference.Reference.t
+  def reference(conference) do
+    %Telephony.Conference.Reference{identifier: conference.identifier, chair: conference.chair.identifier}
+  end
+
+  @doc """
+  Turns the conference into a reference that can be passed between applications
+  This version also contains a reference to the pending participant
+  """
+  @spec pending_participant_reference(t) :: Telephony.Conference.PendingParticipantReference.t
+  def pending_participant_reference(conference) do
+    %Telephony.Conference.PendingParticipantReference{
+      identifier: conference.identifier,
+      chair: conference.chair.identifier,
+      pending_participant_identifier: conference.pending_participant.identifier}
+  end
+
   # Client
 
+  @doc """
+  Starts a singleton GenServer
+  """
   def start_link do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
   @doc """
   Creates a conference with the provided chairperson and pending participant.
-  Note that a chairperson may only have one conference at a time, so this
-  overwrites any existing conference for the provided chairperson.
+  Returns an error if there is already an existing conference for the chair
+  to ensure a chair only has one ongoing conference at a time.
   """
   @spec create(String.t, String.t) :: response
   def create(chair, participant) do
@@ -205,8 +228,12 @@ defmodule Telephony.Conference do
   # Server (callbacks)
 
   def handle_call({:create, chair, participant}, _from, conferences) do
-    conference = new(chair, participant)
-    {:reply, {:ok, conference}, Map.put(conferences, conference.chair.identifier, conference)}
+    if Map.get(conferences, chair) != nil do
+      {:reply, {:error, "conference exists for chair"}, conferences}
+    else
+      conference = new(chair, participant)
+      {:reply, {:ok, conference}, Map.put(conferences, conference.chair.identifier, conference)}
+    end
   end
 
   def handle_call({:set_call_sid_on_chair, conference, call_sid}, _from, conferences) do
@@ -341,19 +368,6 @@ defmodule Telephony.Conference do
   defp generate_identifier(chair, current_unix_time) do
     current_unix_time = current_unix_time |> DateTime.to_unix(:milliseconds) |> Integer.to_string
     chair <> "_" <> current_unix_time
-  end
-
-  @spec reference(t) :: Telephony.Conference.Reference.t
-  defp reference(conference) do
-    %Telephony.Conference.Reference{identifier: conference.identifier, chair: conference.chair.identifier}
-  end
-
-  @spec pending_participant_reference(t) :: Telephony.Conference.PendingParticipantReference.t
-  defp pending_participant_reference(conference) do
-    %Telephony.Conference.PendingParticipantReference{
-      identifier: conference.identifier,
-      chair: conference.chair.identifier,
-      pending_participant_identifier: conference.pending_participant.identifier}
   end
 
   @spec new(String.t, String.t) :: t
