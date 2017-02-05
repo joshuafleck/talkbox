@@ -14,14 +14,13 @@ defmodule Telephony.Conference do
   """
   use GenServer
 
-  @enforce_keys [:identifier, :chair, :pending_participant, :created_at]
+  @enforce_keys [:identifier, :chair, :pending_participant]
   defstruct [
     identifier: nil,
     chair: nil,
     sid: nil,
     pending_participant: nil,
-    participants: %{},
-    created_at: nil
+    participants: %{}
   ]
 
   @typedoc """
@@ -39,8 +38,7 @@ defmodule Telephony.Conference do
     chair: Telephony.Conference.Leg.t,
     sid: String.t,
     pending_participant: Telephony.Conference.Leg.t,
-    participants: %{required(String.t) => Telephony.Conference.Leg.t},
-    created_at: DateTime.t
+    participants: %{required(String.t) => Telephony.Conference.Leg.t}
   }
 
   @type success :: {:ok, t}
@@ -50,6 +48,30 @@ defmodule Telephony.Conference do
 
   @doc """
   Determines if a conference has any participation (ongoing or pending)
+
+  ## Examples
+
+      iex(4)> %Telephony.Conference{
+      ...(4)>   identifier: nil,
+      ...(4)>   chair: nil,
+      ...(4)>   pending_participant: nil,
+      ...(4)> } |> Telephony.Conference.any_participants?
+      false
+
+      iex(3)> %Telephony.Conference{
+      ...(3)>   identifier: nil,
+      ...(3)>   chair: nil,
+      ...(3)>   pending_participant: %Telephony.Conference.Leg{identifier: nil},
+      ...(3)> } |> Telephony.Conference.any_participants?
+      true
+
+      iex(5)> %Telephony.Conference{
+      ...(5)>   identifier: nil,
+      ...(5)>   chair: nil,
+      ...(5)>   pending_participant: nil,
+      ...(5)>   participants: %{"test_call_sid" => %Telephony.Conference.Leg{identifier: nil}}
+      ...(5)> } |> Telephony.Conference.any_participants?
+      true
   """
   @spec any_participants?(t) :: boolean
   def any_participants?(conference) do
@@ -58,6 +80,22 @@ defmodule Telephony.Conference do
 
   @doc """
   Determines if a conference has a pending participant
+
+  ## Examples
+
+      iex(8)> %Telephony.Conference{
+      ...(8)>   identifier: nil,
+      ...(8)>   chair: nil,
+      ...(8)>   pending_participant: nil,
+      ...(8)> } |> Telephony.Conference.pending_participant?
+      false
+
+      iex(9)> %Telephony.Conference{
+      ...(9)>   identifier: nil,
+      ...(9)>   chair: nil,
+      ...(9)>   pending_participant: %Telephony.Conference.Leg{identifier: nil},
+      ...(9)> } |> Telephony.Conference.pending_participant?
+      true
   """
   @spec pending_participant?(t) :: boolean
   def pending_participant?(conference) do
@@ -66,6 +104,32 @@ defmodule Telephony.Conference do
 
   @doc """
   Determines if the chair has joined the conference
+
+  ## Examples
+
+      iex(12)> %Telephony.Conference{
+      ...(12)>   identifier: nil,
+      ...(12)>   chair: %Telephony.Conference.Leg{identifier: nil, call_sid: "test_call_sid"},
+      ...(12)>   pending_participant: nil,
+      ...(12)>   sid: "test_conference_sid"
+      ...(12)> } |> Telephony.Conference.chair_in_conference?
+      true
+
+      iex(13)> %Telephony.Conference{
+      ...(13)>   identifier: nil,
+      ...(13)>   chair: %Telephony.Conference.Leg{identifier: nil, call_sid: "test_call_sid"},
+      ...(13)>   pending_participant: nil,
+      ...(13)>   sid: nil
+      ...(13)> } |> Telephony.Conference.chair_in_conference?
+      false
+
+      iex(14)> %Telephony.Conference{
+      ...(14)>   identifier: nil,
+      ...(14)>   chair: %Telephony.Conference.Leg{identifier: nil, call_sid: nil},
+      ...(14)>   pending_participant: nil,
+      ...(14)>   sid: "test_conference_sid"
+      ...(14)> } |> Telephony.Conference.chair_in_conference?
+      false
   """
   @spec chair_in_conference?(t) :: boolean
   def chair_in_conference?(conference) do
@@ -74,6 +138,22 @@ defmodule Telephony.Conference do
 
   @doc """
   Determines if the provided call sid belongs to the chair
+
+  ## Examples
+
+      iex(15)> %Telephony.Conference{
+      ...(15)>   identifier: nil,
+      ...(15)>   chair: %Telephony.Conference.Leg{identifier: nil, call_sid: "test_call_sid"},
+      ...(15)>   pending_participant: nil,
+      ...(15)> } |> Telephony.Conference.chairs_call_sid?("test_call_sid")
+      true
+
+      iex(16)> %Telephony.Conference{
+      ...(16)>   identifier: nil,
+      ...(16)>   chair: %Telephony.Conference.Leg{identifier: nil, call_sid: "different_test_call_sid"},
+      ...(16)>   pending_participant: nil,
+      ...(16)> } |> Telephony.Conference.chairs_call_sid?("test_call_sid")
+      false
   """
   @spec chairs_call_sid?(t, String.t) :: boolean
   def chairs_call_sid?(conference, call_sid) do
@@ -82,6 +162,16 @@ defmodule Telephony.Conference do
 
   @doc """
   Turns the conference into a reference that can be passed between applications
+
+  ## Examples
+
+      iex(17)> %Telephony.Conference{
+      ...(17)>   identifier: "test_conference",
+      ...(17)>   chair: %Telephony.Conference.Leg{identifier: "test_chair"},
+      ...(17)>   pending_participant: nil,
+      ...(17)> } |> Telephony.Conference.reference()
+      %Telephony.Conference.Reference{chair: "test_chair",
+       identifier: "test_conference"}
   """
   @spec reference(t) :: Telephony.Conference.Reference.t
   def reference(conference) do
@@ -91,6 +181,17 @@ defmodule Telephony.Conference do
   @doc """
   Turns the conference into a reference that can be passed between applications
   This version also contains a reference to the pending participant
+
+  ## Examples
+
+      iex(18)> %Telephony.Conference{
+      ...(18)>   identifier: "test_conference",
+      ...(18)>   chair: %Telephony.Conference.Leg{identifier: "test_chair"},
+      ...(18)>   pending_participant: %Telephony.Conference.Leg{identifier: "test_participant"},
+      ...(18)> } |> Telephony.Conference.pending_participant_reference()
+      %Telephony.Conference.PendingParticipantReference{chair: "test_chair",
+       identifier: "test_conference",
+       pending_participant_identifier: "test_participant"}
   """
   @spec pending_participant_reference(t) :: Telephony.Conference.PendingParticipantReference.t
   def pending_participant_reference(conference) do
@@ -116,7 +217,7 @@ defmodule Telephony.Conference do
   """
   @spec create(String.t, String.t) :: response
   def create(chair, participant) do
-    GenServer.call(__MODULE__, {:create, chair, participant})
+    GenServer.call(__MODULE__, {:create, chair, participant, generate_identifier(chair, DateTime.utc_now)})
   end
 
   @doc """
@@ -227,11 +328,11 @@ defmodule Telephony.Conference do
 
   # Server (callbacks)
 
-  def handle_call({:create, chair, participant}, _from, conferences) do
+  def handle_call({:create, chair, participant, identifier}, _from, conferences) do
     if Map.get(conferences, chair) != nil do
       {:reply, {:error, "conference exists for chair"}, conferences}
     else
-      conference = new(chair, participant)
+      conference = new(chair, participant, identifier)
       {:reply, {:ok, conference}, Map.put(conferences, conference.chair.identifier, conference)}
     end
   end
@@ -280,17 +381,18 @@ defmodule Telephony.Conference do
 
   def handle_call({:set_call_sid_on_pending_participant, conference, call_sid}, _from, conferences) do
     with_conference_by_pending_participant(conferences, pending_participant_reference(conference), fn conference ->
-      chairs_call_sid = conference.chair.call_sid
-      case conference.pending_participant.call_sid do
-        nil ->
-          conference = %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
-          {:reply, {:ok, conference}, Map.put(conferences, conference.chair.identifier, conference)}
-        ^call_sid ->
-          {:reply, {:ok, conference}, conferences}
-        ^chairs_call_sid ->
-          {:reply, {:error, "call_sid of conference chair"}, conferences}
-        _ ->
-          {:reply, {:error, "call_sid already set"}, conferences}
+      if conference.chair.call_sid == call_sid do
+        {:reply, {:error, "call_sid of conference chair"}, conferences}
+      else
+        case conference.pending_participant.call_sid do
+          nil ->
+            conference = %{conference | pending_participant: %{conference.pending_participant | call_sid: call_sid}}
+            {:reply, {:ok, conference}, Map.put(conferences, conference.chair.identifier, conference)}
+          ^call_sid ->
+            {:reply, {:ok, conference}, conferences}
+          _ ->
+            {:reply, {:error, "call_sid already set"}, conferences}
+        end
       end
     end)
   end
@@ -370,15 +472,12 @@ defmodule Telephony.Conference do
     chair <> "_" <> current_unix_time
   end
 
-  @spec new(String.t, String.t) :: t
-  defp new(chair, participant) do
-    current_unix_time = DateTime.utc_now
-
+  @spec new(String.t, String.t, String.t) :: t
+  defp new(chair, participant, identifier) do
     %__MODULE__{
-      identifier: generate_identifier(chair, current_unix_time),
+      identifier: identifier,
       chair: %Telephony.Conference.Leg{identifier: chair},
-      pending_participant: %Telephony.Conference.Leg{identifier: participant},
-      created_at: current_unix_time
+      pending_participant: %Telephony.Conference.Leg{identifier: participant}
     }
   end
 
