@@ -154,13 +154,15 @@ defmodule Telephony do
     conference
   end
 
+  @telephony_provider Application.get_env(:telephony, :provider)
+
   @spec clear_pointless_conference(Telephony.Conference.t) :: Telephony.Conference.t
   defp clear_pointless_conference(conference) do
     if Telephony.Conference.any_participants?(conference) do
       conference
     else
       if Telephony.Conference.chair_in_conference?(conference) do
-        {:ok, _call_sid} = get_env(:provider).kick_participant_from_conference(conference.sid, conference.chair.call_sid)
+        {:ok, _call_sid} = @telephony_provider.kick_participant_from_conference(conference.sid, conference.chair.call_sid)
       end
       hangup_pending_and_remove_conference(conference)
     end
@@ -175,14 +177,14 @@ defmodule Telephony do
     conference
   end
 
-  @spec hangup_pending_participant_call(Telephony.Conference.t) :: String.t
+  @spec hangup_pending_participant_call(Telephony.Conference.t) :: String.t | nil
   defp hangup_pending_participant_call(conference) do
     case conference.pending_participant.call_sid do
-      call_sid when not is_nil(call_sid) ->
-        # NOTE: we'll receive a call status update event when the participant's call ends, which will trigger the actual removal of the participant
-        {:ok, call_sid} = get_env(:provider).hangup(call_sid)
-        call_sid
+      nil ->
+        nil
       call_sid ->
+        # NOTE: we'll receive a call status update event when the participant's call ends, which will trigger the actual removal of the participant
+        {:ok, call_sid} = @telephony_provider.hangup(call_sid)
         call_sid
     end
   end
@@ -198,7 +200,7 @@ defmodule Telephony do
   @spec initiate_call_to_chair(Telephony.Conference.t) :: String.t
   defp initiate_call_to_chair(conference) do
     reference = Telephony.Conference.reference(conference)
-    {:ok, call_sid} = get_env(:provider).call(
+    {:ok, call_sid} = @telephony_provider.call(
       to: conference.chair.identifier,
       from: get_env(:cli),
       url: Telephony.Callbacks.chair_answered(reference),
@@ -210,7 +212,7 @@ defmodule Telephony do
   @spec initiate_call_to_pending_participant(Telephony.Conference.t) :: String.t
   defp initiate_call_to_pending_participant(conference) do
     pending_participant_reference = Telephony.Conference.pending_participant_reference(conference)
-    {:ok, call_sid} = get_env(:provider).call(
+    {:ok, call_sid} = @telephony_provider.call(
       to: conference.pending_participant.identifier,
       from: get_env(:cli),
       url: Telephony.Callbacks.pending_participant_answered(pending_participant_reference),

@@ -12,7 +12,9 @@ defmodule Telephony.ConferenceTest do
 
   test "create when there is not an existing conference creates a conference" do
     {:reply, {:ok, conference}, conferences} = Telephony.Conference.handle_call({:create, "chair", "participant", "identifier"}, nil, %{})
-    assert conferences == conferences
+    assert conference.identifier == "identifier"
+    assert conference.chair.identifier == "chair"
+    assert conference.pending_participant.identifier == "participant"
     assert conference == Map.get(conferences, "chair")
   end
 
@@ -152,7 +154,8 @@ defmodule Telephony.ConferenceTest do
     assert Map.get(conferences, "chair") == conference
   end
 
-  test "update_call_status_of_pending_participant when the sequence number of the updated call_status is greater than the current sequence number", %{conferences: conferences, conference: conference} do
+  test "update_call_status_of_pending_participant when the sequence number of the updated call_status is greater than the current sequence number", %{
+    conferences: conferences, conference: conference} do
     assert conference.pending_participant.call_status == {nil, -1}
     pending_participant_reference = Telephony.Conference.pending_participant_reference(conference)
     {:reply, {:ok, conference}, conferences} = Telephony.Conference.handle_call({:update_call_status_of_pending_participant, pending_participant_reference, "test_call_status", 1}, nil, conferences)
@@ -220,7 +223,7 @@ defmodule Telephony.ConferenceTest do
 
   test "fetch_by_pending_participant when a conference containing the specified pending participant is not found returns an error", %{conferences: conferences, conference: conference} do
     reference = Telephony.Conference.pending_participant_reference(conference)
-    reference = %{reference | pending_participant_identifier: "different_participant" }
+    reference = %{reference | pending_participant_identifier: "different_participant"}
     {:reply, {:error, message}, ^conferences} = Telephony.Conference.handle_call({:fetch_by_pending_participant, reference}, nil, conferences)
     assert message == "matching conference not found"
   end

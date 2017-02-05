@@ -1,4 +1,4 @@
-defmodule Telephony.Twilio do
+defmodule Telephony.Provider.Twilio do
   @moduledoc """
   This module encapsulates all calls to Twilio for managing call and conference state.
   The telephony-specific logic is encapsulated in one module to enable swapping out
@@ -13,6 +13,7 @@ defmodule Telephony.Twilio do
     * Ability to retry if we were unable to reach Twilio
   """
   require Logger
+  @behaviour Telephony.Provider
 
   @doc """
   Initiates a telephone call.

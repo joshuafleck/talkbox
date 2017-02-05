@@ -39,15 +39,37 @@ defmodule Callbacks.Twilio.CallController do
     |> text(Callbacks.Twiml.join_conference(conference))
   end
 
-  def participant_status_changed(conn, %{"conference" => conference, "chair" => chair, "CallSid" => call_sid, "participant" => pending_participant, "CallStatus" => status, "SequenceNumber" => sequence_number}) when progressing(status) do
-    Events.publish(%Events.PendingParticipantCallStatusChanged{conference: conference, chair: chair, call_sid: call_sid, pending_participant: pending_participant, call_status: status, sequence_number: String.to_integer(sequence_number)})
+  def participant_status_changed(conn, %{
+    "conference" => conference,
+    "chair" => chair,
+    "CallSid" => call_sid,
+    "participant" => pending_participant,
+    "CallStatus" => status,
+    "SequenceNumber" => sequence_number}) when progressing(status) do
+    Events.publish(%Events.PendingParticipantCallStatusChanged{
+      conference: conference,
+      chair: chair,
+      call_sid: call_sid,
+      pending_participant: pending_participant,
+      call_status: status,
+      sequence_number: String.to_integer(sequence_number)})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
   end
 
-  def participant_status_changed(conn, %{"conference" => conference, "chair" => chair, "CallSid" => call_sid, "participant" => pending_participant, "CallStatus" => status}) when failed_to_connect(status) do
-    Events.publish(%Events.PendingParticipantFailedToJoinConference{conference: conference, chair: chair, call_sid: call_sid, pending_participant: pending_participant, reason: status})
+  def participant_status_changed(conn, %{
+    "conference" => conference,
+    "chair" => chair,
+    "CallSid" => call_sid,
+    "participant" => pending_participant,
+    "CallStatus" => status}) when failed_to_connect(status) do
+    Events.publish(%Events.PendingParticipantFailedToJoinConference{
+      conference: conference,
+      chair: chair,
+      call_sid: call_sid,
+      pending_participant: pending_participant,
+      reason: status})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
