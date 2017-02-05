@@ -10,7 +10,7 @@ defmodule Telephony.ConferenceTest do
     {:ok, conference: conference, conferences: conferences, chairs_call_leg: chairs_call_leg, participants_call_leg: participants_call_leg}
   end
 
-  test "create when there is not an existing conference creates a conference", %{conferences: conferences} do
+  test "create when there is not an existing conference creates a conference" do
     {:reply, {:ok, conference}, conferences} = Telephony.Conference.handle_call({:create, "chair", "participant", "identifier"}, nil, %{})
     assert conferences == conferences
     assert conference == Map.get(conferences, "chair")
@@ -132,7 +132,7 @@ defmodule Telephony.ConferenceTest do
     assert message == "pending participant already set"
   end
 
-  test "add_pending_participant when the pending participant is nil adds a pending participant", %{conferences: conferences, conference: conference, chairs_call_leg: chairs_call_leg} do
+  test "add_pending_participant when the pending participant is nil adds a pending participant", %{conference: conference, chairs_call_leg: chairs_call_leg} do
     pending_participant_reference = Telephony.Conference.pending_participant_reference(conference)
     conference = %Telephony.Conference{chair: chairs_call_leg, identifier: "identifier", pending_participant: nil}
     conferences = %{"chair" => conference}
