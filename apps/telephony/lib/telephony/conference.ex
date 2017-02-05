@@ -459,7 +459,7 @@ defmodule Telephony.Conference do
   end
 
   def handle_call({:fetch_by_pending_participant, pending_participant_reference}, _from, conferences) do
-    with_conference(conferences, pending_participant_reference, fn conference ->
+    with_conference_by_pending_participant(conferences, pending_participant_reference, fn conference ->
       {:reply, {:ok, conference}, conferences}
     end)
   end

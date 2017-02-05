@@ -173,4 +173,55 @@ defmodule Telephony.ConferenceTest do
     {:reply, {:error, message}, ^conferences} = Telephony.Conference.handle_call({:update_call_status_of_pending_participant, pending_participant_reference, "test_call_status", -1}, nil, conferences)
     assert message == "call status has been superceded"
   end
+
+  test "remove_participant removes the participant from the participant's list", %{chairs_call_leg: chairs_call_leg, participants_call_leg: participants_call_leg} do
+    conference = %Telephony.Conference{chair: chairs_call_leg, identifier: "identifier", pending_participant: nil, participants: %{"test_call_sid" => participants_call_leg}}
+    conferences = %{"chair" => conference}
+    assert Map.get(conference.participants, "test_call_sid") != nil
+    {:reply, {:ok, conference}, conferences} = Telephony.Conference.handle_call({:remove_participant, conference, "test_call_sid"}, nil, conferences)
+    assert conference.participants == %{}
+    assert Map.get(conferences, "chair") == conference
+  end
+
+  test "remove when the conference is present removes the conference", %{conferences: conferences, conference: conference} do
+    assert Map.get(conferences, "chair") == conference
+    {:reply, {:ok, conference}, conferences} = Telephony.Conference.handle_call({:remove, conference}, nil, conferences)
+    assert conferences == %{}
+    assert conference != nil
+  end
+
+  test "fetch when the conference is not present returns an error", %{conference: conference} do
+    reference = Telephony.Conference.reference(conference)
+    conferences = %{"different_chair" => conference}
+    assert Map.get(conferences, "chair") == nil
+    {:reply, {:error, message}, ^conferences} = Telephony.Conference.handle_call({:fetch, reference}, nil, conferences)
+    assert message == "matching conference not found"
+  end
+
+  test "fetch when the conference is present returns the conference", %{conferences: conferences, conference: conference} do
+    reference = Telephony.Conference.reference(conference)
+    assert Map.get(conferences, "chair") == conference
+    {:reply, {:ok, ^conference}, ^conferences} = Telephony.Conference.handle_call({:fetch, reference}, nil, conferences)
+  end
+
+  test "fetch_by_pending_participant when the conference is not present returns an error", %{conference: conference} do
+    reference = Telephony.Conference.pending_participant_reference(conference)
+    conferences = %{"different_chair" => conference}
+    assert Map.get(conferences, "chair") == nil
+    {:reply, {:error, message}, ^conferences} = Telephony.Conference.handle_call({:fetch_by_pending_participant, reference}, nil, conferences)
+    assert message == "matching conference not found"
+  end
+
+  test "fetch_by_pending_participant when the conference is present returns the conference", %{conferences: conferences, conference: conference} do
+    reference = Telephony.Conference.pending_participant_reference(conference)
+    assert Map.get(conferences, "chair") == conference
+    {:reply, {:ok, ^conference}, ^conferences} = Telephony.Conference.handle_call({:fetch_by_pending_participant, reference}, nil, conferences)
+  end
+
+  test "fetch_by_pending_participant when a conference containing the specified pending participant is not found returns an error", %{conferences: conferences, conference: conference} do
+    reference = Telephony.Conference.pending_participant_reference(conference)
+    reference = %{reference | pending_participant_identifier: "different_participant" }
+    {:reply, {:error, message}, ^conferences} = Telephony.Conference.handle_call({:fetch_by_pending_participant, reference}, nil, conferences)
+    assert message == "matching conference not found"
+  end
 end
