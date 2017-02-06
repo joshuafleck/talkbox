@@ -27,7 +27,6 @@ defmodule Telephony.Provider.Twilio do
   ## Examples
       call(to: "+4412345678901", from: "+4412345678902", url: "http://test.com/call_answered", status_callback: "http://test.com/call_status_changed", status_callback_events: ["completed"])
   """
-  @spec call(%{to: String.t, from: String.t, url: String.t, status_callback: String.t, status_callback_events: [String.t]}) :: {:ok, String.t} | {:error, String.t, number}
   def call(
     to: to,
     from: from,
@@ -58,7 +57,6 @@ defmodule Telephony.Provider.Twilio do
   ## Examples
       hangup("call_sid1234")
   """
-  @spec hangup(String.t) :: {:ok, String.t} | {:error, String.t, number}
   def hangup(call_sid) do
     Logger.debug "#{__MODULE__} ending call with sid #{call_sid}"
     result = ExTwilio.Call.complete(call_sid)
@@ -79,7 +77,6 @@ defmodule Telephony.Provider.Twilio do
   ## Examples
       kick_participant_from_conference("conference_sid1234","call_sid1234")
   """
-  @spec kick_participant_from_conference(String.t, String.t) :: {:ok, String.t} | {:error, String.t, number}
   def kick_participant_from_conference(conference_sid, call_sid) do
     Logger.debug "#{__MODULE__} kicking participant with sid #{call_sid} from conference #{conference_sid}"
     result = ExTwilio.Participant.destroy(call_sid, %{conference: conference_sid})
