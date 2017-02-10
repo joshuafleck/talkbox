@@ -1,21 +1,13 @@
 defmodule Events do
   @moduledoc """
-  Documentation for Events.
+  This module provides the ability for applications to publish events
+  that can then be consumed and acted upon asyncronously. Each type of
+  event will have its structure defined in a module within this app
+  such that the producers and consumers of these events can include
+  this application to ensure event definitions are the same for both
+  the producers and consumers.
   """
   require Logger
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Events.hello
-      :world
-
-  """
-  def hello do
-    :world
-  end
 
   def publish(event) do
     event
