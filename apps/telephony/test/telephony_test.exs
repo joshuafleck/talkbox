@@ -41,6 +41,13 @@ defmodule TelephonyTest do
     end
   end
 
+  test "call_or_promote_pending_participant when the initiation of the call to the pending participant fails" do
+    conference = Telephony.initiate_conference("different_chair", "error")
+    assert_raise MatchError, ~r(call initiation failed), fn ->
+      join_to_conference(participant_reference(conference, "different_chair"))
+    end
+  end
+
   test "call_or_promote_pending_participant when the participant's call_sid belongs to the pending participant", %{conference: conference} do
     conference = join_chair_to_conference(conference)
     assert conference.pending_participant != nil
@@ -77,9 +84,7 @@ defmodule TelephonyTest do
   end
 
   test "remove_chair_or_participant when the call_sid matches the participant's", %{conference: conference} do
-    conference = conference
-    |> join_chair_to_conference
-    |> join_participant_to_conference
+    conference = join_chair_and_pending_participant(conference)
     participant = Map.get(conference.participants, "participant")
     assert participant != nil
     assert participant.call_sid == "participant"
@@ -129,6 +134,21 @@ defmodule TelephonyTest do
     assert Telephony.remove_conference(Telephony.Conference.reference(conference)) == nil
   end
 
+  test "remove_pending_participant when there is an existing participant", %{conference: conference} do
+    reference = pending_participant_reference(conference)
+    join_chair_and_pending_participant(conference)
+    conference = Telephony.add_participant(reference)
+    assert conference.pending_participant != nil
+    assert Map.get(conference.participants, "participant") != nil
+
+    conference = Telephony.remove_pending_participant(pending_participant_reference(conference))
+
+    # Removes the pending participant
+    assert conference.pending_participant == nil
+    # Does not remove the conference
+    assert Telephony.remove_conference(Telephony.Conference.reference(conference)) != nil
+  end
+
   test "remove_pending_participant when there is no pending participant", %{conference: conference} do
     reference = pending_participant_reference(conference)
     conference = Telephony.remove_pending_participant(reference)
@@ -150,9 +170,7 @@ defmodule TelephonyTest do
 
   test "add_participant", %{conference: conference} do
     reference = pending_participant_reference(conference)
-    conference = conference
-    |> join_chair_to_conference
-    |> join_participant_to_conference
+    conference = join_chair_and_pending_participant(conference)
     assert conference.pending_participant == nil
 
     conference = Telephony.add_participant(reference)
@@ -182,9 +200,7 @@ defmodule TelephonyTest do
 
   defp join_chair_to_conference(conference), do: join_to_conference(chairs_participant_reference(conference))
   defp join_participant_to_conference(conference), do: join_to_conference(participants_participant_reference(conference))
-  defp join_to_conference(reference) do
-    Telephony.call_or_promote_pending_participant(reference)
-  end
+  defp join_to_conference(reference), do: Telephony.call_or_promote_pending_participant(reference)
   defp chairs_participant_reference(conference), do: participant_reference(conference, "chair")
   defp participants_participant_reference(conference), do: participant_reference(conference, "participant")
   defp participant_reference(conference, call_sid) do
@@ -201,5 +217,10 @@ defmodule TelephonyTest do
       identifier: conference.identifier,
       pending_participant_identifier: conference.pending_participant.identifier
     }
+  end
+  defp join_chair_and_pending_participant(conference) do
+    conference
+    |> join_chair_to_conference
+    |> join_participant_to_conference
   end
 end
