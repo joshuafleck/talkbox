@@ -2,6 +2,7 @@ defmodule Callbacks.Router do
   use Callbacks.Web, :router
 
   pipeline :twilio do
+    # TODO: assert the validity of the request from Twilio
     plug :accepts, ["html"]
   end
 

@@ -8,15 +8,14 @@ defmodule Router.Application do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
-    # Define workers and child supervisors to be supervised
-    children = [
-      # Starts a worker by calling: Router.Worker.start_link(arg1, arg2, arg3)
-      # worker(Router.Worker, [arg1, arg2, arg3]),
-      worker(Router.Consumer, [], [id: Router.Consumer0]),
-      worker(Router.Consumer, [], [id: Router.Consumer1]),
-      worker(Router.Consumer, [], [id: Router.Consumer2]),
-      worker(Router.Consumer, [], [id: Router.Consumer3])
-    ]
+    number_of_consumers = Application.get_env(:router, :consumers)
+    children = if number_of_consumers > 0 do
+      Enum.map(Range.new(1, number_of_consumers), fn(index) ->
+        worker(Router.Consumer, [], [id: "Router.Consumer"<>Integer.to_string(index)])
+      end)
+    else
+      []
+    end
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
