@@ -4,7 +4,6 @@ defmodule Events.PendingParticipantFailedToJoinConference do
   Published when we are notified that the pending participants's call leg
   could not be connected.
   """
-  @derive [Poison.Encoder]
   @enforce_keys [:conference, :chair, :call_sid, :pending_participant, :reason]
   defstruct [
     conference: nil,

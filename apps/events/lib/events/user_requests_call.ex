@@ -4,7 +4,6 @@ defmodule Events.UserRequestsCall do
   of a conference, with the user acting as the chair and the callee
   acting as the pending participant.
   """
-  @derive [Poison.Encoder]
   @enforce_keys [:user, :callee]
   defstruct [
     user: nil,

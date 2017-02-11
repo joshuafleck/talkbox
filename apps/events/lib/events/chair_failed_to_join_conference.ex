@@ -3,7 +3,6 @@ defmodule Events.ChairFailedToJoinConference do
   The chairperson has failed to join their conference. Published when
   we are notified that the chairperson's call leg could not be connected.
   """
-  @derive [Poison.Encoder]
   @enforce_keys [:conference, :chair, :call_sid, :reason]
   defstruct [
     conference: nil,

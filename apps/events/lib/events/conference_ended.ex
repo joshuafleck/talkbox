@@ -3,7 +3,6 @@ defmodule Events.ConferenceEnded do
   The conference has ended - all of its participants have left. Published when
   we are notified by the telephony provider that the conference has ended.
   """
-  @derive [Poison.Encoder]
   @enforce_keys [:conference, :chair, :conference_sid]
   defstruct [
     conference: nil,

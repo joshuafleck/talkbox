@@ -6,7 +6,6 @@ defmodule Events.ParticipantJoinedConference do
   participant's call leg, as the telephony provider does not provide this
   distinction.
   """
-  @derive [Poison.Encoder]
   @enforce_keys [:conference, :chair, :call_sid, :conference_sid]
   defstruct [
     conference: nil,

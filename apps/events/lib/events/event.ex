@@ -6,7 +6,6 @@ defmodule Events.Event do
   `participant_joined_conference`. The responsibility of this module is to
   store the more detailed event along with some metadata about the event.
   """
-  @derive [Poison.Encoder]
   defstruct [
     created_at: nil,
     type: nil,

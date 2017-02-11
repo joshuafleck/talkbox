@@ -7,7 +7,6 @@ defmodule Events.PendingParticipantCallStatusChanged do
   updates allowing us to determine if the updates have arrived to our server
   out of order.
   """
-  @derive [Poison.Encoder]
   @enforce_keys [:conference, :chair, :call_sid, :pending_participant, :call_status, :sequence_number]
   defstruct [
     conference: nil,

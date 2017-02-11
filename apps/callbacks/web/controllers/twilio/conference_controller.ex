@@ -14,21 +14,21 @@ defmodule Callbacks.Twilio.ConferenceController do
   end
 
   def status_changed(conn, %{"conference" => conference, "chair" => chair, "ConferenceSid" => conference_sid, "CallSid" => call_sid, "StatusCallbackEvent" => event}) when participant_joined(event) do
-    Events.publish(%Events.ParticipantJoinedConference{conference: conference, chair: chair, call_sid: call_sid, conference_sid: conference_sid})
+    {:ok, _} = Events.publish(%Events.ParticipantJoinedConference{conference: conference, chair: chair, call_sid: call_sid, conference_sid: conference_sid})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
   end
 
   def status_changed(conn, %{"conference" => conference, "chair" => chair, "ConferenceSid" => conference_sid, "CallSid" => call_sid, "StatusCallbackEvent" => event}) when participant_left(event) do
-    Events.publish(%Events.ParticipantLeftConference{conference: conference, chair: chair, call_sid: call_sid, conference_sid: conference_sid})
+    {:ok, _} = Events.publish(%Events.ParticipantLeftConference{conference: conference, chair: chair, call_sid: call_sid, conference_sid: conference_sid})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
   end
 
   def status_changed(conn, %{"conference" => conference, "chair" => chair, "ConferenceSid" => conference_sid, "StatusCallbackEvent" => event}) when conference_ended(event) do
-    Events.publish(%Events.ConferenceEnded{conference: conference, chair: chair, conference_sid: conference_sid})
+    {:ok, _} = Events.publish(%Events.ConferenceEnded{conference: conference, chair: chair, conference_sid: conference_sid})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")

@@ -6,37 +6,34 @@ defmodule Events do
   such that the producers and consumers of these events can include
   this application to ensure event definitions are the same for both
   the producers and consumers.
+
+  Currently, events are published to an in-memory queue structure, but
+  could be published to a third-party application like RabbitMQ to take
+  advantage of topics, multiplexing, etc.
   """
   require Logger
 
+  @doc """
+  Publishes an event to the queue of events
+
+  ## Example
+
+  TODO
+  """
   def publish(event) do
+    Logger.debug "#{__MODULE__} publishing #{inspect(event)}"
     event
-    |> encode
-    |> publish_to_rabbit("talkbox_routing") # TODO: use a proper routing key
+    |> Events.Queue.put
   end
 
-  def decode(event_json) do
-    event_with_metadata = Poison.decode!(event_json, as: %Events.Event{})
-    payload_type = String.to_existing_atom(event_with_metadata.type)
-    Poison.decode!(event_with_metadata.payload, as: payload_type.__struct__)
-  end
+  @doc """
+  Consumes an event from the queue of events
 
-  defp encode(event) do
-    event_with_metadata = %Events.Event{
-      created_at: DateTime.utc_now,
-      type: event.__struct__,
-      payload: Poison.encode!(event)
-    }
-    event_with_metadata
-    |> Poison.encode!
-  end
+  ## Example
 
-  # TODO: properly manage connections, set headers and publishing options
-  defp publish_to_rabbit(event_json, routing_key) do
-    Logger.debug "#{__MODULE__} publishing #{event_json}"
-    {:ok, conn} = AMQP.Connection.open
-    {:ok, chan} = AMQP.Channel.open(conn)
-    :ok = AMQP.Basic.publish(chan, "", routing_key, event_json, persistent: true, mandatory: true)
-    AMQP.Connection.close(conn)
+  TODO
+  """
+  def consume do
+    Events.Queue.pop
   end
 end

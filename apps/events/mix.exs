@@ -19,7 +19,8 @@ defmodule Events.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     # Specify extra applications you'll use from Erlang/Elixir
-    [extra_applications: [:logger]]
+    [extra_applications: [:logger],
+     mod: {Events.Application, []}]
   end
 
   # Dependencies can be Hex packages:
@@ -36,9 +37,6 @@ defmodule Events.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [
-      {:poison, "~> 2.0"}, # For [de]serializing event data with JSON
-      {:amqp, github: "keisisqrl/amqp"} # For publishing to RabbitMQ (note: this is a patched forked version)
-    ]
+    []
   end
 end
