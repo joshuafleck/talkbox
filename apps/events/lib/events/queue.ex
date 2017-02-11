@@ -54,8 +54,6 @@ defmodule Events.Queue do
         {:reply, {:error, "queue is empty"}, queue}
       {:value, event} ->
         {:reply, {:ok, event}, queue}
-      result ->
-        {:reply, {:error, "unexepected result from queue: #{result}"}, queue}
     end
   end
 end

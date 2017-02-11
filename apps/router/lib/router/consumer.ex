@@ -1,64 +1,32 @@
 defmodule Router.Consumer do
-  use GenServer
+  @moduledoc """
+  Responsible for consuming events from the event queue
+  and sending them off to be processed. Intended to run
+  as a pool of workers to support scaling up when there
+  is a high volume of events.
+  """
   require Logger
 
   def start_link do
-    GenServer.start_link(__MODULE__, [], [])
+    Task.start_link(fn -> poll() end)
   end
 
-  @queue       "talkbox_routing"
-  @queue_error "#{@queue}_error"
-
-  # TODO: do we need RabbitMQ, or could we leverage Erlang's [Queue](http://erlang.org/doc/man/queue.html)
-  def init(_opts) do
-    {:ok, conn} = AMQP.Connection.open
-    {:ok, chan} = AMQP.Channel.open(conn)
-    AMQP.Basic.qos(chan, prefetch_count: 1)
-    AMQP.Queue.declare(chan, @queue_error, durable: true)
-    # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
-    AMQP.Queue.declare(chan, @queue, durable: true,
-                                arguments: [{"x-dead-letter-exchange", :longstr, ""},
-                                            {"x-dead-letter-routing-key", :longstr, @queue_error}])
-    # Register the GenServer process as a consumer
-    {:ok, _consumer_tag} = AMQP.Basic.consume(chan, @queue)
-    {:ok, chan}
-  end
-
-  # Confirmation sent by the broker after registering this process as a consumer
-  def handle_info({:basic_consume_ok, %{consumer_tag: _}}, chan) do
-    {:noreply, chan}
-  end
-
-  # Sent by the broker when the consumer is unexpectedly cancelled (such as after a queue deletion)
-  def handle_info({:basic_cancel, %{consumer_tag: _}}, chan) do
-    {:stop, :normal, chan}
-  end
-
-  # Confirmation sent by the broker to the consumer process after a Basic.cancel
-  def handle_info({:basic_cancel_ok, %{consumer_tag: _}}, chan) do
-    {:noreply, chan}
-  end
-
-  def handle_info({:basic_deliver, payload, %{delivery_tag: tag, redelivered: redelivered}}, chan) do
-    spawn fn -> consume(chan, tag, redelivered, payload) end
-    {:noreply, chan}
-  end
-
-  defp consume(channel, tag, redelivered, payload) do
-    try do
-      Logger.debug "#{__MODULE__} consuming #{payload}"
-      event = Events.decode(payload)
-      Router.Routing.routing(event)
-      AMQP.Basic.ack channel, tag
-    rescue
-      error ->
-        # Requeue unless it's a redelivered message.
-        # This means we will retry consuming a message once in case of exception
-        # before we give up and have it moved to the error queue
-        AMQP.Basic.reject channel, tag, requeue: not redelivered
-        Logger.error "Error consuming #{payload}"
-        Logger.error Exception.message(error)
-        Logger.error Exception.format_stacktrace(System.stacktrace())
+  defp poll do
+    case Events.consume do
+      {:ok, event} ->
+        Logger.debug "#{__MODULE__} consuming #{inspect(event)}"
+        try do
+          Router.Routing.routing(event)
+        rescue
+          error ->
+            Logger.error "#{__MODULE__} error consuming #{inspect(event)}"
+            Logger.error Exception.message(error)
+            Logger.error Exception.format_stacktrace(System.stacktrace())
+        end
+      {:error, "queue is empty"} ->
+        nil
     end
+    :ok = :timer.sleep(10)
+    poll()
   end
 end

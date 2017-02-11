@@ -41,8 +41,7 @@ defmodule Router.Mixfile do
       {:telephony, in_umbrella: true},
       {:callbacks, in_umbrella: true},
       {:ui, in_umbrella: true},
-      {:events, in_umbrella: true},
-      {:amqp, github: "keisisqrl/amqp"} # For consuming from RabbitMQ (note: this is a patched forked version)
+      {:events, in_umbrella: true}
     ]
   end
 end

@@ -1,24 +1,14 @@
 defmodule Router do
   @moduledoc """
-  Documentation for Router.
+  Responsible for consuming events published by any users of the `Events`
+  application and translating these events into a series of actions against
+  one or more applications.
   """
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Router.hello
-      :world
-
-  """
-  def hello do
-    :world
-  end
-
-  # TODO: can this same functionality be achieved using the [Registry](https://hexdocs.pm/elixir/master/Registry.html#module-using-as-a-pubsub)?
   defprotocol Routing do
-    @doc "TODO"
+    @doc """
+    Given an event will apply behaviour specific to that event
+    """
     def routing(event)
   end
 
@@ -30,7 +20,6 @@ defmodule Router do
 
   defimpl Routing, for: Events.ChairFailedToJoinConference do
     def routing(event) do
-      # TODO: What if they are attempting to rejoin an ongoing conference (it's probably okay, though)?
       Telephony.remove_conference(
         %Telephony.Conference.Reference{
           chair: event.chair,
