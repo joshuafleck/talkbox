@@ -14,7 +14,13 @@ defmodule Router do
 
   defimpl Routing, for: Events.UserRequestsCall do
     def routing(event) do
-      Telephony.initiate_conference(event.user, event.callee)
+      case Telephony.initiate_conference(event.user, event.callee) do
+        {:ok, conference} ->
+          Router.Web.broadcast(event.user, "Starting call", conference)
+        {:error, message} ->
+          # TODO: try to fetch the conference for the user and return it?
+          Router.Web.broadcast(event.user, "Error starting call: #{message}", nil)
+      end
     end
   end
 

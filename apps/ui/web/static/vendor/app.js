@@ -10033,6 +10033,42 @@ var _user$project$Line$view = function (model) {
 	}
 };
 
+var _user$project$Conference$CallLeg = F3(
+	function (a, b, c) {
+		return {identifier: a, call_status: b, call_sid: c};
+	});
+var _user$project$Conference$decodeCallLeg = A4(
+	_elm_lang$core$Json_Decode$map3,
+	_user$project$Conference$CallLeg,
+	A2(_elm_lang$core$Json_Decode$field, 'identifier', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'call_status', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'call_sid', _elm_lang$core$Json_Decode$string));
+var _user$project$Conference$decodeParticipants = _elm_lang$core$Json_Decode$list(_user$project$Conference$decodeCallLeg);
+var _user$project$Conference$Conference = F4(
+	function (a, b, c, d) {
+		return {identifier: a, chair: b, pending_participant: c, participants: d};
+	});
+var _user$project$Conference$decodeConference = A5(
+	_elm_lang$core$Json_Decode$map4,
+	_user$project$Conference$Conference,
+	A2(_elm_lang$core$Json_Decode$field, 'identifier', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'chair', _user$project$Conference$decodeCallLeg),
+	A2(_elm_lang$core$Json_Decode$field, 'pending_participant', _user$project$Conference$decodeCallLeg),
+	A2(_elm_lang$core$Json_Decode$field, 'participants', _user$project$Conference$decodeParticipants));
+var _user$project$Conference$Response = F2(
+	function (a, b) {
+		return {message: a, conference: b};
+	});
+var _user$project$Conference$decodeResponse = A3(
+	_elm_lang$core$Json_Decode$map2,
+	_user$project$Conference$Response,
+	A2(_elm_lang$core$Json_Decode$field, 'message', _elm_lang$core$Json_Decode$string),
+	A2(_elm_lang$core$Json_Decode$field, 'conference', _user$project$Conference$decodeConference));
+var _user$project$Conference$None = {ctor: 'None'};
+var _user$project$Conference$InProgress = function (a) {
+	return {ctor: 'InProgress', _0: a};
+};
+
 var _user$project$App$decodeTwilioToken = A2(
 	_elm_lang$core$Json_Decode$at,
 	{
@@ -10094,9 +10130,9 @@ var _user$project$App$clientsChannel = function (clientName) {
 var _user$project$App$Flags = function (a) {
 	return {clientName: a};
 };
-var _user$project$App$Model = F5(
-	function (a, b, c, d, e) {
-		return {phxSocket: a, status: b, clientName: c, twilioStatus: d, line: e};
+var _user$project$App$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {phxSocket: a, status: b, clientName: c, twilioStatus: d, line: e, conference: f, conferenceStatus: g};
 	});
 var _user$project$App$LineMsg = function (a) {
 	return {ctor: 'LineMsg', _0: a};
@@ -10149,10 +10185,33 @@ var _user$project$App$view = function (model) {
 						_1: {
 							ctor: '::',
 							_0: A2(
-								_elm_lang$html$Html$map,
-								_user$project$App$LineMsg,
-								_user$project$Line$view(model.line)),
-							_1: {ctor: '[]'}
+								_elm_lang$html$Html$h4,
+								{ctor: '[]'},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('Conference'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$p,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text(
+											_elm_lang$core$Basics$toString(model.conferenceStatus)),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$map,
+										_user$project$App$LineMsg,
+										_user$project$Line$view(model.line)),
+									_1: {ctor: '[]'}
+								}
+							}
 						}
 					}
 				}
@@ -10167,6 +10226,9 @@ var _user$project$App$TwilioStatusChanged = function (a) {
 };
 var _user$project$App$CallRequestFailed = function (a) {
 	return {ctor: 'CallRequestFailed', _0: a};
+};
+var _user$project$App$ConferenceChanged = function (a) {
+	return {ctor: 'ConferenceChanged', _0: a};
 };
 var _user$project$App$CallStatusChanged = function (a) {
 	return {ctor: 'CallStatusChanged', _0: a};
@@ -10232,19 +10294,24 @@ var _user$project$App$init = function (flags) {
 			_user$project$App$SetupTwilio,
 			A4(
 				_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
-				'call_status_changed',
+				'conference_changed',
 				_user$project$App$clientsChannel(flags.clientName),
-				_user$project$App$CallStatusChanged,
+				_user$project$App$ConferenceChanged,
 				A4(
 					_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
-					'call_ended',
+					'call_status_changed',
 					_user$project$App$clientsChannel(flags.clientName),
-					_user$project$App$CallEnded,
-					_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
-						_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:5000/socket/websocket'))))));
+					_user$project$App$CallStatusChanged,
+					A4(
+						_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
+						'call_ended',
+						_user$project$App$clientsChannel(flags.clientName),
+						_user$project$App$CallEnded,
+						_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
+							_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:5000/socket/websocket')))))));
 	var initSocket = _p2._0;
 	var phxCmd = _p2._1;
-	var model = {phxSocket: initSocket, status: 'All good', clientName: flags.clientName, twilioStatus: 'All good', line: _user$project$Line$initialModel};
+	var model = {phxSocket: initSocket, status: 'All good', clientName: flags.clientName, twilioStatus: 'All good', line: _user$project$Line$initialModel, conference: _user$project$Conference$None, conferenceStatus: 'All good'};
 	return {
 		ctor: '_Tuple2',
 		_0: model,
@@ -10332,18 +10399,42 @@ var _user$project$App$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
-			case 'CallRequestFailed':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p3._0);
+			case 'ConferenceChanged':
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p3._0);
 				var _p9 = decodeResult;
 				if (_p9.ctor === 'Ok') {
-					var _p10 = A2(_user$project$Line$update, _user$project$Line$CallRequestFailed, model.line);
-					var updatedLineModel = _p10._0;
-					var lineCmd = _p10._1;
+					var _p10 = _p9._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{status: _p9._0, line: updatedLineModel}),
+							{
+								conference: _user$project$Conference$InProgress(_p10.conference),
+								conferenceStatus: _p10.message
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{status: _p9._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'CallRequestFailed':
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p3._0);
+				var _p11 = decodeResult;
+				if (_p11.ctor === 'Ok') {
+					var _p12 = A2(_user$project$Line$update, _user$project$Line$CallRequestFailed, model.line);
+					var updatedLineModel = _p12._0;
+					var lineCmd = _p12._1;
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{status: _p11._0, line: updatedLineModel}),
 						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$App$LineMsg, lineCmd)
 					};
 				} else {
@@ -10352,29 +10443,29 @@ var _user$project$App$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p9._0)
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p11._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'LineMsg':
-				var _p14 = _p3._0;
-				var _p11 = function () {
-					var _p12 = _p14;
-					switch (_p12.ctor) {
+				var _p16 = _p3._0;
+				var _p13 = function () {
+					var _p14 = _p16;
+					switch (_p14.ctor) {
 						case 'RequestCall':
-							return A2(_user$project$App$sendStartCall, model, _p12._0);
+							return A2(_user$project$App$sendStartCall, model, _p14._0);
 						case 'EndCall':
-							return A2(_user$project$App$sendEndCall, model, _p12._0);
+							return A2(_user$project$App$sendEndCall, model, _p14._0);
 						default:
 							return {ctor: '_Tuple2', _0: model.phxSocket, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				}();
-				var phxSocket = _p11._0;
-				var phxCmd = _p11._1;
-				var _p13 = A2(_user$project$Line$update, _p14, model.line);
-				var updatedLineModel = _p13._0;
-				var lineCmd = _p13._1;
+				var phxSocket = _p13._0;
+				var phxCmd = _p13._1;
+				var _p15 = A2(_user$project$Line$update, _p16, model.line);
+				var updatedLineModel = _p15._0;
+				var lineCmd = _p15._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10392,9 +10483,9 @@ var _user$project$App$update = F2(
 						})
 				};
 			default:
-				var _p15 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p3._0, model.phxSocket);
-				var phxSocket = _p15._0;
-				var phxCmd = _p15._1;
+				var _p17 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p3._0, model.phxSocket);
+				var phxSocket = _p17._0;
+				var phxCmd = _p17._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(

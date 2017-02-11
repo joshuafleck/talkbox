@@ -5,7 +5,7 @@ defmodule Telephony.Provider.Twilio do
   telephony logic with stubs in tests, but also in case we want to introduce support
   for additional telephony providers.
 
-  Suggested enhancements:
+  TODO:
     * Enhanced logging, including:
       * Time of each request
       * Outcome of each request

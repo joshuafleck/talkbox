@@ -5,20 +5,18 @@ defmodule TelephonyTest do
   setup do
     Application.stop(:telephony)
     :ok = Application.start(:telephony)
-    conference = Telephony.initiate_conference("chair", "participant")
+    {:ok, conference} = Telephony.initiate_conference("chair", "participant")
     {:ok, conference: conference}
   end
 
   test "initiate_conference returns a conference with the call_sid set on the chair" do
-    conference = Telephony.initiate_conference("new_chair", "participant")
+    {:ok, conference} = Telephony.initiate_conference("new_chair", "participant")
     # Initiates the chairs's call leg
     assert conference.chair.call_sid == "new_chair"
   end
 
   test "initiate_conference when the chair's call initiation fails raises an error" do
-    assert_raise MatchError, ~r(call initiation failed), fn ->
-      Telephony.initiate_conference("error", "participant")
-    end
+    assert Telephony.initiate_conference("error", "participant") == {:error, "call initiation failed"}
   end
 
   test "call_or_promote_pending_participant when the participant's call_sid belongs to the chair", %{conference: conference} do
@@ -42,7 +40,7 @@ defmodule TelephonyTest do
   end
 
   test "call_or_promote_pending_participant when the initiation of the call to the pending participant fails" do
-    conference = Telephony.initiate_conference("different_chair", "error")
+    {:ok, conference} = Telephony.initiate_conference("different_chair", "error")
     assert_raise MatchError, ~r(call initiation failed), fn ->
       join_to_conference(participant_reference(conference, "different_chair"))
     end

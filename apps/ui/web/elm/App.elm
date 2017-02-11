@@ -15,6 +15,8 @@ import Twilio
 
 import Line
 
+import Conference
+
 main =
   Html.programWithFlags
     { init = init
@@ -35,6 +37,8 @@ type alias Model =
   , clientName : String
   , twilioStatus : String
   , line : Line.Model
+  , conference : Conference.Model
+  , conferenceStatus : String
   }
 
 clientsChannel : String -> String
@@ -51,6 +55,7 @@ init flags =
       |> Phoenix.Socket.withDebug
       |> Phoenix.Socket.on "call_ended" (clientsChannel flags.clientName) CallEnded
       |> Phoenix.Socket.on "call_status_changed" (clientsChannel flags.clientName) CallStatusChanged
+      |> Phoenix.Socket.on "conference_changed" (clientsChannel flags.clientName) ConferenceChanged
       |> Phoenix.Socket.on "set_token" (clientsChannel flags.clientName) SetupTwilio
       |> Phoenix.Socket.join channel
     model =
@@ -59,6 +64,8 @@ init flags =
       , clientName = flags.clientName
       , twilioStatus = "All good"
       , line = Line.initialModel
+      , conference = Conference.None
+      , conferenceStatus = "All good"
       }
   in
     ( model, Cmd.map PhoenixMsg phxCmd )
@@ -69,6 +76,7 @@ type Msg
   = PhoenixMsg (Phoenix.Socket.Msg Msg)
   | CallEnded JsEncode.Value
   | CallStatusChanged JsEncode.Value
+  | ConferenceChanged JsEncode.Value
   | CallRequestFailed JsEncode.Value
   | TwilioStatusChanged String
   | SetupTwilio JsEncode.Value
@@ -146,6 +154,18 @@ update msg model =
             )
           Err error ->
             ({ model | status = error }, Cmd.none )
+    ConferenceChanged raw ->
+      let
+        decodeResult = JsDecode.decodeValue Conference.decodeResponse raw
+      in
+        case decodeResult of
+          Ok response ->
+            (
+              { model | conference = (Conference.InProgress response.conference), conferenceStatus = response.message },
+              Cmd.none
+            )
+          Err error ->
+            ({ model | status = error }, Cmd.none )
     CallRequestFailed raw ->
       let
         decodeResult = JsDecode.decodeValue decodeCallRequestFailure raw
@@ -193,6 +213,8 @@ view model =
     p [] [ text model.status ],
     h4 [] [ text "Twilio" ],
     p [] [ text (toString model.twilioStatus) ],
+    h4 [] [ text "Conference" ],
+    p [] [ text (toString model.conferenceStatus) ],
     Html.map LineMsg (Line.view model.line)
   ]
 

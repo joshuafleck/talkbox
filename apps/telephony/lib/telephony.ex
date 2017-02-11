@@ -7,6 +7,10 @@ defmodule Telephony do
   """
   require Logger
 
+  @type success :: {:ok, Telephony.Conference.t}
+  @type fail :: {:error, String.t}
+  @type response :: success | fail
+
   @doc """
   Initiates a conference by creating a conference record and
   dialling the chair's call leg. We abstain from dialling the
@@ -14,12 +18,17 @@ defmodule Telephony do
   the chair's leg to the conference. This is to ensure that the
   participant does not end up in an empty conference.
   """
-  @spec initiate_conference(String.t, String.t) :: Telephony.Conference.t
+  @spec initiate_conference(String.t, String.t) :: response
   def initiate_conference(chair, participant) do
-    {:ok, conference} = Telephony.Conference.create(chair, participant)
-    call_sid = initiate_call_to_chair(conference)
-    {:ok, conference} = Telephony.Conference.set_call_sid_on_chair(conference, call_sid)
-    conference
+    with  {:ok, conference} <- Telephony.Conference.create(chair, participant),
+          {:ok, call_sid} <- initiate_call_to_chair(conference),
+          {:ok, conference} <- Telephony.Conference.set_call_sid_on_chair(conference, call_sid)
+    do
+      {:ok, conference}
+    else
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -197,16 +206,20 @@ defmodule Telephony do
     conference
   end
 
-  @spec initiate_call_to_chair(Telephony.Conference.t) :: String.t
+  @spec initiate_call_to_chair(Telephony.Conference.t) :: {:ok, String.t} | {:error, String.t}
   defp initiate_call_to_chair(conference) do
     reference = Telephony.Conference.reference(conference)
-    {:ok, call_sid} = @telephony_provider.call(
+    case @telephony_provider.call(
       to: conference.chair.identifier,
       from: get_env(:cli),
       url: Telephony.Callbacks.chair_answered(reference),
       status_callback: Telephony.Callbacks.chair_status_callback(reference),
-      status_callback_events: ~w(completed))
-    call_sid
+      status_callback_events: ~w(completed)) do
+      {:ok, call_sid} ->
+        {:ok, call_sid}
+      {:error, message, _} ->
+        {:error, message}
+    end
   end
 
   @spec initiate_call_to_pending_participant(Telephony.Conference.t) :: String.t

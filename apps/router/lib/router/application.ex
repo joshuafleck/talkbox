@@ -11,7 +11,7 @@ defmodule Router.Application do
     number_of_consumers = Application.get_env(:router, :consumers)
     children = if number_of_consumers > 0 do
       Enum.map(Range.new(1, number_of_consumers), fn(index) ->
-        worker(Router.Consumer, [], [id: "Router.Consumer"<>Integer.to_string(index)])
+        worker(Router.Consumer, [], [id: "Router.Consumer" <> Integer.to_string(index)])
       end)
     else
       []
