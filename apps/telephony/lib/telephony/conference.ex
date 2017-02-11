@@ -8,9 +8,6 @@ defmodule Telephony.Conference do
   requests coming out of order. The system is designed such that if the local
   copy of the conference state is lost, it can be retrieved from the telephony
   provider with minimal interruption to ongoing calls.
-
-  Suggested enhancements:
-    * Upon startup, query the telephony provider for a list of in-progress conferences with which to prepopulate the local conference store.
   """
   use GenServer
 

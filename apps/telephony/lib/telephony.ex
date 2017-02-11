@@ -4,6 +4,9 @@ defmodule Telephony do
   of the telephony system. It is responsible for initiating and hanging
   up call legs as well as managing the state of the calls through the
   `Telephony.Conference` module.
+
+  TODO:
+    * Upon startup, query the telephony provider for a list of in-progress conferences with which to prepopulate the local conference store.
   """
   require Logger
 
