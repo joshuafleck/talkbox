@@ -1,8 +1,9 @@
 defmodule EventsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   doctest Events
 
-  test "the truth" do
-    assert 1 + 1 == 2
+  setup do
+    Application.stop(:events)
+    :ok = Application.start(:events)
   end
 end

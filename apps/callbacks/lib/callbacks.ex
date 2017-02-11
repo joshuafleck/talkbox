@@ -1,4 +1,7 @@
 defmodule Callbacks do
+  @moduledoc """
+  Responsible for responding to callback requests from telephony providers.
+  """
   use Application
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html

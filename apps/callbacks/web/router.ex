@@ -5,7 +5,6 @@ defmodule Callbacks.Router do
     plug :accepts, ["html"]
   end
 
-  # TODO: need to handle 404s, 500s, etc as there is no error view
   scope "/callbacks", Callbacks do
     scope "/twilio" do
       pipe_through :twilio

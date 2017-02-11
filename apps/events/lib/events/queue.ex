@@ -20,6 +20,7 @@ defmodule Events.Queue do
     iex(8)> Events.Queue.put("test")
     {:ok, "test"}
   """
+  @spec put(any) :: {:ok, any} | {:error, String.t}
   def put(event) do
     GenServer.call(__MODULE__, {:put, event})
   end
@@ -37,6 +38,7 @@ defmodule Events.Queue do
     iex(12)> Events.Queue.pop()
     {:error, "queue is empty"}
   """
+  @spec pop :: {:ok, any} | {:error, String.t}
   def pop do
     GenServer.call(__MODULE__, {:pop})
   end

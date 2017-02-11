@@ -3,10 +3,9 @@ defmodule TelephonyTest do
   doctest Telephony
 
   setup do
+    Application.stop(:telephony)
+    :ok = Application.start(:telephony)
     conference = Telephony.initiate_conference("chair", "participant")
-    on_exit fn ->
-      Telephony.remove_conference(Telephony.Conference.reference(conference))
-    end
     {:ok, conference: conference}
   end
 
