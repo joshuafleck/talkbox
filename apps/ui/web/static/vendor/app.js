@@ -10217,7 +10217,8 @@ var _user$project$Conference$viewCallLeg = F2(
 															_user$project$Conference$Hangup(callLeg)),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$disabled(callLeg.hangup_requested),
+															_0: _elm_lang$html$Html_Attributes$disabled(
+																callLeg.hangup_requested || _elm_lang$core$Native_Utils.eq(callLeg.call_sid, _elm_lang$core$Maybe$Nothing)),
 															_1: {ctor: '[]'}
 														}
 													},
@@ -10235,7 +10236,8 @@ var _user$project$Conference$viewCallLeg = F2(
 															_user$project$Conference$Cancel(callLeg)),
 														_1: {
 															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$disabled(callLeg.hangup_requested),
+															_0: _elm_lang$html$Html_Attributes$disabled(
+																callLeg.hangup_requested || _elm_lang$core$Native_Utils.eq(callLeg.call_sid, _elm_lang$core$Maybe$Nothing)),
 															_1: {ctor: '[]'}
 														}
 													},
@@ -10396,6 +10398,65 @@ var _user$project$App$decodeCall = A4(
 	A2(_elm_lang$core$Json_Decode$field, 'sid', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode$field, 'status', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode$field, 'callee', _elm_lang$core$Json_Decode$string));
+var _user$project$App$encodedParticipantReference = F2(
+	function (conference, callLeg) {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'conference',
+					_1: _elm_lang$core$Json_Encode$string(conference.identifier)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'chair',
+						_1: _elm_lang$core$Json_Encode$string(conference.chair.identifier)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'call_sid',
+							_1: _elm_lang$core$Json_Encode$string(
+								A2(_elm_lang$core$Maybe$withDefault, '', callLeg.call_sid))
+						},
+						_1: {ctor: '[]'}
+					}
+				}
+			});
+	});
+var _user$project$App$encodedPendingParticipantReference = F2(
+	function (conference, callLeg) {
+		return _elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'conference',
+					_1: _elm_lang$core$Json_Encode$string(conference.identifier)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'chair',
+						_1: _elm_lang$core$Json_Encode$string(conference.chair.identifier)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'pending_participant',
+							_1: _elm_lang$core$Json_Encode$string(callLeg.identifier)
+						},
+						_1: {ctor: '[]'}
+					}
+				}
+			});
+	});
 var _user$project$App$encodedCallEnd = function (sid) {
 	return _elm_lang$core$Json_Encode$object(
 		{
@@ -10607,13 +10668,55 @@ var _user$project$App$sendEndCall = F2(
 		var phxCmd = _p2._1;
 		return {ctor: '_Tuple2', _0: phxSocket, _1: phxCmd};
 	});
+var _user$project$App$sendRequestToCancelPendingParticipant = F3(
+	function (model, conference, callLeg) {
+		var payload = A2(_user$project$App$encodedPendingParticipantReference, conference, callLeg);
+		var phxPush = A2(
+			_fbonetti$elm_phoenix_socket$Phoenix_Push$onError,
+			_user$project$App$CallRequestFailed,
+			A2(
+				_fbonetti$elm_phoenix_socket$Phoenix_Push$onOk,
+				_user$project$App$CallEnded,
+				A2(
+					_fbonetti$elm_phoenix_socket$Phoenix_Push$withPayload,
+					payload,
+					A2(
+						_fbonetti$elm_phoenix_socket$Phoenix_Push$init,
+						'request_to_cancel_pending_participant',
+						_user$project$App$clientsChannel(model.clientName)))));
+		var _p3 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, phxPush, model.phxSocket);
+		var phxSocket = _p3._0;
+		var phxCmd = _p3._1;
+		return {ctor: '_Tuple2', _0: phxSocket, _1: phxCmd};
+	});
+var _user$project$App$sendRequestToHangupParticipant = F3(
+	function (model, conference, callLeg) {
+		var payload = A2(_user$project$App$encodedParticipantReference, conference, callLeg);
+		var phxPush = A2(
+			_fbonetti$elm_phoenix_socket$Phoenix_Push$onError,
+			_user$project$App$CallRequestFailed,
+			A2(
+				_fbonetti$elm_phoenix_socket$Phoenix_Push$onOk,
+				_user$project$App$CallEnded,
+				A2(
+					_fbonetti$elm_phoenix_socket$Phoenix_Push$withPayload,
+					payload,
+					A2(
+						_fbonetti$elm_phoenix_socket$Phoenix_Push$init,
+						'request_to_hangup_participant',
+						_user$project$App$clientsChannel(model.clientName)))));
+		var _p4 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, phxPush, model.phxSocket);
+		var phxSocket = _p4._0;
+		var phxCmd = _p4._1;
+		return {ctor: '_Tuple2', _0: phxSocket, _1: phxCmd};
+	});
 var _user$project$App$PhoenixMsg = function (a) {
 	return {ctor: 'PhoenixMsg', _0: a};
 };
 var _user$project$App$init = function (flags) {
 	var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init(
 		_user$project$App$clientsChannel(flags.clientName));
-	var _p3 = A2(
+	var _p5 = A2(
 		_fbonetti$elm_phoenix_socket$Phoenix_Socket$join,
 		channel,
 		A4(
@@ -10638,8 +10741,8 @@ var _user$project$App$init = function (flags) {
 						_user$project$App$CallEnded,
 						_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
 							_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:5000/socket/websocket')))))));
-	var initSocket = _p3._0;
-	var phxCmd = _p3._1;
+	var initSocket = _p5._0;
+	var phxCmd = _p5._1;
 	var model = {phxSocket: initSocket, status: 'All good', clientName: flags.clientName, twilioStatus: 'All good', line: _user$project$Line$initialModel, conference: _elm_lang$core$Maybe$Nothing, conferenceStatus: 'All good'};
 	return {
 		ctor: '_Tuple2',
@@ -10649,19 +10752,19 @@ var _user$project$App$init = function (flags) {
 };
 var _user$project$App$update = F2(
 	function (msg, model) {
-		var _p4 = msg;
-		switch (_p4.ctor) {
+		var _p6 = msg;
+		switch (_p6.ctor) {
 			case 'CallStatusChanged':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCall, _p4._0);
-				var _p5 = decodeResult;
-				if (_p5.ctor === 'Ok') {
-					var _p7 = _p5._0;
-					var _p6 = A2(
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCall, _p6._0);
+				var _p7 = decodeResult;
+				if (_p7.ctor === 'Ok') {
+					var _p9 = _p7._0;
+					var _p8 = A2(
 						_user$project$Line$update,
-						_user$project$Line$CallStarted(_p7),
+						_user$project$Line$CallStarted(_p9),
 						model.line);
-					var updatedLineModel = _p6._0;
-					var lineCmd = _p6._1;
+					var updatedLineModel = _p8._0;
+					var lineCmd = _p8._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -10672,8 +10775,8 @@ var _user$project$App$update = F2(
 									'Call with sid ',
 									A2(
 										_elm_lang$core$Basics_ops['++'],
-										_p7.sid,
-										A2(_elm_lang$core$Basics_ops['++'], ' ', _p7.status))),
+										_p9.sid,
+										A2(_elm_lang$core$Basics_ops['++'], ' ', _p9.status))),
 								line: updatedLineModel
 							}),
 						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$App$LineMsg, lineCmd)
@@ -10684,15 +10787,15 @@ var _user$project$App$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call: ', _p5._0)
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call: ', _p7._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'CallEnded':
-				var _p8 = A2(_user$project$Line$update, _user$project$Line$CallEnded, model.line);
-				var updatedLineModel = _p8._0;
-				var lineCmd = _p8._1;
+				var _p10 = A2(_user$project$Line$update, _user$project$Line$CallEnded, model.line);
+				var updatedLineModel = _p10._0;
+				var lineCmd = _p10._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10705,39 +10808,39 @@ var _user$project$App$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{twilioStatus: _p4._0}),
+						{twilioStatus: _p6._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SetupTwilio':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeTwilioToken, _p4._0);
-				var _p9 = decodeResult;
-				if (_p9.ctor === 'Ok') {
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeTwilioToken, _p6._0);
+				var _p11 = decodeResult;
+				if (_p11.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{status: 'Twilio token received'}),
-						_1: _user$project$Twilio$setup(_p9._0)
+						_1: _user$project$Twilio$setup(_p11._0)
 					};
 				} else {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{status: _p9._0}),
+							{status: _p11._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'ConferenceChanged':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p4._0);
-				var _p10 = decodeResult;
-				if (_p10.ctor === 'Ok') {
-					var _p11 = _p10._0;
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p6._0);
+				var _p12 = decodeResult;
+				if (_p12.ctor === 'Ok') {
+					var _p13 = _p12._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{conference: _p11.conference, conferenceStatus: _p11.message}),
+							{conference: _p13.conference, conferenceStatus: _p13.message}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
@@ -10745,22 +10848,22 @@ var _user$project$App$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{status: _p10._0}),
+							{status: _p12._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'CallRequestFailed':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p4._0);
-				var _p12 = decodeResult;
-				if (_p12.ctor === 'Ok') {
-					var _p13 = A2(_user$project$Line$update, _user$project$Line$CallRequestFailed, model.line);
-					var updatedLineModel = _p13._0;
-					var lineCmd = _p13._1;
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p6._0);
+				var _p14 = decodeResult;
+				if (_p14.ctor === 'Ok') {
+					var _p15 = A2(_user$project$Line$update, _user$project$Line$CallRequestFailed, model.line);
+					var updatedLineModel = _p15._0;
+					var lineCmd = _p15._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{status: _p12._0, line: updatedLineModel}),
+							{status: _p14._0, line: updatedLineModel}),
 						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$App$LineMsg, lineCmd)
 					};
 				} else {
@@ -10769,29 +10872,29 @@ var _user$project$App$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p12._0)
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p14._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'LineMsg':
-				var _p17 = _p4._0;
-				var _p14 = function () {
-					var _p15 = _p17;
-					switch (_p15.ctor) {
+				var _p19 = _p6._0;
+				var _p16 = function () {
+					var _p17 = _p19;
+					switch (_p17.ctor) {
 						case 'RequestCall':
-							return A2(_user$project$App$sendStartCall, model, _p15._0);
+							return A2(_user$project$App$sendStartCall, model, _p17._0);
 						case 'EndCall':
-							return A2(_user$project$App$sendEndCall, model, _p15._0);
+							return A2(_user$project$App$sendEndCall, model, _p17._0);
 						default:
 							return {ctor: '_Tuple2', _0: model.phxSocket, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				}();
-				var phxSocket = _p14._0;
-				var phxCmd = _p14._1;
-				var _p16 = A2(_user$project$Line$update, _p17, model.line);
-				var updatedLineModel = _p16._0;
-				var lineCmd = _p16._1;
+				var phxSocket = _p16._0;
+				var phxCmd = _p16._1;
+				var _p18 = A2(_user$project$Line$update, _p19, model.line);
+				var updatedLineModel = _p18._0;
+				var lineCmd = _p18._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10809,20 +10912,24 @@ var _user$project$App$update = F2(
 						})
 				};
 			case 'ConferenceMsg':
-				var _p22 = _p4._0;
-				var _p18 = model.conference;
-				if (_p18.ctor === 'Nothing') {
+				var _p24 = _p6._0;
+				var _p20 = model.conference;
+				if (_p20.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
-					var _p19 = function () {
-						var _p20 = _p22;
-						return {ctor: '_Tuple2', _0: model.phxSocket, _1: _elm_lang$core$Platform_Cmd$none};
-					}();
-					var phxSocket = _p19._0;
-					var phxCmd = _p19._1;
-					var _p21 = A2(_user$project$Conference$update, _p22, _p18._0);
+					var _p21 = A2(_user$project$Conference$update, _p24, _p20._0);
 					var updatedConferenceModel = _p21._0;
 					var conferenceCmd = _p21._1;
+					var _p22 = function () {
+						var _p23 = _p24;
+						if (_p23.ctor === 'Cancel') {
+							return A3(_user$project$App$sendRequestToCancelPendingParticipant, model, updatedConferenceModel, _p23._0);
+						} else {
+							return A3(_user$project$App$sendRequestToHangupParticipant, model, updatedConferenceModel, _p23._0);
+						}
+					}();
+					var phxSocket = _p22._0;
+					var phxCmd = _p22._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -10844,9 +10951,9 @@ var _user$project$App$update = F2(
 					};
 				}
 			default:
-				var _p23 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p4._0, model.phxSocket);
-				var phxSocket = _p23._0;
-				var phxCmd = _p23._1;
+				var _p25 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p6._0, model.phxSocket);
+				var phxSocket = _p25._0;
+				var phxCmd = _p25._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(

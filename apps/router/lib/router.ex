@@ -28,6 +28,7 @@ defmodule Router do
   defimpl Routing, for: Events.ChairFailedToJoinConference do
     @spec routing(Events.ChairFailedToJoinConference.t) :: any
     def routing(event) do
+      # TODO: think about if these need to cater for the unhappy path
       Telephony.remove_conference(
         %Telephony.Conference.Reference{
           chair: event.chair,
@@ -101,6 +102,17 @@ defmodule Router do
           chair: event.chair,
           identifier: event.conference})
       Router.Web.broadcast(event.chair, "Call ended", nil)
+    end
+  end
+
+  defimpl Routing, for: Events.UserRequestsToCancelPendingParticipant do
+    @spec routing(Events.UserRequestsToCancelPendingParticipant.t) :: any
+    def routing(event) do
+      Telephony.hangup_pending_participant(
+        %Telephony.Conference.PendingParticipantReference{
+          chair: event.chair,
+          identifier: event.conference,
+          pending_participant_identifier: event.pending_participant})
     end
   end
 end

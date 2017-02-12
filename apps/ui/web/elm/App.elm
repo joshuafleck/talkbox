@@ -110,6 +110,32 @@ sendEndCall model callInfo =
   in
     ( phxSocket, phxCmd )
 
+sendRequestToCancelPendingParticipant : Model -> Conference.Model -> Conference.CallLeg -> (Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg))
+sendRequestToCancelPendingParticipant model conference callLeg =
+  let
+    payload = (encodedPendingParticipantReference conference callLeg)
+    phxPush =
+      Phoenix.Push.init "request_to_cancel_pending_participant" (clientsChannel model.clientName)
+        |> Phoenix.Push.withPayload payload
+        |> Phoenix.Push.onOk CallEnded
+        |> Phoenix.Push.onError CallRequestFailed
+    (phxSocket, phxCmd) = Phoenix.Socket.push phxPush model.phxSocket
+  in
+    ( phxSocket, phxCmd )
+
+sendRequestToHangupParticipant : Model -> Conference.Model -> Conference.CallLeg -> (Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg))
+sendRequestToHangupParticipant model conference callLeg =
+  let
+    payload = (encodedParticipantReference conference callLeg)
+    phxPush =
+      Phoenix.Push.init "request_to_hangup_participant" (clientsChannel model.clientName)
+        |> Phoenix.Push.withPayload payload
+        |> Phoenix.Push.onOk CallEnded
+        |> Phoenix.Push.onError CallRequestFailed
+    (phxSocket, phxCmd) = Phoenix.Socket.push phxPush model.phxSocket
+  in
+    ( phxSocket, phxCmd )
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
@@ -207,12 +233,10 @@ update msg model =
                   Conference.update subMsg conference
               ( phxSocket, phxCmd ) =
                 case subMsg of
-                  --(Conference.RequestCall callee) ->
-                  --  sendStartCall model callee
-                  --(Conference.EndCall callInfo) ->
-                  --  sendEndCall model callInfo
-                  _ ->
-                    ( model.phxSocket, Cmd.none )
+                  (Conference.Cancel callLeg) ->
+                    sendRequestToCancelPendingParticipant model updatedConferenceModel callLeg
+                  (Conference.Hangup callLeg) ->
+                    sendRequestToHangupParticipant model updatedConferenceModel callLeg
             in
                 ( { model | conference = Just updatedConferenceModel, phxSocket = phxSocket }, Cmd.batch [ Cmd.map ConferenceMsg conferenceCmd, Cmd.map PhoenixMsg phxCmd ] )
     PhoenixMsg msg ->
@@ -263,6 +287,20 @@ encodedCallEnd: String -> JsDecode.Value
 encodedCallEnd sid =
     JsEncode.object
       [ ("sid", JsEncode.string sid) ]
+
+encodedPendingParticipantReference: Conference.Model -> Conference.CallLeg -> JsDecode.Value
+encodedPendingParticipantReference conference callLeg =
+    JsEncode.object
+      [ ("conference", JsEncode.string conference.identifier)
+      , ("chair", JsEncode.string conference.chair.identifier)
+      , ("pending_participant", JsEncode.string callLeg.identifier) ]
+
+encodedParticipantReference: Conference.Model -> Conference.CallLeg -> JsDecode.Value
+encodedParticipantReference conference callLeg =
+    JsEncode.object
+      [ ("conference", JsEncode.string conference.identifier)
+      , ("chair", JsEncode.string conference.chair.identifier)
+      , ("call_sid", JsEncode.string (Maybe.withDefault "" callLeg.call_sid)) ]
 
 decodeCall: JsDecode.Decoder Line.CallInfo
 decodeCall =

@@ -108,7 +108,7 @@ viewCallLeg callLeg callLegType =
       Chair ->
         button [ hidden True ] [ text "Hang up" ]
       Participant ->
-        button [ onClick (Hangup callLeg), disabled callLeg.hangup_requested ] [ text "Hang up" ]
+        button [ onClick (Hangup callLeg), disabled (callLeg.hangup_requested || (callLeg.call_sid == Nothing)) ] [ text "Hang up" ]
       PendingParticipant ->
-        button [ onClick (Cancel callLeg), disabled callLeg.hangup_requested ] [ text "Hang up" ] ]
+        button [ onClick (Cancel callLeg), disabled (callLeg.hangup_requested || (callLeg.call_sid == Nothing)) ] [ text "Hang up" ] ]
   ]

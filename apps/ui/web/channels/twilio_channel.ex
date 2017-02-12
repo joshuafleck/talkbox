@@ -26,6 +26,17 @@ defmodule Ui.TwilioChannel do
     {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
   end
 
+  def handle_in("request_to_hangup_participant", %{"chair" => chair, "conference" => conference, "call_sid" => call_sid}, socket) do
+    # TODO: finish implementing this, plus figure out what to send in response
+    Events.publish(%Events.UserRequestsToHangupParticipant{conference: conference, chair: chair, call_sid: call_sid})
+    {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
+  end
+
+  def handle_in("request_to_cancel_pending_participant", %{"chair" => chair, "conference" => conference, "pending_participant" => pending_participant}, socket) do
+    Events.publish(%Events.UserRequestsToCancelPendingParticipant{conference: conference, chair: chair, pending_participant: pending_participant})
+    {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
+  end
+
   # Channels can be used in a request/response fashion
   # by sending replies to requests from the client
   def handle_in("ping", payload, socket) do
