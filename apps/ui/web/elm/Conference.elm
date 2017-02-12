@@ -102,8 +102,8 @@ viewCallLeg : CallLeg -> CallLegType -> Html Msg
 viewCallLeg callLeg callLegType =
   ul [] [
       li [] [ b [] [ text "Identifier: " ], text callLeg.identifier ]
-    , li [] [ b [] [ text "Status" ], text (Maybe.withDefault "" callLeg.call_status) ]
-    , li [] [ b [] [ text "Sid" ], text (Maybe.withDefault "" callLeg.call_sid) ]
+    , li [] [ b [] [ text "Status: " ], text (Maybe.withDefault "" callLeg.call_status) ]
+    , li [] [ b [] [ text "Sid: " ], text (Maybe.withDefault "" callLeg.call_sid) ]
     , li [] [ case callLegType of
       Chair ->
         button [ hidden True ] [ text "Hang up" ]

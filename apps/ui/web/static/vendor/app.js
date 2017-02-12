@@ -10153,7 +10153,7 @@ var _user$project$Conference$viewCallLeg = F2(
 								{ctor: '[]'},
 								{
 									ctor: '::',
-									_0: _elm_lang$html$Html$text('Status'),
+									_0: _elm_lang$html$Html$text('Status: '),
 									_1: {ctor: '[]'}
 								}),
 							_1: {
@@ -10175,7 +10175,7 @@ var _user$project$Conference$viewCallLeg = F2(
 									{ctor: '[]'},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html$text('Sid'),
+										_0: _elm_lang$html$Html$text('Sid: '),
 										_1: {ctor: '[]'}
 									}),
 								_1: {
