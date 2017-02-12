@@ -37,7 +37,7 @@ type alias Model =
   , clientName : String
   , twilioStatus : String
   , line : Line.Model
-  , conference : Conference.Model
+  , conference : Maybe Conference.Model
   , conferenceStatus : String
   }
 
@@ -64,7 +64,7 @@ init flags =
       , clientName = flags.clientName
       , twilioStatus = "All good"
       , line = Line.initialModel
-      , conference = Conference.None
+      , conference = Nothing
       , conferenceStatus = "All good"
       }
   in
@@ -81,6 +81,7 @@ type Msg
   | TwilioStatusChanged String
   | SetupTwilio JsEncode.Value
   | LineMsg Line.Msg
+  | ConferenceMsg Conference.Msg
 
 -- TODO: extract these into a Cmd.elm file??
 sendStartCall : Model -> Line.Callee -> (Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg))
@@ -161,7 +162,7 @@ update msg model =
         case decodeResult of
           Ok response ->
             (
-              { model | conference = (Conference.InProgress response.conference), conferenceStatus = response.message },
+              { model | conference = response.conference, conferenceStatus = response.message },
               Cmd.none
             )
           Err error ->
@@ -196,6 +197,24 @@ update msg model =
                 ( model.phxSocket, Cmd.none )
         in
             ( { model | line = updatedLineModel, phxSocket = phxSocket }, Cmd.batch [ Cmd.map LineMsg lineCmd, Cmd.map PhoenixMsg phxCmd ] )
+    ConferenceMsg subMsg ->
+      case model.conference of
+        Nothing ->
+          (model, Cmd.none)
+        Just conference ->
+          let
+              ( updatedConferenceModel, conferenceCmd ) =
+                  Conference.update subMsg conference
+              ( phxSocket, phxCmd ) =
+                case subMsg of
+                  --(Conference.RequestCall callee) ->
+                  --  sendStartCall model callee
+                  --(Conference.EndCall callInfo) ->
+                  --  sendEndCall model callInfo
+                  _ ->
+                    ( model.phxSocket, Cmd.none )
+            in
+                ( { model | conference = Just updatedConferenceModel, phxSocket = phxSocket }, Cmd.batch [ Cmd.map ConferenceMsg conferenceCmd, Cmd.map PhoenixMsg phxCmd ] )
     PhoenixMsg msg ->
       let
         ( phxSocket, phxCmd ) = Phoenix.Socket.update msg model.phxSocket
@@ -209,13 +228,18 @@ update msg model =
 view : Model -> Html Msg
 view model =
   div [] [
-    h4 [] [ text "Elm" ],
-    p [] [ text model.status ],
-    h4 [] [ text "Twilio" ],
-    p [] [ text (toString model.twilioStatus) ],
-    h4 [] [ text "Conference" ],
-    p [] [ text (toString model.conferenceStatus) ],
-    Html.map LineMsg (Line.view model.line)
+      h4 [] [ text "Elm" ]
+    , p [] [ text model.status ]
+    , h4 [] [ text "Twilio" ]
+    , p [] [ text (toString model.twilioStatus) ]
+    , h4 [] [ text "Conference" ]
+    , p [] [ text (toString model.conferenceStatus) ]
+    , case model.conference of
+        Nothing ->
+          p [] [ text "no conference yet" ]
+        Just conference ->
+          Html.map ConferenceMsg (Conference.view conference)
+    , Html.map LineMsg (Line.view model.line)
   ]
 
 -- SUBSCRIPTIONS
