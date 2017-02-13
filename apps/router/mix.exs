@@ -39,7 +39,6 @@ defmodule Router.Mixfile do
   defp deps do
     [
       {:telephony, in_umbrella: true},
-      {:callbacks, in_umbrella: true},
       {:ui, in_umbrella: true},
       {:events, in_umbrella: true}
     ]
