@@ -1,19 +1,9 @@
 # Router
 
-**TODO: Add description**
+Handlers for [events](../events). Runs a pool of consumer processes that pull events from the event queue and delegate to the [telephony](../telephony) or [ui](../ui) applications.
 
-## Installation
+## Interesting bits
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `router` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [{:router, "~> 0.1.0"}]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/router](https://hexdocs.pm/router).
+- **[Consumer](lib/router/consumer.ex)** This pulls events off of the event queue and processes them. It runs in an infinite loop (with tail recursion)
+- **[Router](lib/router.ex)** For each type of event, defines a handler which delegates to the [telephony](../telephony) or [ui](../ui) applications.
 
