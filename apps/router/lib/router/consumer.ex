@@ -1,9 +1,8 @@
 defmodule Router.Consumer do
   @moduledoc """
-  Responsible for consuming events from the event queue
-  and sending them off to be processed. Intended to run
-  as a pool of workers to support scaling up when there
-  is a high volume of events.
+  Responsible for consuming events from the event queue (see `Events.Queue`)
+  and sending them off to be processed. Intended to run as a pool of workers
+  to support scaling up when there is a high volume of events.
   """
   require Logger
 

@@ -1,8 +1,18 @@
 defmodule Ui.TwilioChannel do
+  @moduledoc """
+  Channel through which we communicate with the SPA. Given messages
+  from the client, will translate those into events published with the
+  `Events` module.
+  """
   use Ui.Web, :channel
 
+  @doc """
+  Called when the SPA is initially loaded, each client has its own channel
+  named with the pattern: `twilio:<client name>`
+  """
   def join("twilio:" <> client_name, payload, socket) do
     if authorized?(payload) do
+      # TODO: check if this client already has an existing conference
       send self(), {:after_join, client_name}
       {:ok, socket}
     else
@@ -10,6 +20,10 @@ defmodule Ui.TwilioChannel do
     end
   end
 
+  @doc """
+  Generares a Twilio capability token allowing the client to interact with
+  the configured Twilio application
+  """
   def handle_info({:after_join, client_name}, socket) do
     token = generate_token(client_name)
     push socket, "set_token", %{token: token}
@@ -17,7 +31,7 @@ defmodule Ui.TwilioChannel do
   end
 
   def handle_info(:after_update, socket) do
-    # broadcast socket, "set_seats", %{seats: all_seats}
+    # broadcast socket, "event", %{<payload>}
     {:noreply, socket}
   end
 
@@ -52,6 +66,7 @@ defmodule Ui.TwilioChannel do
 
   # Add authorization logic here as required.
   defp authorized?(_payload) do
+    # TODO: implement authorisation
     true
   end
 

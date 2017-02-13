@@ -1,6 +1,8 @@
 defmodule Telephony.Callbacks do
   @moduledoc """
-  Builders of callback URLs for the telephony provider's webhooks
+  Builders of callback URLs for the telephony provider's webhooks.
+  These callbacks feed into the `Callbacks` application - you can
+  see how they are routed by looking at the `Callbacks.Router` module.
   """
 
   @doc """

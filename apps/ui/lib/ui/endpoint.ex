@@ -1,4 +1,10 @@
 defmodule Ui.Endpoint do
+  @moduledoc """
+  This is the endpoint through which other applications can
+  broadcast events to clients. `Router.Web` uses this module
+  to keep the clients up to date with the latest changes to
+  the conference.
+  """
   use Phoenix.Endpoint, otp_app: :ui
 
   socket "/socket", Ui.UserSocket

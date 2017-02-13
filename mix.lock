@@ -7,6 +7,8 @@
   "cowlib": {:hex, :cowlib, "1.0.2", "9d769a1d062c9c3ac753096f868ca121e2730b9a377de23dec0f7e08b1df84ee", [:make], []},
   "credo": {:hex, :credo, "0.5.3", "0c405b36e7651245a8ed63c09e2d52c2e2b89b6d02b1570c4d611e0fcbecf4a2", [:mix], [{:bunt, "~> 0.1.6", [hex: :bunt, optional: false]}]},
   "dialyxir": {:hex, :dialyxir, "0.4.3", "a4daeebd0107de10d3bbae2ccb6b8905e69544db1ed5fe9148ad27cd4cb2c0cd", [:mix], []},
+  "earmark": {:hex, :earmark, "1.1.1", "433136b7f2e99cde88b745b3a0cfc3fbc81fe58b918a09b40fce7f00db4d8187", [:mix], []},
+  "ex_doc": {:hex, :ex_doc, "0.14.5", "c0433c8117e948404d93ca69411dd575ec6be39b47802e81ca8d91017a0cf83c", [:mix], [{:earmark, "~> 1.0", [hex: :earmark, optional: false]}]},
   "ex_ngrok": {:hex, :ex_ngrok, "0.3.2", "d8fe3b1c35051fbf22cd23be12f74309fc6fd31d56c9c0f7d632964412b82548", [:mix], [{:httpoison, "~> 0.10", [hex: :httpoison, optional: false]}, {:poison, "~> 2.0", [hex: :poison, optional: false]}]},
   "ex_twilio": {:hex, :ex_twilio, "0.2.1", "4d559433774d7945fd54262a863007b7b9faac3ad6d2291938fdfe9cb3018083", [:mix], [{:httpoison, ">= 0.9.0", [hex: :httpoison, optional: false]}, {:inflex, "~> 1.0", [hex: :inflex, optional: false]}, {:joken, "~> 1.3.1", [hex: :joken, optional: false]}, {:poison, ">= 2.0.0", [hex: :poison, optional: false]}]},
   "ex_twilio_bootstrap": {:hex, :ex_twilio_bootstrap, "0.1.1", "df249ab1d7471d66a227d9c85cdb1d45b4fb1873d4e794577f9d6e1a10da4bee", [:mix], [{:ex_twilio, "~> 0.2", [hex: :ex_twilio, optional: false]}]},

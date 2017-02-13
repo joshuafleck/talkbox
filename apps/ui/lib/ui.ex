@@ -1,4 +1,9 @@
 defmodule Ui do
+  @moduledoc """
+  This application serves a single page app, which is implemented using
+  Elm (http://elm-lang.org/). Communication between the client and server
+  is accomplished using web sockets.
+  """
   use Application
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html

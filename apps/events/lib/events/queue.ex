@@ -2,6 +2,8 @@ defmodule Events.Queue do
   @moduledoc """
   A FIFO queue, see:
   http://elixir-lang.org/getting-started/erlang-libraries.html#the-queue-module
+
+  This is where the events are stored after they are published.
   """
   use GenServer
 

@@ -1,6 +1,8 @@
 defmodule Callbacks do
   @moduledoc """
   Responsible for responding to callback requests from telephony providers.
+  A typical response will either return a TwiML instruction with `Callbacks.Twiml`
+  or will fire an event using the `Events` module.
   """
   use Application
 
