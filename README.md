@@ -37,23 +37,32 @@ Each of these components is implemented as a child-project under the `/apps` dir
 ## Set up
 
 1. Install dependencies
+
     ```
     brew bundle
     ```
+
 1. Set environment variables
+
     ```
     export TWILIO_ACCOUNT_SID=<account sid>
     export TWILIO_AUTH_TOKEN=<auth token>
     ```
+
 1. Run the tests
+
     ```
     mix test
     ```
+
 1. Start the applications
+
     ```
     iex -S mix phoenix.server
     ```
+
 1. Open the application
+
     ```
     open http://localhost:5000/?client_name=yourname
     ```
