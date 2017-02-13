@@ -115,4 +115,16 @@ defmodule Router do
           pending_participant_identifier: event.pending_participant})
     end
   end
+
+  defimpl Routing, for: Events.UserRequestsToHangupParticipant do
+    @spec routing(Events.UserRequestsToHangupParticipant.t) :: any
+    def routing(event) do
+      Telephony.hangup_participant(
+        %Telephony.Conference.ParticipantReference{
+          chair: event.chair,
+          identifier: event.conference,
+          participant_call_sid: event.call_sid,
+          conference_sid: nil})
+    end
+  end
 end

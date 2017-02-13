@@ -1,6 +1,6 @@
 defmodule Events.UserRequestsToHangupParticipant do
   @moduledoc """
-  TODO
+  A user has requested to remove a participant from the conference.
   """
   @enforce_keys [:conference, :chair, :call_sid]
   defstruct [

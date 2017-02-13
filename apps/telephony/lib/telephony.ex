@@ -10,6 +10,8 @@ defmodule Telephony do
   """
   require Logger
 
+  @telephony_provider Application.get_env(:telephony, :provider)
+
   @type success :: {:ok, Telephony.Conference.t}
   @type fail :: {:error, String.t}
   @type response :: success | fail
@@ -145,6 +147,20 @@ defmodule Telephony do
   end
 
   @doc """
+  Call this to remove a participant's call leg from the conference.
+
+  Note that this does not remove the participant from the conference state as there
+  will be a subsequent message from the telephony provider telling us that the leg has left,
+  which will be handled in `remove_chair_or_participant/1`.
+  """
+  @spec hangup_participant(Telephony.Conference.ParticipantReference.t) :: {:ok, String.t} | {:error, String.t, number}
+  def hangup_participant(conference_participant_reference) do
+    call_sid = conference_participant_reference.participant_call_sid
+    {:ok, conference} = Telephony.Conference.fetch(conference_participant_reference)
+    @telephony_provider.kick_participant_from_conference(conference.sid, call_sid)
+  end
+
+  @doc """
   Call this to add a participant to the conference.
 
   This will store the pending participant on the conference state and
@@ -165,8 +181,6 @@ defmodule Telephony do
     {:ok, conference} = Telephony.Conference.update_call_status_of_pending_participant(pending_participant_reference, call_status, sequence_number)
     conference
   end
-
-  @telephony_provider Application.get_env(:telephony, :provider)
 
   @spec clear_pointless_conference(Telephony.Conference.t) :: Telephony.Conference.t
   defp clear_pointless_conference(conference) do

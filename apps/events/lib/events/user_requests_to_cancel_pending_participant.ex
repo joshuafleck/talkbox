@@ -1,6 +1,6 @@
 defmodule Events.UserRequestsToCancelPendingParticipant do
   @moduledoc """
-  TODO
+  A user has requested to cancel a dial to a pending participant.
   """
   @enforce_keys [:conference, :chair, :pending_participant]
   defstruct [

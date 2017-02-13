@@ -179,6 +179,15 @@ defmodule TelephonyTest do
     assert conference.pending_participant.call_sid == "participant"
   end
 
+  test "hangup_participant", %{conference: conference} do
+    conference = join_chair_and_pending_participant(conference)
+
+    result = Telephony.hangup_participant(participants_participant_reference(conference))
+
+    # It kicks the participant from the conference
+    assert result == {:ok, "participant"}
+  end
+
   test "add_participant when there is already a pending participant", %{conference: conference} do
     assert conference.pending_participant != nil
 
