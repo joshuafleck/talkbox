@@ -105,8 +105,19 @@ defmodule Router do
     end
   end
 
-  defimpl Routing, for: Events.UserRequestsToCancelPendingParticipant do
-    @spec routing(Events.UserRequestsToCancelPendingParticipant.t) :: any
+  defimpl Routing, for: Events.ChairRequestsToAddParticipant do
+    @spec routing(Events.ChairRequestsToAddParticipant.t) :: any
+    def routing(event) do
+      Telephony.add_participant(
+        %Telephony.Conference.PendingParticipantReference{
+          chair: event.chair,
+          identifier: event.conference,
+          pending_participant_identifier: event.pending_participant})
+    end
+  end
+
+  defimpl Routing, for: Events.ChairRequestsToCancelPendingParticipant do
+    @spec routing(Events.ChairRequestsToCancelPendingParticipant.t) :: any
     def routing(event) do
       Telephony.hangup_pending_participant(
         %Telephony.Conference.PendingParticipantReference{
@@ -116,8 +127,8 @@ defmodule Router do
     end
   end
 
-  defimpl Routing, for: Events.UserRequestsToHangupParticipant do
-    @spec routing(Events.UserRequestsToHangupParticipant.t) :: any
+  defimpl Routing, for: Events.ChairRequestsToHangupParticipant do
+    @spec routing(Events.ChairRequestsToHangupParticipant.t) :: any
     def routing(event) do
       Telephony.hangup_participant(
         %Telephony.Conference.ParticipantReference{

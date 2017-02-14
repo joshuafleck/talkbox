@@ -53,8 +53,6 @@ init flags =
     (initSocket, phxCmd) =
       Phoenix.Socket.init "ws://localhost:5000/socket/websocket"
       |> Phoenix.Socket.withDebug
-      |> Phoenix.Socket.on "call_ended" (clientsChannel flags.clientName) CallEnded
-      |> Phoenix.Socket.on "call_status_changed" (clientsChannel flags.clientName) CallStatusChanged
       |> Phoenix.Socket.on "conference_changed" (clientsChannel flags.clientName) ConferenceChanged
       |> Phoenix.Socket.on "set_token" (clientsChannel flags.clientName) SetupTwilio
       |> Phoenix.Socket.join channel
@@ -74,16 +72,14 @@ init flags =
 
 type Msg
   = PhoenixMsg (Phoenix.Socket.Msg Msg)
-  | CallEnded JsEncode.Value
-  | CallStatusChanged JsEncode.Value
   | ConferenceChanged JsEncode.Value
-  | CallRequestFailed JsEncode.Value
+  | RequestFailed JsEncode.Value
+  | RequestSubmitted JsEncode.Value
   | TwilioStatusChanged String
   | SetupTwilio JsEncode.Value
   | LineMsg Line.Msg
   | ConferenceMsg Conference.Msg
 
--- TODO: extract these into a Cmd.elm file??
 sendStartCall : Model -> Line.Callee -> (Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg))
 sendStartCall model callee =
   let
@@ -91,21 +87,21 @@ sendStartCall model callee =
     phxPush =
       Phoenix.Push.init "start_call" (clientsChannel model.clientName)
         |> Phoenix.Push.withPayload payload
-        |> Phoenix.Push.onOk CallStatusChanged
-        |> Phoenix.Push.onError CallRequestFailed
+        |> Phoenix.Push.onOk RequestSubmitted
+        |> Phoenix.Push.onError RequestFailed
     (phxSocket, phxCmd) = Phoenix.Socket.push phxPush model.phxSocket
   in
     ( phxSocket, phxCmd )
 
-sendEndCall : Model -> Line.CallInfo -> (Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg))
-sendEndCall model callInfo =
+sendAddParticipant : Model -> Line.Callee -> Conference.Model -> (Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg))
+sendAddParticipant model callee conference =
   let
-    payload = (encodedCallEnd callInfo.sid)
+    payload = (encodedCallWithConference callee model.clientName conference)
     phxPush =
-      Phoenix.Push.init "end_call" (clientsChannel model.clientName)
+      Phoenix.Push.init "request_to_add_participant" (clientsChannel model.clientName)
         |> Phoenix.Push.withPayload payload
-        |> Phoenix.Push.onOk CallEnded
-        |> Phoenix.Push.onError CallRequestFailed
+        |> Phoenix.Push.onOk RequestSubmitted
+        |> Phoenix.Push.onError RequestFailed
     (phxSocket, phxCmd) = Phoenix.Socket.push phxPush model.phxSocket
   in
     ( phxSocket, phxCmd )
@@ -117,8 +113,8 @@ sendRequestToCancelPendingParticipant model conference callLeg =
     phxPush =
       Phoenix.Push.init "request_to_cancel_pending_participant" (clientsChannel model.clientName)
         |> Phoenix.Push.withPayload payload
-        |> Phoenix.Push.onOk CallEnded
-        |> Phoenix.Push.onError CallRequestFailed
+        |> Phoenix.Push.onOk RequestSubmitted
+        |> Phoenix.Push.onError RequestFailed
     (phxSocket, phxCmd) = Phoenix.Socket.push phxPush model.phxSocket
   in
     ( phxSocket, phxCmd )
@@ -130,8 +126,8 @@ sendRequestToHangupParticipant model conference callLeg =
     phxPush =
       Phoenix.Push.init "request_to_hangup_participant" (clientsChannel model.clientName)
         |> Phoenix.Push.withPayload payload
-        |> Phoenix.Push.onOk CallEnded
-        |> Phoenix.Push.onError CallRequestFailed
+        |> Phoenix.Push.onOk RequestSubmitted
+        |> Phoenix.Push.onError RequestFailed
     (phxSocket, phxCmd) = Phoenix.Socket.push phxPush model.phxSocket
   in
     ( phxSocket, phxCmd )
@@ -139,31 +135,6 @@ sendRequestToHangupParticipant model conference callLeg =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    CallStatusChanged raw ->
-      let
-        decodeResult = JsDecode.decodeValue decodeCall raw
-      in
-        case decodeResult of
-          Ok callInfo ->
-            let
-              ( updatedLineModel, lineCmd ) =
-                Line.update (Line.CallStarted callInfo) model.line
-            in
-              (
-                { model | status = "Call with sid " ++ callInfo.sid ++ " " ++ callInfo.status, line = updatedLineModel },
-                Cmd.map LineMsg lineCmd
-              )
-          Err error ->
-            ({ model | status = "Failed to decode call: " ++ error }, Cmd.none )
-    CallEnded raw ->
-      let
-        ( updatedLineModel, lineCmd ) =
-          Line.update Line.CallEnded model.line
-      in
-      (
-        { model | status = "Call ended", line = updatedLineModel },
-        Cmd.map LineMsg lineCmd
-      )
     TwilioStatusChanged twilioStatus ->
       (
         { model | twilioStatus = twilioStatus },
@@ -193,22 +164,17 @@ update msg model =
             )
           Err error ->
             ({ model | status = error }, Cmd.none )
-    CallRequestFailed raw ->
+    RequestFailed raw ->
       let
         decodeResult = JsDecode.decodeValue decodeCallRequestFailure raw
       in
         case decodeResult of
           Ok message ->
-            let
-              ( updatedLineModel, lineCmd ) =
-                Line.update Line.CallRequestFailed model.line
-            in
-            (
-              { model | status = message, line = updatedLineModel },
-              Cmd.map LineMsg lineCmd
-            )
+            ({ model | status = "Request failed with error: " ++ message }, Cmd.none )
           Err error ->
             ({ model | status = "Failed to decode call request failure: " ++ error }, Cmd.none )
+    RequestSubmitted raw ->
+      ({ model | status = "Request submitted" }, Cmd.none )
     LineMsg subMsg ->
       let
           ( updatedLineModel, lineCmd ) =
@@ -216,9 +182,11 @@ update msg model =
           ( phxSocket, phxCmd ) =
             case subMsg of
               (Line.RequestCall callee) ->
-                sendStartCall model callee
-              (Line.EndCall callInfo) ->
-                sendEndCall model callInfo
+                case model.conference of
+                  Nothing ->
+                    sendStartCall model callee
+                  Just conference ->
+                    sendAddParticipant model callee conference
               _ ->
                 ( model.phxSocket, Cmd.none )
         in
@@ -260,10 +228,13 @@ view model =
     , p [] [ text (toString model.conferenceStatus) ]
     , case model.conference of
         Nothing ->
-          p [] [ text "no conference yet" ]
+          Html.map LineMsg (Line.view model.line)
         Just conference ->
-          Html.map ConferenceMsg (Conference.view conference)
-    , Html.map LineMsg (Line.view model.line)
+          case conference.pending_participant of
+            Nothing ->
+              p [] [Html.map ConferenceMsg (Conference.view conference), Html.map LineMsg (Line.view model.line)]
+            Just _ ->
+              Html.map ConferenceMsg (Conference.view conference)
   ]
 
 -- SUBSCRIPTIONS
@@ -278,15 +249,17 @@ subscriptions model =
 -- HTTP
 
 encodedCall: String -> String -> JsDecode.Value
-encodedCall callee caller =
+encodedCall callee user =
     JsEncode.object
       [ ("callee", JsEncode.string callee)
-      , ("caller", JsEncode.string caller)]
+      , ("user", JsEncode.string user)]
 
-encodedCallEnd: String -> JsDecode.Value
-encodedCallEnd sid =
+encodedCallWithConference: String -> String -> Conference.Model -> JsDecode.Value
+encodedCallWithConference callee chair conference =
     JsEncode.object
-      [ ("sid", JsEncode.string sid) ]
+      [ ("callee", JsEncode.string callee)
+      , ("chair", JsEncode.string chair)
+      , ("conference", JsEncode.string conference.identifier) ]
 
 encodedPendingParticipantReference: Conference.Model -> Conference.CallLeg -> JsDecode.Value
 encodedPendingParticipantReference conference callLeg =
@@ -301,13 +274,6 @@ encodedParticipantReference conference callLeg =
       [ ("conference", JsEncode.string conference.identifier)
       , ("chair", JsEncode.string conference.chair.identifier)
       , ("call_sid", JsEncode.string (Maybe.withDefault "" callLeg.call_sid)) ]
-
-decodeCall: JsDecode.Decoder Line.CallInfo
-decodeCall =
-  JsDecode.map3 Line.CallInfo
-    (JsDecode.field "sid" JsDecode.string)
-    (JsDecode.field "status" JsDecode.string)
-    (JsDecode.field "callee" JsDecode.string)
 
 decodeCallRequestFailure: JsDecode.Decoder String
 decodeCallRequestFailure =

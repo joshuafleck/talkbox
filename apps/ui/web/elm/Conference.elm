@@ -95,7 +95,7 @@ view model =
       Just callLeg ->
         li [] [ b [] [ text "Pending participant: " ], viewCallLeg callLeg PendingParticipant ]
       Nothing ->
-        li [] [ text "This should be an input to dial" ]
+        li [] [ text "" ]
   ]
 
 viewCallLeg : CallLeg -> CallLegType -> Html Msg

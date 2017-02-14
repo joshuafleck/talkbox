@@ -8,17 +8,9 @@ import Html.Events exposing (onClick, onInput)
 
 type alias Callee = String
 
-type alias CallInfo =
-  { sid : String
-  , status : String
-  , callee : Callee
-  }
-
 type Call
   = None
   | Dialling Callee
-  | Requested Callee
-  | InProgress CallInfo
 
 type alias Model = Call
 
@@ -30,10 +22,6 @@ initialModel = None
 type Msg
   = DialInput Callee
   | RequestCall Callee
-  | CallRequestFailed
-  | CallStarted CallInfo
-  | EndCall CallInfo
-  | CallEnded
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
@@ -41,14 +29,6 @@ update message model =
     DialInput callee ->
       ( Dialling callee, Cmd.none )
     RequestCall callee ->
-      ( Requested callee, Cmd.none )
-    CallRequestFailed ->
-      ( None, Cmd.none )
-    CallStarted callInfo ->
-      ( InProgress callInfo, Cmd.none )
-    EndCall callInfo ->
-      ( model, Cmd.none )
-    CallEnded ->
       ( None, Cmd.none )
 
 -- VIEW
@@ -65,15 +45,4 @@ view model =
       div [] [
         input [ value callee, onInput DialInput ] [],
         button [ onClick (RequestCall callee) ] [ text "Call" ]
-      ]
-    Requested callee ->
-      div [] [
-        input [ value callee, disabled True ] [],
-        button [ disabled True ] [ text "Hangup" ]
-      ]
-    InProgress callInfo -> -- TODO: ability to mute and un-mute (through Twilio subscription/cmd)
-      div [] [
-        input [ value callInfo.callee, disabled True ] [],
-        button [ onClick (EndCall callInfo) ] [ text "Hangup" ],
-        span [] [ text callInfo.status ]
       ]

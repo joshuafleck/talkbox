@@ -35,20 +35,24 @@ defmodule Ui.TwilioChannel do
     {:noreply, socket}
   end
 
-  def handle_in("start_call", %{"callee" => callee, "caller" => user}, socket) do
+  def handle_in("start_call", %{"callee" => callee, "user" => user}, socket) do
     Events.publish(%Events.UserRequestsCall{user: user, callee: callee})
-    {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
+    {:reply, {:ok, %{}}, socket}
+  end
+
+  def handle_in("request_to_add_participant", %{"callee" => callee, "chair" => chair, "conference" => conference}, socket) do
+    Events.publish(%Events.ChairRequestsToAddParticipant{conference: conference, chair: chair, pending_participant: callee})
+    {:reply, {:ok, %{}}, socket}
   end
 
   def handle_in("request_to_hangup_participant", %{"chair" => chair, "conference" => conference, "call_sid" => call_sid}, socket) do
-    # TODO: finish implementing this, plus figure out what to send in response
-    Events.publish(%Events.UserRequestsToHangupParticipant{conference: conference, chair: chair, call_sid: call_sid})
-    {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
+    Events.publish(%Events.ChairRequestsToHangupParticipant{conference: conference, chair: chair, call_sid: call_sid})
+    {:reply, {:ok, %{}}, socket}
   end
 
   def handle_in("request_to_cancel_pending_participant", %{"chair" => chair, "conference" => conference, "pending_participant" => pending_participant}, socket) do
-    Events.publish(%Events.UserRequestsToCancelPendingParticipant{conference: conference, chair: chair, pending_participant: pending_participant})
-    {:reply, {:ok, %{sid: "call.sid", status: "call.status", callee: "call.to"}}, socket}
+    Events.publish(%Events.ChairRequestsToCancelPendingParticipant{conference: conference, chair: chair, pending_participant: pending_participant})
+    {:reply, {:ok, %{}}, socket}
   end
 
   # Channels can be used in a request/response fashion

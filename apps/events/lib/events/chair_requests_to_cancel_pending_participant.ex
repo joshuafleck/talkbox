@@ -1,12 +1,12 @@
-defmodule Events.UserRequestsToHangupParticipant do
+defmodule Events.ChairRequestsToCancelPendingParticipant do
   @moduledoc """
-  A user has requested to remove a participant from the conference.
+  A chairperson has requested to cancel a dial to a pending participant.
   """
-  @enforce_keys [:conference, :chair, :call_sid]
+  @enforce_keys [:conference, :chair, :pending_participant]
   defstruct [
     conference: nil,
     chair: nil,
-    call_sid: nil
+    pending_participant: nil
   ]
 
   @typedoc """
@@ -14,11 +14,11 @@ defmodule Events.UserRequestsToHangupParticipant do
   Fields:
     * `conference` - The conference identifier generated when a conference is requested
     * `chair` - The name of the conference chairperson
-    * `call_sid` - The call sid of the participant's (or chair's) call leg provided by the telephony provider
+    * `pending_participant` - The pending participant's name (when calling a client by name) or telephone number
   """
   @type t :: %__MODULE__{
     conference: String.t,
     chair: String.t,
-    call_sid: String.t
+    pending_participant: String.t
   }
 end
