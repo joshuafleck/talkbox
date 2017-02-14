@@ -36,9 +36,8 @@ defmodule Callbacks.Mixfile do
       # {:phoenix, "~> 1.2.1"},
       # See: https://github.com/phoenixframework/phoenix/issues/1988
       {:phoenix, git: "https://github.com/phoenixframework/phoenix.git", ref: "32b84e2", override: true},
-      # {:phoenix_pubsub, "~> 1.0"},
-      # {:phoenix_html, "~> 2.6"},
-      # {:phoenix_live_reload, "~> 1.0", only: :dev},
+      {:phoenix_pubsub, "~> 1.0"},
+      {:phoenix_html, "~> 2.6"},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
       {:ex_twiml, "~> 2.1.0"}, # For serving TwiML responses to Twilio
