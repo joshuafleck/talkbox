@@ -33,7 +33,9 @@ defmodule Ui.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.2.1"},
+      #{:phoenix, "~> 1.2.1"},
+      # See: https://github.com/phoenixframework/phoenix/issues/1988
+      {:phoenix, git: "https://github.com/phoenixframework/phoenix.git", ref: "32b84e2", override: true},
       {:phoenix_pubsub, "~> 1.0"},
       {:phoenix_html, "~> 2.6"},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
