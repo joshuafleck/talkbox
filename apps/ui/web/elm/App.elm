@@ -1,8 +1,6 @@
 module App exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (placeholder, value)
-import Html.Events exposing (onClick, onInput)
 
 import Json.Decode as JsDecode
 import Json.Encode as JsEncode
@@ -246,7 +244,7 @@ subscriptions model =
     , Phoenix.Socket.listen model.phxSocket PhoenixMsg
     ]
 
--- HTTP
+-- JSON
 
 encodedCall: String -> String -> JsDecode.Value
 encodedCall callee user =

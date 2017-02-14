@@ -1,4 +1,5 @@
 module Conference exposing (..)
+-- Displays the state of the conference and provides the ability to hangup call legs
 
 import Html exposing (..)
 import Html.Attributes exposing (disabled, hidden)

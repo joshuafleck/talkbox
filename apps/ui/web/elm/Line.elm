@@ -1,4 +1,5 @@
 module Line exposing (..)
+-- Provides the ability to enter a phone number or client name and request to call them
 
 import Html exposing (..)
 import Html.Attributes exposing (placeholder, value, disabled)
