@@ -28,7 +28,6 @@ defmodule Telephony.Conference do
     * `sid` - The conference sid provided by the telephony provider, which we use when manipulating the conference state
     * `pending_participant` - Information about the call leg of the pending participant (i.e. the participant we wish to join to the conference)
     * `participants` - A map of call sid to call leg information about the conference participants
-    * `created_at` - The time at which the conference was created
   """
   @type t :: %__MODULE__{
     identifier: String.t,
