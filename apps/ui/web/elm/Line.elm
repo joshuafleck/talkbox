@@ -2,8 +2,8 @@ module Line exposing (..)
 -- Provides the ability to enter a phone number or client name and request to call them
 
 import Html exposing (..)
-import Html.Attributes exposing (placeholder, value, disabled)
-import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (placeholder, value, disabled, class, type_)
+import Html.Events exposing (onInput, onSubmit)
 
 -- MODEL
 
@@ -38,12 +38,16 @@ view : Model -> Html Msg
 view model =
   case model of
     None ->
-      div [] [
-        input [ placeholder "+44... or client:...", onInput DialInput ] [],
-        button [ disabled True ] [ text "Call" ]
+      form [ class "form-inline" ] [
+          div [ class "form-group" ] [
+            input [ class "form-control", placeholder "+44... or name", onInput DialInput ] []
+          ]
+        , button [ disabled True, type_ "submit", class "btn btn-default" ] [ text "Call" ]
       ]
     Dialling callee ->
-      div [] [
-        input [ value callee, onInput DialInput ] [],
-        button [ onClick (RequestCall callee) ] [ text "Call" ]
+      form [ class "form-inline", onSubmit (RequestCall callee) ] [
+          div [ class "form-group" ] [
+            input [ class "form-control", value callee, onInput DialInput ] []
+          ]
+        , button [ type_ "submit", class "btn btn-default" ] [ text "Call" ]
       ]

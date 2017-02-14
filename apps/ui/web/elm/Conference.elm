@@ -2,7 +2,7 @@ module Conference exposing (..)
 -- Displays the state of the conference and provides the ability to hangup call legs
 
 import Html exposing (..)
-import Html.Attributes exposing (disabled, hidden)
+import Html.Attributes exposing (disabled, hidden, value, class, type_)
 import Html.Events exposing (onClick)
 
 import Json.Decode as JsDecode
@@ -11,9 +11,9 @@ import Json.Decode as JsDecode
 
 type alias CallLeg =
   { identifier : String
-  , call_status : Maybe String
-  , call_sid : Maybe String
-  , hangup_requested : Bool
+  , callStatus : Maybe String
+  , callSid : Maybe String
+  , hangupRequested : Bool
   }
 
 type alias Model =
@@ -76,40 +76,33 @@ findCallLegAndRequestHangup participant target =
 
 requestHangup : CallLeg -> CallLeg
 requestHangup callLeg =
-  { callLeg | hangup_requested = True }
+  { callLeg | hangupRequested = True }
 
 ---- VIEW
 
 type CallLegType
-  = Chair
-  | Participant
+  = Participant
   | PendingParticipant
 
 view : Model -> Html Msg
 view model =
-  ul [] [
-      li [] [ b [] [ text "Identifier: " ], text model.identifier ]
-    , li [] [ b [] [ text "Chair: " ], viewCallLeg model.chair Chair ]
-    , li [] [ b [] [ text "Participants: " ] ]
-    , ul [] (List.map (\participant -> viewCallLeg participant Participant) model.participants)
-    , case model.pending_participant of
-      Just callLeg ->
-        li [] [ b [] [ text "Pending participant: " ], viewCallLeg callLeg PendingParticipant ]
+  div [ class "list-group" ] (allCallLegs model)
+
+allCallLegs : Model -> List (Html Msg)
+allCallLegs model =
+  let
+    callLegs = List.map (\participant -> viewCallLeg participant Participant) model.participants
+  in
+    case model.pending_participant of
+      Just pendingParticipant ->
+        callLegs ++ [ viewCallLeg pendingParticipant PendingParticipant ]
       Nothing ->
-        li [] [ text "" ]
-  ]
+        callLegs
 
 viewCallLeg : CallLeg -> CallLegType -> Html Msg
 viewCallLeg callLeg callLegType =
-  ul [] [
-      li [] [ b [] [ text "Identifier: " ], text callLeg.identifier ]
-    , li [] [ b [] [ text "Status: " ], text (Maybe.withDefault "" callLeg.call_status) ]
-    , li [] [ b [] [ text "Sid: " ], text (Maybe.withDefault "" callLeg.call_sid) ]
-    , li [] [ case callLegType of
-      Chair ->
-        button [ hidden True ] [ text "Hang up" ]
-      Participant ->
-        button [ onClick (Hangup callLeg), disabled (callLeg.hangup_requested || (callLeg.call_sid == Nothing)) ] [ text "Hang up" ]
-      PendingParticipant ->
-        button [ onClick (Cancel callLeg), disabled (callLeg.hangup_requested || (callLeg.call_sid == Nothing)) ] [ text "Hang up" ] ]
-  ]
+  case callLegType of
+    Participant ->
+      button [ type_ "button", onClick (Hangup callLeg), disabled (callLeg.hangupRequested || (callLeg.callSid == Nothing)), class "list-group-item" ] [ text callLeg.identifier ]
+    PendingParticipant ->
+      button [ type_ "button", onClick (Cancel callLeg), disabled (callLeg.hangupRequested || (callLeg.callSid == Nothing)), class "list-group-item" ] [ text (callLeg.identifier ++ " (" ++ (Maybe.withDefault "pending" callLeg.callStatus) ++ ")") ]

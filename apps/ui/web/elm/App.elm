@@ -1,6 +1,7 @@
 module App exposing (..)
 
 import Html exposing (..)
+import Html.Attributes exposing (class)
 
 import Json.Decode as JsDecode
 import Json.Encode as JsEncode
@@ -217,13 +218,15 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-  div [] [
-      h4 [] [ text "Elm" ]
-    , p [] [ text model.status ]
-    , h4 [] [ text "Twilio" ]
-    , p [] [ text (toString model.twilioStatus) ]
-    , h4 [] [ text "Conference" ]
-    , p [] [ text (toString model.conferenceStatus) ]
+  div [ class "jumbotron" ] [
+      h1 [] [ text ("Welcome, " ++ model.clientName ++ "!") ]
+    , p [] [ text "Talkbox is a proof of concept in building browser-based telephony applications using functional programming languages." ]
+    --, h4 [] [ text "Elm" ]
+    --, p [] [ text model.status ]
+    --, h4 [] [ text "Twilio" ]
+    --, p [] [ text (toString model.twilioStatus) ]
+    --, h4 [] [ text "Conference" ]
+    --, p [] [ text (toString model.conferenceStatus) ]
     , case model.conference of
         Nothing ->
           Html.map LineMsg (Line.view model.line)
@@ -232,7 +235,7 @@ view model =
             Nothing ->
               p [] [Html.map ConferenceMsg (Conference.view conference), Html.map LineMsg (Line.view model.line)]
             Just _ ->
-              Html.map ConferenceMsg (Conference.view conference)
+              p [] [Html.map ConferenceMsg (Conference.view conference)]
   ]
 
 -- SUBSCRIPTIONS
@@ -271,7 +274,7 @@ encodedParticipantReference conference callLeg =
     JsEncode.object
       [ ("conference", JsEncode.string conference.identifier)
       , ("chair", JsEncode.string conference.chair.identifier)
-      , ("call_sid", JsEncode.string (Maybe.withDefault "" callLeg.call_sid)) ]
+      , ("call_sid", JsEncode.string (Maybe.withDefault "" callLeg.callSid)) ]
 
 decodeCallRequestFailure: JsDecode.Decoder String
 decodeCallRequestFailure =

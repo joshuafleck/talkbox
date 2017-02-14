@@ -9841,22 +9841,41 @@ var _user$project$Line$view = function (model) {
 	var _p1 = model;
 	if (_p1.ctor === 'None') {
 		return A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
+			_elm_lang$html$Html$form,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('form-inline'),
+				_1: {ctor: '[]'}
+			},
 			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$html$Html$input,
+					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$placeholder('+44... or client:...'),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onInput(_user$project$Line$DialInput),
-							_1: {ctor: '[]'}
-						}
+						_0: _elm_lang$html$Html_Attributes$class('form-group'),
+						_1: {ctor: '[]'}
 					},
-					{ctor: '[]'}),
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$input,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('form-control'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$placeholder('+44... or name'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onInput(_user$project$Line$DialInput),
+										_1: {ctor: '[]'}
+									}
+								}
+							},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
+					}),
 				_1: {
 					ctor: '::',
 					_0: A2(
@@ -9864,7 +9883,15 @@ var _user$project$Line$view = function (model) {
 						{
 							ctor: '::',
 							_0: _elm_lang$html$Html_Attributes$disabled(true),
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$type_('submit'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('btn btn-default'),
+									_1: {ctor: '[]'}
+								}
+							}
 						},
 						{
 							ctor: '::',
@@ -9877,31 +9904,58 @@ var _user$project$Line$view = function (model) {
 	} else {
 		var _p2 = _p1._0;
 		return A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
+			_elm_lang$html$Html$form,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('form-inline'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onSubmit(
+						_user$project$Line$RequestCall(_p2)),
+					_1: {ctor: '[]'}
+				}
+			},
 			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$html$Html$input,
+					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$value(_p2),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onInput(_user$project$Line$DialInput),
-							_1: {ctor: '[]'}
-						}
+						_0: _elm_lang$html$Html_Attributes$class('form-group'),
+						_1: {ctor: '[]'}
 					},
-					{ctor: '[]'}),
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$input,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('form-control'),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$value(_p2),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onInput(_user$project$Line$DialInput),
+										_1: {ctor: '[]'}
+									}
+								}
+							},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
+					}),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$button,
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onClick(
-								_user$project$Line$RequestCall(_p2)),
-							_1: {ctor: '[]'}
+							_0: _elm_lang$html$Html_Attributes$type_('submit'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('btn btn-default'),
+								_1: {ctor: '[]'}
+							}
 						},
 						{
 							ctor: '::',
@@ -9917,7 +9971,7 @@ var _user$project$Line$view = function (model) {
 var _user$project$Conference$requestHangup = function (callLeg) {
 	return _elm_lang$core$Native_Utils.update(
 		callLeg,
-		{hangup_requested: true});
+		{hangupRequested: true});
 };
 var _user$project$Conference$findCallLegAndRequestHangup = F2(
 	function (participant, target) {
@@ -9956,7 +10010,7 @@ var _user$project$Conference$update = F2(
 	});
 var _user$project$Conference$CallLeg = F4(
 	function (a, b, c, d) {
-		return {identifier: a, call_status: b, call_sid: c, hangup_requested: d};
+		return {identifier: a, callStatus: b, callSid: c, hangupRequested: d};
 	});
 var _user$project$Conference$decodeCallLeg = A5(
 	_elm_lang$core$Json_Decode$map4,
@@ -9998,263 +10052,105 @@ var _user$project$Conference$Hangup = function (a) {
 };
 var _user$project$Conference$viewCallLeg = F2(
 	function (callLeg, callLegType) {
-		return A2(
-			_elm_lang$html$Html$ul,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$li,
-					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$b,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('Identifier: '),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html$text(callLeg.identifier),
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {
+		var _p1 = callLegType;
+		if (_p1.ctor === 'Participant') {
+			return A2(
+				_elm_lang$html$Html$button,
+				{
 					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$li,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$b,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('Status: '),
-									_1: {ctor: '[]'}
-								}),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html$text(
-									A2(_elm_lang$core$Maybe$withDefault, '', callLeg.call_status)),
-								_1: {ctor: '[]'}
-							}
-						}),
+					_0: _elm_lang$html$Html_Attributes$type_('button'),
 					_1: {
 						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$li,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: A2(
-									_elm_lang$html$Html$b,
-									{ctor: '[]'},
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html$text('Sid: '),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: _elm_lang$html$Html$text(
-										A2(_elm_lang$core$Maybe$withDefault, '', callLeg.call_sid)),
-									_1: {ctor: '[]'}
-								}
-							}),
+						_0: _elm_lang$html$Html_Events$onClick(
+							_user$project$Conference$Hangup(callLeg)),
 						_1: {
 							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$li,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: function () {
-										var _p1 = callLegType;
-										switch (_p1.ctor) {
-											case 'Chair':
-												return A2(
-													_elm_lang$html$Html$button,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Attributes$hidden(true),
-														_1: {ctor: '[]'}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text('Hang up'),
-														_1: {ctor: '[]'}
-													});
-											case 'Participant':
-												return A2(
-													_elm_lang$html$Html$button,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onClick(
-															_user$project$Conference$Hangup(callLeg)),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$disabled(
-																callLeg.hangup_requested || _elm_lang$core$Native_Utils.eq(callLeg.call_sid, _elm_lang$core$Maybe$Nothing)),
-															_1: {ctor: '[]'}
-														}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text('Hang up'),
-														_1: {ctor: '[]'}
-													});
-											default:
-												return A2(
-													_elm_lang$html$Html$button,
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html_Events$onClick(
-															_user$project$Conference$Cancel(callLeg)),
-														_1: {
-															ctor: '::',
-															_0: _elm_lang$html$Html_Attributes$disabled(
-																callLeg.hangup_requested || _elm_lang$core$Native_Utils.eq(callLeg.call_sid, _elm_lang$core$Maybe$Nothing)),
-															_1: {ctor: '[]'}
-														}
-													},
-													{
-														ctor: '::',
-														_0: _elm_lang$html$Html$text('Hang up'),
-														_1: {ctor: '[]'}
-													});
-										}
-									}(),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
+							_0: _elm_lang$html$Html_Attributes$disabled(
+								callLeg.hangupRequested || _elm_lang$core$Native_Utils.eq(callLeg.callSid, _elm_lang$core$Maybe$Nothing)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('list-group-item'),
+								_1: {ctor: '[]'}
+							}
 						}
 					}
-				}
-			});
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(callLeg.identifier),
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return A2(
+				_elm_lang$html$Html$button,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$type_('button'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onClick(
+							_user$project$Conference$Cancel(callLeg)),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$disabled(
+								callLeg.hangupRequested || _elm_lang$core$Native_Utils.eq(callLeg.callSid, _elm_lang$core$Maybe$Nothing)),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$class('list-group-item'),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							callLeg.identifier,
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								' (',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									A2(_elm_lang$core$Maybe$withDefault, 'pending', callLeg.callStatus),
+									')')))),
+					_1: {ctor: '[]'}
+				});
+		}
 	});
 var _user$project$Conference$PendingParticipant = {ctor: 'PendingParticipant'};
 var _user$project$Conference$Participant = {ctor: 'Participant'};
-var _user$project$Conference$Chair = {ctor: 'Chair'};
+var _user$project$Conference$allCallLegs = function (model) {
+	var callLegs = A2(
+		_elm_lang$core$List$map,
+		function (participant) {
+			return A2(_user$project$Conference$viewCallLeg, participant, _user$project$Conference$Participant);
+		},
+		model.participants);
+	var _p2 = model.pending_participant;
+	if (_p2.ctor === 'Just') {
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			callLegs,
+			{
+				ctor: '::',
+				_0: A2(_user$project$Conference$viewCallLeg, _p2._0, _user$project$Conference$PendingParticipant),
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return callLegs;
+	}
+};
 var _user$project$Conference$view = function (model) {
 	return A2(
-		_elm_lang$html$Html$ul,
-		{ctor: '[]'},
+		_elm_lang$html$Html$div,
 		{
 			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$li,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$b,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Identifier: '),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(model.identifier),
-						_1: {ctor: '[]'}
-					}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$li,
-					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$b,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('Chair: '),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(_user$project$Conference$viewCallLeg, model.chair, _user$project$Conference$Chair),
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$li,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$b,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('Participants: '),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$ul,
-							{ctor: '[]'},
-							A2(
-								_elm_lang$core$List$map,
-								function (participant) {
-									return A2(_user$project$Conference$viewCallLeg, participant, _user$project$Conference$Participant);
-								},
-								model.participants)),
-						_1: {
-							ctor: '::',
-							_0: function () {
-								var _p2 = model.pending_participant;
-								if (_p2.ctor === 'Just') {
-									return A2(
-										_elm_lang$html$Html$li,
-										{ctor: '[]'},
-										{
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$b,
-												{ctor: '[]'},
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html$text('Pending participant: '),
-													_1: {ctor: '[]'}
-												}),
-											_1: {
-												ctor: '::',
-												_0: A2(_user$project$Conference$viewCallLeg, _p2._0, _user$project$Conference$PendingParticipant),
-												_1: {ctor: '[]'}
-											}
-										});
-								} else {
-									return A2(
-										_elm_lang$html$Html$li,
-										{ctor: '[]'},
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html$text(''),
-											_1: {ctor: '[]'}
-										});
-								}
-							}(),
-							_1: {ctor: '[]'}
-						}
-					}
-				}
-			}
-		});
+			_0: _elm_lang$html$Html_Attributes$class('list-group'),
+			_1: {ctor: '[]'}
+		},
+		_user$project$Conference$allCallLegs(model));
 };
 
 var _user$project$App$decodeTwilioToken = A2(
@@ -10296,7 +10192,7 @@ var _user$project$App$encodedParticipantReference = F2(
 							ctor: '_Tuple2',
 							_0: 'call_sid',
 							_1: _elm_lang$core$Json_Encode$string(
-								A2(_elm_lang$core$Maybe$withDefault, '', callLeg.call_sid))
+								A2(_elm_lang$core$Maybe$withDefault, '', callLeg.callSid))
 						},
 						_1: {ctor: '[]'}
 					}
@@ -10401,15 +10297,23 @@ var _user$project$App$LineMsg = function (a) {
 var _user$project$App$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
-		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('jumbotron'),
+			_1: {ctor: '[]'}
+		},
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$h4,
+				_elm_lang$html$Html$h1,
 				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html$text('Elm'),
+					_0: _elm_lang$html$Html$text(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							'Welcome, ',
+							A2(_elm_lang$core$Basics_ops['++'], model.clientName, '!'))),
 					_1: {ctor: '[]'}
 				}),
 			_1: {
@@ -10419,95 +10323,56 @@ var _user$project$App$view = function (model) {
 					{ctor: '[]'},
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html$text(model.status),
+						_0: _elm_lang$html$Html$text('Talkbox is a proof of concept in building browser-based telephony applications using functional programming languages.'),
 						_1: {ctor: '[]'}
 					}),
 				_1: {
 					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$h4,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Twilio'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$p,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text(
-									_elm_lang$core$Basics$toString(model.twilioStatus)),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$h4,
-								{ctor: '[]'},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('Conference'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {
-								ctor: '::',
-								_0: A2(
+					_0: function () {
+						var _p0 = model.conference;
+						if (_p0.ctor === 'Nothing') {
+							return A2(
+								_elm_lang$html$Html$map,
+								_user$project$App$LineMsg,
+								_user$project$Line$view(model.line));
+						} else {
+							var _p2 = _p0._0;
+							var _p1 = _p2.pending_participant;
+							if (_p1.ctor === 'Nothing') {
+								return A2(
 									_elm_lang$html$Html$p,
 									{ctor: '[]'},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html$text(
-											_elm_lang$core$Basics$toString(model.conferenceStatus)),
-										_1: {ctor: '[]'}
-									}),
-								_1: {
-									ctor: '::',
-									_0: function () {
-										var _p0 = model.conference;
-										if (_p0.ctor === 'Nothing') {
-											return A2(
+										_0: A2(
+											_elm_lang$html$Html$map,
+											_user$project$App$ConferenceMsg,
+											_user$project$Conference$view(_p2)),
+										_1: {
+											ctor: '::',
+											_0: A2(
 												_elm_lang$html$Html$map,
 												_user$project$App$LineMsg,
-												_user$project$Line$view(model.line));
-										} else {
-											var _p2 = _p0._0;
-											var _p1 = _p2.pending_participant;
-											if (_p1.ctor === 'Nothing') {
-												return A2(
-													_elm_lang$html$Html$p,
-													{ctor: '[]'},
-													{
-														ctor: '::',
-														_0: A2(
-															_elm_lang$html$Html$map,
-															_user$project$App$ConferenceMsg,
-															_user$project$Conference$view(_p2)),
-														_1: {
-															ctor: '::',
-															_0: A2(
-																_elm_lang$html$Html$map,
-																_user$project$App$LineMsg,
-																_user$project$Line$view(model.line)),
-															_1: {ctor: '[]'}
-														}
-													});
-											} else {
-												return A2(
-													_elm_lang$html$Html$map,
-													_user$project$App$ConferenceMsg,
-													_user$project$Conference$view(_p2));
-											}
+												_user$project$Line$view(model.line)),
+											_1: {ctor: '[]'}
 										}
-									}(),
-									_1: {ctor: '[]'}
-								}
+									});
+							} else {
+								return A2(
+									_elm_lang$html$Html$p,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$map,
+											_user$project$App$ConferenceMsg,
+											_user$project$Conference$view(_p2)),
+										_1: {ctor: '[]'}
+									});
 							}
 						}
-					}
+					}(),
+					_1: {ctor: '[]'}
 				}
 			}
 		});
