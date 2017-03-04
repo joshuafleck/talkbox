@@ -13,7 +13,7 @@ defmodule Telephony do
   @telephony_provider Application.get_env(:telephony, :provider)
 
   @type success :: {:ok, Telephony.Conference.t}
-  @type fail :: {:error, String.t}
+  @type fail :: {:error, String.t, Telephony.Conference.t | nil}
   @type response :: success | fail
 
   @doc """
@@ -31,8 +31,8 @@ defmodule Telephony do
     do
       {:ok, conference}
     else
-      error ->
-        error
+      {:error, message} ->
+        {:error, message, nil}
     end
   end
 
@@ -54,14 +54,14 @@ defmodule Telephony do
   participant has joined the conference, thus we cannot rely on matching
   the participant based on its call_sid.
   """
-  @spec call_or_promote_pending_participant(Telephony.Conference.ParticipantReference.t) :: Telephony.Conference.t
+  @spec call_or_promote_pending_participant(Telephony.Conference.ParticipantReference.t) :: response
   def call_or_promote_pending_participant(conference_participant_reference) do
     {:ok, conference} = Telephony.Conference.fetch(conference_participant_reference)
     if Telephony.Conference.chair_in_conference?(conference) do
       # It's the participant that joined
       {:ok, conference} = Telephony.Conference.set_call_sid_on_pending_participant(conference, conference_participant_reference.participant_call_sid)
       {:ok, conference} = Telephony.Conference.promote_pending_participant(conference)
-      conference
+      {:ok, conference}
     else
       # It's the chair that joined
       {:ok, conference} = Telephony.Conference.set_call_sid_on_chair(conference, conference_participant_reference.participant_call_sid)
@@ -166,7 +166,7 @@ defmodule Telephony do
   This will store the pending participant on the conference state and
   will initiate the call leg to the pending participant.
   """
-  @spec add_participant(Telephony.Conference.PendingParticipantReference.t) :: Telephony.Conference.t
+  @spec add_participant(Telephony.Conference.PendingParticipantReference.t) :: response
   def add_participant(pending_participant_reference) do
     {:ok, conference} = Telephony.Conference.add_pending_participant(pending_participant_reference)
     call_pending_participant(conference)
@@ -215,12 +215,17 @@ defmodule Telephony do
     end
   end
 
-  @spec call_pending_participant(Telephony.Conference.t) :: Telephony.Conference.t
+  @spec call_pending_participant(Telephony.Conference.t) :: response
   defp call_pending_participant(conference) do
-    pending_participant_call_sid = initiate_call_to_pending_participant(conference)
-    # NOTE: this could fail if the participant has already been promoted (unlikely but possible)
-    {:ok, conference} = Telephony.Conference.set_call_sid_on_pending_participant(conference, pending_participant_call_sid)
-    conference
+    case initiate_call_to_pending_participant(conference) do
+      {:ok, pending_participant_call_sid} ->
+        # NOTE: this could fail if the participant has already been promoted (unlikely but possible)
+        {:ok, conference} = Telephony.Conference.set_call_sid_on_pending_participant(conference, pending_participant_call_sid)
+        {:ok, conference}
+      {:error, message} ->
+        conference = remove_pending_participant(Telephony.Conference.pending_participant_reference(conference))
+        {:error, message, conference}
+    end
   end
 
   @spec initiate_call_to_chair(Telephony.Conference.t) :: {:ok, String.t} | {:error, String.t}
@@ -239,16 +244,21 @@ defmodule Telephony do
     end
   end
 
-  @spec initiate_call_to_pending_participant(Telephony.Conference.t) :: String.t
+  @spec initiate_call_to_pending_participant(Telephony.Conference.t) :: {:ok, String.t} | {:error, String.t}
   defp initiate_call_to_pending_participant(conference) do
     pending_participant_reference = Telephony.Conference.pending_participant_reference(conference)
-    {:ok, call_sid} = @telephony_provider.call(
+    result = @telephony_provider.call(
       to: conference.pending_participant.identifier,
       from: get_env(:cli),
       url: Telephony.Callbacks.pending_participant_answered(pending_participant_reference),
       status_callback: Telephony.Callbacks.participant_status_callback(pending_participant_reference),
       status_callback_events: ~w(initiated ringing completed))
-    call_sid
+    case result do
+      {:error, message, _} ->
+        {:error, message}
+      result ->
+        result
+    end
   end
 
   @doc """
