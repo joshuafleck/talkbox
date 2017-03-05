@@ -17,22 +17,21 @@ defmodule Telephony do
   @type response :: success | fail
 
   @doc """
-  Initiates a conference by creating a conference record and
-  dialling the chair's call leg. We abstain from dialling the
-  participant's call leg until we've confirmed we have joined
-  the chair's leg to the conference. This is to ensure that the
-  participant does not end up in an empty conference.
+  Finds or initialises a conference, adding a pending participant to the
+  conference and, if there was a prexisting conference, dials a new call
+  leg, otherwise, dials the chair's call leg.
+
+  In case of a new conference we abstain from dialling the participant's call
+  leg until we've confirmed we have joined the chair's leg to the conference.
+  This is to ensure that the participant does not end up in an empty conference.
   """
-  @spec initiate_conference(String.t, String.t) :: response
-  def initiate_conference(chair, participant) do
-    with  {:ok, conference} <- Telephony.Conference.create(chair, participant),
-          {:ok, call_sid} <- initiate_call_to_chair(conference),
-          {:ok, conference} <- Telephony.Conference.set_call_sid_on_chair(conference, call_sid)
-    do
-      {:ok, conference}
-    else
-      {:error, message} ->
-        {:error, message, nil}
+  @spec add_participant_or_initiate_conference(String.t, String.t) :: response
+  def add_participant_or_initiate_conference(chair, participant) do
+    case Telephony.Conference.fetch_by_chair(chair) do
+      nil ->
+        initiate_conference(chair, participant)
+      conference ->
+        add_participant(conference, participant)
     end
   end
 
@@ -161,18 +160,6 @@ defmodule Telephony do
   end
 
   @doc """
-  Call this to add a participant to the conference.
-
-  This will store the pending participant on the conference state and
-  will initiate the call leg to the pending participant.
-  """
-  @spec add_participant(Telephony.Conference.PendingParticipantReference.t) :: response
-  def add_participant(pending_participant_reference) do
-    {:ok, conference} = Telephony.Conference.add_pending_participant(pending_participant_reference)
-    call_pending_participant(conference)
-  end
-
-  @doc """
   Called when we receive a notification from the telephony provider that the status of the
   call leg for the pending participant has changed.
   """
@@ -180,6 +167,29 @@ defmodule Telephony do
   def update_call_status_of_pending_participant(pending_participant_reference, call_status, sequence_number) do
     {:ok, conference} = Telephony.Conference.update_call_status_of_pending_participant(pending_participant_reference, call_status, sequence_number)
     conference
+  end
+
+  @spec initiate_conference(String.t, String.t) :: response
+  defp initiate_conference(chair, participant) do
+    with  {:ok, conference} <- Telephony.Conference.create(chair, participant),
+          {:ok, call_sid} <- initiate_call_to_chair(conference),
+          {:ok, conference} <- Telephony.Conference.set_call_sid_on_chair(conference, call_sid)
+    do
+      {:ok, conference}
+    else
+      {:error, message} ->
+        {:error, message, nil}
+    end
+  end
+
+  @spec add_participant(Telephony.Conference.t, String.t) :: response
+  defp add_participant(conference, participant) do
+    pending_participant_reference = %Telephony.Conference.PendingParticipantReference{
+      identifier: conference.identifier,
+      chair: conference.chair.identifier,
+      pending_participant_identifier: participant}
+    {:ok, conference} = Telephony.Conference.add_pending_participant(pending_participant_reference)
+    call_pending_participant(conference)
   end
 
   @spec clear_pointless_conference(Telephony.Conference.t) :: Telephony.Conference.t

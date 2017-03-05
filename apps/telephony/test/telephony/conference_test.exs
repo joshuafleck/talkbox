@@ -227,4 +227,12 @@ defmodule Telephony.ConferenceTest do
     {:reply, {:error, message}, ^conferences} = Telephony.Conference.handle_call({:fetch_by_pending_participant, reference}, nil, conferences)
     assert message == "matching conference not found"
   end
+
+  test "fetch_by_chair when the conference is present returns the conference", %{conferences: conferences, conference: conference} do
+    {:reply, ^conference, ^conferences} = Telephony.Conference.handle_call({:fetch_by_chair, "chair"}, nil, conferences)
+  end
+
+  test "fetch_by_chair when the conference is not present returns nil", %{conferences: conferences, conference: conference} do
+    {:reply, nil, ^conferences} = Telephony.Conference.handle_call({:fetch_by_chair, "different chair"}, nil, conferences)
+  end
 end

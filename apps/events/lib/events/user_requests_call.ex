@@ -1,8 +1,6 @@
 defmodule Events.UserRequestsCall do
   @moduledoc """
-  A user has requested to start a call. This triggers the initiation
-  of a conference, with the user acting as the chair and the callee
-  acting as the pending participant.
+  A user has requested to start a call.
   """
   @enforce_keys [:user, :callee]
   defstruct [

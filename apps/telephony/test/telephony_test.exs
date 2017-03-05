@@ -5,18 +5,18 @@ defmodule TelephonyTest do
   setup do
     Application.stop(:telephony)
     :ok = Application.start(:telephony)
-    {:ok, conference} = Telephony.initiate_conference("chair", "participant")
+    {:ok, conference} = Telephony.add_participant_or_initiate_conference("chair", "participant")
     {:ok, conference: conference}
   end
 
-  test "initiate_conference returns a conference with the call_sid set on the chair" do
-    {:ok, conference} = Telephony.initiate_conference("new_chair", "participant")
+  test "add_participant_or_initiate_conference returns a conference with the call_sid set on the chair" do
+    {:ok, conference} = Telephony.add_participant_or_initiate_conference("new_chair", "participant")
     # Initiates the chairs's call leg
     assert conference.chair.call_sid == "new_chair"
   end
 
-  test "initiate_conference when the chair's call initiation fails raises an error" do
-    assert Telephony.initiate_conference("error", "participant") == {:error, "call initiation failed", nil}
+  test "add_participant_or_initiate_conference when the chair's call initiation fails raises an error" do
+    assert Telephony.add_participant_or_initiate_conference("error", "participant") == {:error, "call initiation failed", nil}
   end
 
   test "call_or_promote_pending_participant when the participant's call_sid belongs to the chair", %{conference: conference} do
@@ -40,7 +40,7 @@ defmodule TelephonyTest do
   end
 
   test "call_or_promote_pending_participant when the initiation of the call to the pending participant fails" do
-    {:ok, conference} = Telephony.initiate_conference("different_chair", "error")
+    {:ok, conference} = Telephony.add_participant_or_initiate_conference("different_chair", "error")
     assert conference.pending_participant != nil
 
     {:error, _message, conference} = join_to_conference(participant_reference(conference, "different_chair"))
@@ -138,9 +138,8 @@ defmodule TelephonyTest do
   end
 
   test "remove_pending_participant when there is an existing participant", %{conference: conference} do
-    reference = pending_participant_reference(conference)
     join_chair_and_pending_participant(conference)
-    {:ok, conference} = Telephony.add_participant(reference)
+    {:ok, conference} = Telephony.add_participant_or_initiate_conference("chair", "participant")
     assert conference.pending_participant != nil
     assert Map.get(conference.participants, "participant") != nil
 
@@ -171,12 +170,11 @@ defmodule TelephonyTest do
     assert conference != nil
   end
 
-  test "add_participant", %{conference: conference} do
-    reference = pending_participant_reference(conference)
+  test "add_participant_or_initiate_conference when a conference exists for the chair", %{conference: conference} do
     conference = join_chair_and_pending_participant(conference)
     assert conference.pending_participant == nil
 
-    {:ok, conference} = Telephony.add_participant(reference)
+    {:ok, conference} = Telephony.add_participant_or_initiate_conference("chair", "participant")
 
     # Creates a pending participant
     assert conference.pending_participant != nil
@@ -193,11 +191,11 @@ defmodule TelephonyTest do
     assert result == {:ok, "participant"}
   end
 
-  test "add_participant when there is already a pending participant", %{conference: conference} do
+  test "add_participant_or_initiate_conference when there is already a pending participant", %{conference: conference} do
     assert conference.pending_participant != nil
 
     assert_raise MatchError, ~r(pending participant already set), fn ->
-      Telephony.add_participant(pending_participant_reference(conference))
+      Telephony.add_participant_or_initiate_conference("chair", "participant")
     end
   end
 
