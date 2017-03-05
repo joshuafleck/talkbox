@@ -15,11 +15,10 @@ defmodule Router do
   defimpl Routing, for: Events.UserRequestsCall do
     @spec routing(Events.UserRequestsCall.t) :: any
     def routing(event) do
-      case Telephony.initiate_conference(event.user, event.callee) do
+      case Telephony.add_participant_or_initiate_conference(event.user, event.callee) do
         {:ok, conference} ->
           Router.Web.broadcast(event.user, "Starting call", conference)
         {:error, message, conference} ->
-          # TODO: try to fetch the conference for the user and return it?
           Router.Web.broadcast(event.user, "Error starting call: #{message}", conference)
       end
     end
@@ -107,23 +106,6 @@ defmodule Router do
           chair: event.chair,
           identifier: event.conference})
       Router.Web.broadcast(event.chair, "Call ended", nil)
-    end
-  end
-
-  defimpl Routing, for: Events.ChairRequestsToAddParticipant do
-    @spec routing(Events.ChairRequestsToAddParticipant.t) :: any
-    def routing(event) do
-      result = Telephony.add_participant(
-        %Telephony.Conference.PendingParticipantReference{
-          chair: event.chair,
-          identifier: event.conference,
-          pending_participant_identifier: event.pending_participant})
-      case result do
-        {:ok, conference} ->
-          Router.Web.broadcast(event.chair, "Adding participant", conference)
-        {:error, message, conference} ->
-          Router.Web.broadcast(event.chair, "Failed to add participant due to: #{message}", conference)
-      end
     end
   end
 

@@ -67,7 +67,7 @@ init flags =
             , status = "All good"
             , clientName = flags.clientName
             , twilioStatus = "All good"
-            , line = Line.initialModel
+            , line = ""
             , conference = Nothing
             , conferenceStatus = "All good"
             }
@@ -87,77 +87,33 @@ type Msg
     | LineMsg Line.Msg
     | ConferenceMsg Conference.Msg
 
+sendRequest : Model -> String -> JsDecode.Value -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
+sendRequest model requestName payload =
+    let
+        phxPush =
+            Phoenix.Push.init requestName (clientsChannel model.clientName)
+                |> Phoenix.Push.withPayload payload
+                |> Phoenix.Push.onOk RequestSubmitted
+                |> Phoenix.Push.onError RequestFailed
+
+        ( phxSocket, phxCmd ) =
+            Phoenix.Socket.push phxPush model.phxSocket
+    in
+        ( phxSocket, phxCmd )
 
 sendStartCall : Model -> Line.Callee -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendStartCall model callee =
-    let
-        payload =
-            (encodedCall callee model.clientName)
-
-        phxPush =
-            Phoenix.Push.init "start_call" (clientsChannel model.clientName)
-                |> Phoenix.Push.withPayload payload
-                |> Phoenix.Push.onOk RequestSubmitted
-                |> Phoenix.Push.onError RequestFailed
-
-        ( phxSocket, phxCmd ) =
-            Phoenix.Socket.push phxPush model.phxSocket
-    in
-        ( phxSocket, phxCmd )
-
-
-sendAddParticipant : Model -> Line.Callee -> Conference.Model -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
-sendAddParticipant model callee conference =
-    let
-        payload =
-            (encodedCallWithConference callee model.clientName conference)
-
-        phxPush =
-            Phoenix.Push.init "request_to_add_participant" (clientsChannel model.clientName)
-                |> Phoenix.Push.withPayload payload
-                |> Phoenix.Push.onOk RequestSubmitted
-                |> Phoenix.Push.onError RequestFailed
-
-        ( phxSocket, phxCmd ) =
-            Phoenix.Socket.push phxPush model.phxSocket
-    in
-        ( phxSocket, phxCmd )
+    sendRequest model "start_call" (encodedCall callee model.clientName)
 
 
 sendRequestToCancelPendingParticipant : Model -> Conference.Model -> Conference.CallLeg -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendRequestToCancelPendingParticipant model conference callLeg =
-    let
-        payload =
-            (encodedPendingParticipantReference conference callLeg)
-
-        phxPush =
-            Phoenix.Push.init "request_to_cancel_pending_participant" (clientsChannel model.clientName)
-                |> Phoenix.Push.withPayload payload
-                |> Phoenix.Push.onOk RequestSubmitted
-                |> Phoenix.Push.onError RequestFailed
-
-        ( phxSocket, phxCmd ) =
-            Phoenix.Socket.push phxPush model.phxSocket
-    in
-        ( phxSocket, phxCmd )
+    sendRequest model "request_to_cancel_pending_participant" (encodedPendingParticipantReference conference callLeg)
 
 
 sendRequestToHangupParticipant : Model -> Conference.Model -> Conference.CallLeg -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendRequestToHangupParticipant model conference callLeg =
-    let
-        payload =
-            (encodedParticipantReference conference callLeg)
-
-        phxPush =
-            Phoenix.Push.init "request_to_hangup_participant" (clientsChannel model.clientName)
-                |> Phoenix.Push.withPayload payload
-                |> Phoenix.Push.onOk RequestSubmitted
-                |> Phoenix.Push.onError RequestFailed
-
-        ( phxSocket, phxCmd ) =
-            Phoenix.Socket.push phxPush model.phxSocket
-    in
-        ( phxSocket, phxCmd )
+    sendRequest model "request_to_hangup_participant" (encodedParticipantReference conference callLeg)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -231,13 +187,8 @@ update msg model =
 
                 ( phxSocket, phxCmd ) =
                     case subMsg of
-                        (Line.RequestCall callee) ->
-                            case model.conference of
-                                Nothing ->
-                                    sendStartCall model callee
-
-                                Just conference ->
-                                    sendAddParticipant model callee conference
+                        Line.RequestCall ->
+                            sendStartCall model model.line
 
                         _ ->
                             ( model.phxSocket, Cmd.none )
@@ -336,15 +287,6 @@ encodedCall callee user =
     JsEncode.object
       [ ( "callee", JsEncode.string callee )
       , ( "user", JsEncode.string user )
-      ]
-
-
-encodedCallWithConference: String -> String -> Conference.Model -> JsDecode.Value
-encodedCallWithConference callee chair conference =
-    JsEncode.object
-      [ ( "callee", JsEncode.string callee )
-      , ( "chair", JsEncode.string chair )
-      , ( "conference", JsEncode.string conference.identifier )
       ]
 
 

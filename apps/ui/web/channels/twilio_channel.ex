@@ -40,11 +40,6 @@ defmodule Ui.TwilioChannel do
     {:reply, {:ok, %{}}, socket}
   end
 
-  def handle_in("request_to_add_participant", %{"callee" => callee, "chair" => chair, "conference" => conference}, socket) do
-    Events.publish(%Events.ChairRequestsToAddParticipant{conference: conference, chair: chair, pending_participant: callee})
-    {:reply, {:ok, %{}}, socket}
-  end
-
   def handle_in("request_to_hangup_participant", %{"chair" => chair, "conference" => conference, "call_sid" => call_sid}, socket) do
     Events.publish(%Events.ChairRequestsToHangupParticipant{conference: conference, chair: chair, call_sid: call_sid})
     {:reply, {:ok, %{}}, socket}

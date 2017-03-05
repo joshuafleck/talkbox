@@ -322,6 +322,14 @@ defmodule Telephony.Conference do
     GenServer.call(__MODULE__, {:fetch_by_pending_participant, pending_participant_reference})
   end
 
+  @doc """
+  Fetches the conference corresponding to the provided chair
+  """
+  @spec fetch_by_chair(String.t) :: t | nil
+  def fetch_by_chair(chair) do
+    GenServer.call(__MODULE__, {:fetch_by_chair, chair})
+  end
+
   # Server (callbacks)
 
   def handle_call({:create, chair, participant, identifier}, _from, conferences) do
@@ -458,6 +466,11 @@ defmodule Telephony.Conference do
     with_conference_by_pending_participant(conferences, pending_participant_reference, fn conference ->
       {:reply, {:ok, conference}, conferences}
     end)
+  end
+
+  def handle_call({:fetch_by_chair, chair}, _from, conferences) do
+    conference = Map.get(conferences, chair)
+    {:reply, conference, conferences}
   end
 
   # Internals
