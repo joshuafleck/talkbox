@@ -11,6 +11,7 @@ import Html.Events exposing (onInput, onSubmit)
 type alias Callee
     = String
 
+
 type alias Model
     = Callee
 
