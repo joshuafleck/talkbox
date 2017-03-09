@@ -36,19 +36,19 @@ update message model =
 
 view : Model -> Html Msg
 view model =
-  form [ class "form-inline"
-       , onSubmit RequestCall
-       ]
-       [ div [ class "form-group" ]
-             [ input [ class "form-control"
-                     , value model
-                     , placeholder "+44... or name"
-                     , onInput DialInput
-                     ]
-                     [ ]
-             ]
-       , button [ type_ "submit"
-                , class "btn btn-default"
-                ]
-                [ text "Call" ]
-       ]
+    form [ class "form-inline"
+         , onSubmit RequestCall
+         ]
+         [ div [ class "form-group" ]
+               [ input [ class "form-control"
+                       , value model
+                       , placeholder "+44... or name"
+                       , onInput DialInput
+                       ]
+                       [ ]
+               ]
+         , button [ type_ "submit"
+                  , class "btn btn-default"
+                  ]
+                  [ text "Call" ]
+         ]
