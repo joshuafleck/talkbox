@@ -9,45 +9,29 @@ import Html.Events exposing (onInput, onSubmit)
 
 type alias Callee = String
 
-type Call
-  = None
-  | Dialling Callee
-
-type alias Model = Call
-
-initialModel : Model
-initialModel = None
+type alias Model = Callee
 
 -- UPDATE
 
 type Msg
   = DialInput Callee
-  | RequestCall Callee
+  | RequestCall
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update message model =
   case message of
     DialInput callee ->
-      ( Dialling callee, Cmd.none )
-    RequestCall callee ->
-      ( None, Cmd.none )
+      ( callee, Cmd.none )
+    RequestCall ->
+      ( "", Cmd.none )
 
 -- VIEW
 
 view : Model -> Html Msg
 view model =
-  case model of
-    None ->
-      form [ class "form-inline" ] [
-          div [ class "form-group" ] [
-            input [ class "form-control", placeholder "+44... or name", onInput DialInput ] []
-          ]
-        , button [ disabled True, type_ "submit", class "btn btn-default" ] [ text "Call" ]
+  form [ class "form-inline", onSubmit RequestCall ] [
+      div [ class "form-group" ] [
+        input [ class "form-control", value model, placeholder "+44... or name", onInput DialInput ] []
       ]
-    Dialling callee ->
-      form [ class "form-inline", onSubmit (RequestCall callee) ] [
-          div [ class "form-group" ] [
-            input [ class "form-control", value callee, onInput DialInput ] []
-          ]
-        , button [ type_ "submit", class "btn btn-default" ] [ text "Call" ]
-      ]
+    , button [ type_ "submit", class "btn btn-default" ] [ text "Call" ]
+  ]

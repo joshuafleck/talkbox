@@ -15,12 +15,11 @@ defmodule Router do
   defimpl Routing, for: Events.UserRequestsCall do
     @spec routing(Events.UserRequestsCall.t) :: any
     def routing(event) do
-      case Telephony.initiate_conference(event.user, event.callee) do
+      case Telephony.add_participant_or_initiate_conference(event.user, event.callee) do
         {:ok, conference} ->
           Router.Web.broadcast(event.user, "Starting call", conference)
-        {:error, message} ->
-          # TODO: try to fetch the conference for the user and return it?
-          Router.Web.broadcast(event.user, "Error starting call: #{message}", nil)
+        {:error, message, conference} ->
+          Router.Web.broadcast(event.user, "Error starting call: #{message}", conference)
       end
     end
   end
@@ -66,13 +65,18 @@ defmodule Router do
   defimpl Routing, for: Events.ParticipantJoinedConference do
     @spec routing(Events.ParticipantJoinedConference.t) :: any
     def routing(event) do
-      conference = Telephony.call_or_promote_pending_participant(
+      result = Telephony.call_or_promote_pending_participant(
         %Telephony.Conference.ParticipantReference{
           chair: event.chair,
           identifier: event.conference,
           conference_sid: event.conference_sid,
           participant_call_sid: event.call_sid})
-      Router.Web.broadcast(event.chair, "Someone joined", conference)
+      case result do
+        {:ok, conference} ->
+          Router.Web.broadcast(event.chair, "Someone joined", conference)
+        {:error, message, conference} ->
+          Router.Web.broadcast(event.chair, "Failed to join participant to conference due to: #{message}", conference)
+      end
     end
   end
 
@@ -102,17 +106,6 @@ defmodule Router do
           chair: event.chair,
           identifier: event.conference})
       Router.Web.broadcast(event.chair, "Call ended", nil)
-    end
-  end
-
-  defimpl Routing, for: Events.ChairRequestsToAddParticipant do
-    @spec routing(Events.ChairRequestsToAddParticipant.t) :: any
-    def routing(event) do
-      Telephony.add_participant(
-        %Telephony.Conference.PendingParticipantReference{
-          chair: event.chair,
-          identifier: event.conference,
-          pending_participant_identifier: event.pending_participant})
     end
   end
 

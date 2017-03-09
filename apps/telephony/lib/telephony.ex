@@ -13,26 +13,25 @@ defmodule Telephony do
   @telephony_provider Application.get_env(:telephony, :provider)
 
   @type success :: {:ok, Telephony.Conference.t}
-  @type fail :: {:error, String.t}
+  @type fail :: {:error, String.t, Telephony.Conference.t | nil}
   @type response :: success | fail
 
   @doc """
-  Initiates a conference by creating a conference record and
-  dialling the chair's call leg. We abstain from dialling the
-  participant's call leg until we've confirmed we have joined
-  the chair's leg to the conference. This is to ensure that the
-  participant does not end up in an empty conference.
+  Finds or initialises a conference, adding a pending participant to the
+  conference and, if there was a prexisting conference, dials a new call
+  leg, otherwise, dials the chair's call leg.
+
+  In case of a new conference we abstain from dialling the participant's call
+  leg until we've confirmed we have joined the chair's leg to the conference.
+  This is to ensure that the participant does not end up in an empty conference.
   """
-  @spec initiate_conference(String.t, String.t) :: response
-  def initiate_conference(chair, participant) do
-    with  {:ok, conference} <- Telephony.Conference.create(chair, participant),
-          {:ok, call_sid} <- initiate_call_to_chair(conference),
-          {:ok, conference} <- Telephony.Conference.set_call_sid_on_chair(conference, call_sid)
-    do
-      {:ok, conference}
-    else
-      error ->
-        error
+  @spec add_participant_or_initiate_conference(String.t, String.t) :: response
+  def add_participant_or_initiate_conference(chair, participant) do
+    case Telephony.Conference.fetch_by_chair(chair) do
+      nil ->
+        initiate_conference(chair, participant)
+      conference ->
+        add_participant(conference, participant)
     end
   end
 
@@ -54,14 +53,14 @@ defmodule Telephony do
   participant has joined the conference, thus we cannot rely on matching
   the participant based on its call_sid.
   """
-  @spec call_or_promote_pending_participant(Telephony.Conference.ParticipantReference.t) :: Telephony.Conference.t
+  @spec call_or_promote_pending_participant(Telephony.Conference.ParticipantReference.t) :: response
   def call_or_promote_pending_participant(conference_participant_reference) do
     {:ok, conference} = Telephony.Conference.fetch(conference_participant_reference)
     if Telephony.Conference.chair_in_conference?(conference) do
       # It's the participant that joined
       {:ok, conference} = Telephony.Conference.set_call_sid_on_pending_participant(conference, conference_participant_reference.participant_call_sid)
       {:ok, conference} = Telephony.Conference.promote_pending_participant(conference)
-      conference
+      {:ok, conference}
     else
       # It's the chair that joined
       {:ok, conference} = Telephony.Conference.set_call_sid_on_chair(conference, conference_participant_reference.participant_call_sid)
@@ -161,18 +160,6 @@ defmodule Telephony do
   end
 
   @doc """
-  Call this to add a participant to the conference.
-
-  This will store the pending participant on the conference state and
-  will initiate the call leg to the pending participant.
-  """
-  @spec add_participant(Telephony.Conference.PendingParticipantReference.t) :: Telephony.Conference.t
-  def add_participant(pending_participant_reference) do
-    {:ok, conference} = Telephony.Conference.add_pending_participant(pending_participant_reference)
-    call_pending_participant(conference)
-  end
-
-  @doc """
   Called when we receive a notification from the telephony provider that the status of the
   call leg for the pending participant has changed.
   """
@@ -180,6 +167,29 @@ defmodule Telephony do
   def update_call_status_of_pending_participant(pending_participant_reference, call_status, sequence_number) do
     {:ok, conference} = Telephony.Conference.update_call_status_of_pending_participant(pending_participant_reference, call_status, sequence_number)
     conference
+  end
+
+  @spec initiate_conference(String.t, String.t) :: response
+  defp initiate_conference(chair, participant) do
+    with  {:ok, conference} <- Telephony.Conference.create(chair, participant),
+          {:ok, call_sid} <- initiate_call_to_chair(conference),
+          {:ok, conference} <- Telephony.Conference.set_call_sid_on_chair(conference, call_sid)
+    do
+      {:ok, conference}
+    else
+      {:error, message} ->
+        {:error, message, nil}
+    end
+  end
+
+  @spec add_participant(Telephony.Conference.t, String.t) :: response
+  defp add_participant(conference, participant) do
+    pending_participant_reference = %Telephony.Conference.PendingParticipantReference{
+      identifier: conference.identifier,
+      chair: conference.chair.identifier,
+      pending_participant_identifier: participant}
+    {:ok, conference} = Telephony.Conference.add_pending_participant(pending_participant_reference)
+    call_pending_participant(conference)
   end
 
   @spec clear_pointless_conference(Telephony.Conference.t) :: Telephony.Conference.t
@@ -215,12 +225,17 @@ defmodule Telephony do
     end
   end
 
-  @spec call_pending_participant(Telephony.Conference.t) :: Telephony.Conference.t
+  @spec call_pending_participant(Telephony.Conference.t) :: response
   defp call_pending_participant(conference) do
-    pending_participant_call_sid = initiate_call_to_pending_participant(conference)
-    # NOTE: this could fail if the participant has already been promoted (unlikely but possible)
-    {:ok, conference} = Telephony.Conference.set_call_sid_on_pending_participant(conference, pending_participant_call_sid)
-    conference
+    case initiate_call_to_pending_participant(conference) do
+      {:ok, pending_participant_call_sid} ->
+        # NOTE: this could fail if the participant has already been promoted (unlikely but possible)
+        {:ok, conference} = Telephony.Conference.set_call_sid_on_pending_participant(conference, pending_participant_call_sid)
+        {:ok, conference}
+      {:error, message} ->
+        conference = remove_pending_participant(Telephony.Conference.pending_participant_reference(conference))
+        {:error, message, conference}
+    end
   end
 
   @spec initiate_call_to_chair(Telephony.Conference.t) :: {:ok, String.t} | {:error, String.t}
@@ -239,16 +254,21 @@ defmodule Telephony do
     end
   end
 
-  @spec initiate_call_to_pending_participant(Telephony.Conference.t) :: String.t
+  @spec initiate_call_to_pending_participant(Telephony.Conference.t) :: {:ok, String.t} | {:error, String.t}
   defp initiate_call_to_pending_participant(conference) do
     pending_participant_reference = Telephony.Conference.pending_participant_reference(conference)
-    {:ok, call_sid} = @telephony_provider.call(
+    result = @telephony_provider.call(
       to: conference.pending_participant.identifier,
       from: get_env(:cli),
       url: Telephony.Callbacks.pending_participant_answered(pending_participant_reference),
       status_callback: Telephony.Callbacks.participant_status_callback(pending_participant_reference),
       status_callback_events: ~w(initiated ringing completed))
-    call_sid
+    case result do
+      {:error, message, _} ->
+        {:error, message}
+      result ->
+        result
+    end
   end
 
   @doc """
