@@ -19,8 +19,8 @@ type alias Model
 -- UPDATE
 
 type Msg
-  = DialInput Callee
-  | RequestCall
+    = DialInput Callee
+    | RequestCall
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
