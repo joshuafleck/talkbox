@@ -87,9 +87,10 @@ update message model =
 
 findCallLegAndRequestHangup : CallLeg -> CallLeg -> CallLeg
 findCallLegAndRequestHangup participant target =
-    if participant == target
-    then requestHangup participant
-    else participant
+    if participant == target then
+        requestHangup participant
+    else
+        participant
 
 
 requestHangup : CallLeg -> CallLeg
