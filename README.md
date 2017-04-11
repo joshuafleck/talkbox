@@ -41,6 +41,13 @@ Each of these components is implemented as a child-project under the `/apps` dir
     ```
     brew bundle
     ```
+    
+1. Install Node packages
+
+    ```
+    # within the `apps/ui` directory:
+    npm install
+    ```
 
 1. Set environment variables
 
