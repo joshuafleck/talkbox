@@ -79,7 +79,7 @@ defmodule Telephony.Provider.Twilio do
   """
   def kick_participant_from_conference(conference_sid, call_sid) do
     Logger.debug "#{__MODULE__} kicking participant with sid #{call_sid} from conference #{conference_sid}"
-    result = ExTwilio.Participant.destroy(call_sid, %{conference: conference_sid})
+    result = ExTwilio.Participant.destroy(call_sid, [{:conference, conference_sid}])
     case result do
       :ok ->
         {:ok, call_sid}
