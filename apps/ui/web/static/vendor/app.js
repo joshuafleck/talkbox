@@ -1564,8 +1564,7 @@ function toString(v)
 	var type = typeof v;
 	if (type === 'function')
 	{
-		var name = v.func ? v.func.name : v.name;
-		return '<function' + (name === '' ? '' : ':') + name + '>';
+		return '<function>';
 	}
 
 	if (type === 'boolean')
@@ -2072,6 +2071,13 @@ var _elm_lang$core$List$sortWith = _elm_lang$core$Native_List.sortWith;
 var _elm_lang$core$List$sortBy = _elm_lang$core$Native_List.sortBy;
 var _elm_lang$core$List$sort = function (xs) {
 	return A2(_elm_lang$core$List$sortBy, _elm_lang$core$Basics$identity, xs);
+};
+var _elm_lang$core$List$singleton = function (value) {
+	return {
+		ctor: '::',
+		_0: value,
+		_1: {ctor: '[]'}
+	};
 };
 var _elm_lang$core$List$drop = F2(
 	function (n, list) {
@@ -3520,15 +3526,8 @@ function setupIncomingPort(name, callback)
 		sentBeforeInit.push(value);
 	}
 
-	function postInitSend(incomingValue)
+	function postInitSend(value)
 	{
-		var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
-		if (result.ctor === 'Err')
-		{
-			throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
-		}
-
-		var value = result._0;
 		var temp = subs;
 		while (temp.ctor !== '[]')
 		{
@@ -3539,7 +3538,13 @@ function setupIncomingPort(name, callback)
 
 	function send(incomingValue)
 	{
-		currentSend(incomingValue);
+		var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
+		if (result.ctor === 'Err')
+		{
+			throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
+		}
+
+		currentSend(result._0);
 	}
 
 	return { send: send };
@@ -4160,7 +4165,7 @@ function endsWith(sub, str)
 function indexes(sub, str)
 {
 	var subLen = sub.length;
-	
+
 	if (subLen < 1)
 	{
 		return _elm_lang$core$Native_List.Nil;
@@ -4173,74 +4178,78 @@ function indexes(sub, str)
 	{
 		is.push(i);
 		i = i + subLen;
-	}	
-	
+	}
+
 	return _elm_lang$core$Native_List.fromArray(is);
 }
+
 
 function toInt(s)
 {
 	var len = s.length;
+
+	// if empty
 	if (len === 0)
 	{
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+		return intErr(s);
 	}
-	var start = 0;
-	if (s[0] === '-')
+
+	// if hex
+	var c = s[0];
+	if (c === '0' && s[1] === 'x')
 	{
-		if (len === 1)
+		for (var i = 2; i < len; ++i)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			var c = s[i];
+			if (('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f'))
+			{
+				continue;
+			}
+			return intErr(s);
 		}
-		start = 1;
+		return _elm_lang$core$Result$Ok(parseInt(s, 16));
 	}
-	for (var i = start; i < len; ++i)
+
+	// is decimal
+	if (c > '9' || (c < '0' && c !== '-' && c !== '+'))
+	{
+		return intErr(s);
+	}
+	for (var i = 1; i < len; ++i)
 	{
 		var c = s[i];
 		if (c < '0' || '9' < c)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			return intErr(s);
 		}
 	}
+
 	return _elm_lang$core$Result$Ok(parseInt(s, 10));
 }
 
+function intErr(s)
+{
+	return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int");
+}
+
+
 function toFloat(s)
 {
-	var len = s.length;
-	if (len === 0)
+	// check if it is a hex, octal, or binary number
+	if (s.length === 0 || /[\sxbo]/.test(s))
 	{
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
+		return floatErr(s);
 	}
-	var start = 0;
-	if (s[0] === '-')
-	{
-		if (len === 1)
-		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-		}
-		start = 1;
-	}
-	var dotCount = 0;
-	for (var i = start; i < len; ++i)
-	{
-		var c = s[i];
-		if ('0' <= c && c <= '9')
-		{
-			continue;
-		}
-		if (c === '.')
-		{
-			dotCount += 1;
-			if (dotCount <= 1)
-			{
-				continue;
-			}
-		}
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-	}
-	return _elm_lang$core$Result$Ok(parseFloat(s));
+	var n = +s;
+	// faster isNaN check
+	return n === n ? _elm_lang$core$Result$Ok(n) : floatErr(s);
 }
+
+function floatErr(s)
+{
+	return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float");
+}
+
 
 function toList(str)
 {
@@ -5695,11 +5704,6 @@ function badToString(problem)
 				problem = problem.rest;
 				break;
 
-			case 'index':
-				context += '[' + problem.index + ']';
-				problem = problem.rest;
-				break;
-
 			case 'oneOf':
 				var problems = problem.problems;
 				for (var i = 0; i < problems.length; i++)
@@ -6431,9 +6435,9 @@ function on(name, options, decoder)
 
 function equalEvents(a, b)
 {
-	if (!a.options === b.options)
+	if (a.options !== b.options)
 	{
-		if (a.stopPropagation !== b.stopPropagation || a.preventDefault !== b.preventDefault)
+		if (a.options.stopPropagation !== b.options.stopPropagation || a.options.preventDefault !== b.options.preventDefault)
 		{
 			return false;
 		}
@@ -7709,7 +7713,7 @@ function normalRenderer(parentNode, view)
 var rAF =
 	typeof requestAnimationFrame !== 'undefined'
 		? requestAnimationFrame
-		: function(callback) { callback(); };
+		: function(callback) { setTimeout(callback, 1000 / 60); };
 
 function makeStepper(domNode, view, initialVirtualNode, eventNode)
 {
@@ -13243,6 +13247,53 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Channel$setState = F2(
 			channel,
 			{state: state});
 	});
+var _fbonetti$elm_phoenix_socket$Phoenix_Channel$map = F2(
+	function (fn, channel) {
+		return _elm_lang$core$Native_Utils.update(
+			channel,
+			{
+				onClose: A2(
+					_elm_lang$core$Maybe$map,
+					F2(
+						function (x, y) {
+							return function (_p0) {
+								return x(
+									y(_p0));
+							};
+						})(fn),
+					channel.onClose),
+				onError: A2(
+					_elm_lang$core$Maybe$map,
+					F2(
+						function (x, y) {
+							return function (_p1) {
+								return x(
+									y(_p1));
+							};
+						})(fn),
+					channel.onError),
+				onJoin: A2(
+					_elm_lang$core$Maybe$map,
+					F2(
+						function (x, y) {
+							return function (_p2) {
+								return x(
+									y(_p2));
+							};
+						})(fn),
+					channel.onJoin),
+				onJoinError: A2(
+					_elm_lang$core$Maybe$map,
+					F2(
+						function (x, y) {
+							return function (_p3) {
+								return x(
+									y(_p3));
+							};
+						})(fn),
+					channel.onJoinError)
+			});
+	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoinError = F2(
 	function (valueToMsg, channel) {
 		return _elm_lang$core$Native_Utils.update(
@@ -13294,6 +13345,33 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Channel$init = function (name) {
 	return {name: name, payload: _fbonetti$elm_phoenix_socket$Phoenix_Helpers$emptyPayload, state: _fbonetti$elm_phoenix_socket$Phoenix_Channel$Closed, onClose: _elm_lang$core$Maybe$Nothing, onError: _elm_lang$core$Maybe$Nothing, onJoin: _elm_lang$core$Maybe$Nothing, onJoinError: _elm_lang$core$Maybe$Nothing, joinRef: -1, leaveRef: -1};
 };
 
+var _fbonetti$elm_phoenix_socket$Phoenix_Push$map = F2(
+	function (fn, push) {
+		return _elm_lang$core$Native_Utils.update(
+			push,
+			{
+				onOk: A2(
+					_elm_lang$core$Maybe$map,
+					F2(
+						function (x, y) {
+							return function (_p0) {
+								return x(
+									y(_p0));
+							};
+						})(fn),
+					push.onOk),
+				onError: A2(
+					_elm_lang$core$Maybe$map,
+					F2(
+						function (x, y) {
+							return function (_p1) {
+								return x(
+									y(_p1));
+							};
+						})(fn),
+					push.onError)
+			});
+	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Push$onError = F2(
 	function (valueToMsg, push) {
 		return _elm_lang$core$Native_Utils.update(
@@ -13325,6 +13403,37 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Push$init = F2(
 		return A5(_fbonetti$elm_phoenix_socket$Phoenix_Push$Push, event, channel, _fbonetti$elm_phoenix_socket$Phoenix_Helpers$emptyPayload, _elm_lang$core$Maybe$Nothing, _elm_lang$core$Maybe$Nothing);
 	});
 
+var _fbonetti$elm_phoenix_socket$Phoenix_Socket$map = F2(
+	function (fn, socket) {
+		return _elm_lang$core$Native_Utils.update(
+			socket,
+			{
+				channels: A2(
+					_elm_lang$core$Dict$map,
+					F2(
+						function (_p0, channel) {
+							return A2(_fbonetti$elm_phoenix_socket$Phoenix_Channel$map, fn, channel);
+						}),
+					socket.channels),
+				events: A2(
+					_elm_lang$core$Dict$map,
+					F2(
+						function (_p1, event) {
+							return function (_p2) {
+								return fn(
+									event(_p2));
+							};
+						}),
+					socket.events),
+				pushes: A2(
+					_elm_lang$core$Dict$map,
+					F2(
+						function (_p3, push) {
+							return A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$map, fn, push);
+						}),
+					socket.pushes)
+			});
+	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$replyDecoder = A3(
 	_elm_lang$core$Json_Decode$map2,
 	F2(
@@ -13333,9 +13442,9 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$replyDecoder = A3(
 		}),
 	A2(_elm_lang$core$Json_Decode$field, 'status', _elm_lang$core$Json_Decode$string),
 	A2(_elm_lang$core$Json_Decode$field, 'response', _elm_lang$core$Json_Decode$value));
-var _fbonetti$elm_phoenix_socket$Phoenix_Socket$decodeMessage = function (_p0) {
+var _fbonetti$elm_phoenix_socket$Phoenix_Socket$decodeMessage = function (_p4) {
 	return _elm_lang$core$Result$toMaybe(
-		A2(_elm_lang$core$Json_Decode$decodeString, _fbonetti$elm_phoenix_socket$Phoenix_Helpers$messageDecoder, _p0));
+		A2(_elm_lang$core$Json_Decode$decodeString, _fbonetti$elm_phoenix_socket$Phoenix_Helpers$messageDecoder, _p4));
 };
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$debugIfEnabled = function (socket) {
 	return socket.debug ? _elm_lang$core$Debug$log('phx_message') : _elm_lang$core$Basics$identity;
@@ -13345,9 +13454,9 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$phoenixMessages = function (sock
 };
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$mapAll = F2(
 	function (fn, internalMsg) {
-		var _p1 = internalMsg;
-		if (_p1.ctor === 'ExternalMsg') {
-			return _p1._0;
+		var _p5 = internalMsg;
+		if (_p5.ctor === 'ExternalMsg') {
+			return _p5._0;
 		} else {
 			return fn(internalMsg);
 		}
@@ -13360,17 +13469,17 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$sendMessage = F2(
 			_fbonetti$elm_phoenix_socket$Phoenix_Helpers$encodeMessage(message));
 	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$send = F4(
-	function (_p2, event, channel, payload) {
-		var _p3 = _p2;
+	function (_p6, event, channel, payload) {
+		var _p7 = _p6;
 		return A2(
 			_fbonetti$elm_phoenix_socket$Phoenix_Socket$sendMessage,
-			_p3.path,
+			_p7.path,
 			A4(
 				_fbonetti$elm_phoenix_socket$Phoenix_Helpers$Message,
 				event,
 				channel,
 				payload,
-				_elm_lang$core$Maybe$Just(_p3.ref)));
+				_elm_lang$core$Maybe$Just(_p7.ref)));
 	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$off = F3(
 	function (eventName, channelName, socket) {
@@ -13414,19 +13523,19 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$heartbeat = function (socket) {
 };
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$leave = F2(
 	function (channelName, socket) {
-		var _p4 = A2(_elm_lang$core$Dict$get, channelName, socket.channels);
-		if (_p4.ctor === 'Just') {
-			var _p5 = _p4._0;
-			if (_elm_lang$core$Native_Utils.eq(_p5.state, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joining) || _elm_lang$core$Native_Utils.eq(_p5.state, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joined)) {
+		var _p8 = A2(_elm_lang$core$Dict$get, channelName, socket.channels);
+		if (_p8.ctor === 'Just') {
+			var _p9 = _p8._0;
+			if (_elm_lang$core$Native_Utils.eq(_p9.state, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joining) || _elm_lang$core$Native_Utils.eq(_p9.state, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joined)) {
 				var channel_ = _elm_lang$core$Native_Utils.update(
-					_p5,
+					_p9,
 					{state: _fbonetti$elm_phoenix_socket$Phoenix_Channel$Leaving, leaveRef: socket.ref});
 				var socket_ = _elm_lang$core$Native_Utils.update(
 					socket,
 					{
 						channels: A3(_elm_lang$core$Dict$insert, channelName, channel_, socket.channels)
 					});
-				var push_ = A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'phx_leave', _p5.name);
+				var push_ = A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'phx_leave', _p9.name);
 				return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push_, socket_);
 			} else {
 				return {ctor: '_Tuple2', _0: socket, _1: _elm_lang$core$Platform_Cmd$none};
@@ -13445,15 +13554,15 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$joinChannel = F2(
 			{
 				channels: A3(_elm_lang$core$Dict$insert, channel.name, channel_, socket.channels)
 			});
-		var push_ = A5(_fbonetti$elm_phoenix_socket$Phoenix_Push$Push, 'phx_join', channel.name, channel.payload, channel.onJoin, channel.onError);
+		var push_ = A5(_fbonetti$elm_phoenix_socket$Phoenix_Push$Push, 'phx_join', channel.name, channel.payload, channel.onJoin, channel.onJoinError);
 		return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push_, socket_);
 	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$join = F2(
 	function (channel, socket) {
-		var _p6 = A2(_elm_lang$core$Dict$get, channel.name, socket.channels);
-		if (_p6.ctor === 'Just') {
-			var _p7 = _p6._0.state;
-			return (_elm_lang$core$Native_Utils.eq(_p7, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joined) || _elm_lang$core$Native_Utils.eq(_p7, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joining)) ? {ctor: '_Tuple2', _0: socket, _1: _elm_lang$core$Platform_Cmd$none} : A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$joinChannel, channel, socket);
+		var _p10 = A2(_elm_lang$core$Dict$get, channel.name, socket.channels);
+		if (_p10.ctor === 'Just') {
+			var _p11 = _p10._0.state;
+			return (_elm_lang$core$Native_Utils.eq(_p11, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joined) || _elm_lang$core$Native_Utils.eq(_p11, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joining)) ? {ctor: '_Tuple2', _0: socket, _1: _elm_lang$core$Platform_Cmd$none} : A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$joinChannel, channel, socket);
 		} else {
 			return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$joinChannel, channel, socket);
 		}
@@ -13476,12 +13585,12 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug = function (socket) {
 };
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$update = F2(
 	function (msg, socket) {
-		var _p8 = msg;
-		switch (_p8.ctor) {
+		var _p12 = msg;
+		switch (_p12.ctor) {
 			case 'ChannelErrored':
 				var channels = A3(
 					_elm_lang$core$Dict$update,
-					_p8._0,
+					_p12._0,
 					_elm_lang$core$Maybe$map(
 						_fbonetti$elm_phoenix_socket$Phoenix_Channel$setState(_fbonetti$elm_phoenix_socket$Phoenix_Channel$Errored)),
 					socket.channels);
@@ -13490,15 +13599,15 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$update = F2(
 					{channels: channels});
 				return {ctor: '_Tuple2', _0: socket_, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'ChannelClosed':
-				var _p11 = _p8._0;
-				var _p9 = A2(_elm_lang$core$Dict$get, _p11, socket.channels);
-				if (_p9.ctor === 'Just') {
-					var _p10 = _p9._0;
-					var pushes = A2(_elm_lang$core$Dict$remove, _p10.joinRef, socket.pushes);
+				var _p15 = _p12._0;
+				var _p13 = A2(_elm_lang$core$Dict$get, _p15, socket.channels);
+				if (_p13.ctor === 'Just') {
+					var _p14 = _p13._0;
+					var pushes = A2(_elm_lang$core$Dict$remove, _p14.joinRef, socket.pushes);
 					var channels = A3(
 						_elm_lang$core$Dict$insert,
-						_p11,
-						A2(_fbonetti$elm_phoenix_socket$Phoenix_Channel$setState, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Closed, _p10),
+						_p15,
+						A2(_fbonetti$elm_phoenix_socket$Phoenix_Channel$setState, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Closed, _p14),
 						socket.channels);
 					var socket_ = _elm_lang$core$Native_Utils.update(
 						socket,
@@ -13508,15 +13617,15 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$update = F2(
 					return {ctor: '_Tuple2', _0: socket, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 			case 'ChannelJoined':
-				var _p14 = _p8._0;
-				var _p12 = A2(_elm_lang$core$Dict$get, _p14, socket.channels);
-				if (_p12.ctor === 'Just') {
-					var _p13 = _p12._0;
-					var pushes = A2(_elm_lang$core$Dict$remove, _p13.joinRef, socket.pushes);
+				var _p18 = _p12._0;
+				var _p16 = A2(_elm_lang$core$Dict$get, _p18, socket.channels);
+				if (_p16.ctor === 'Just') {
+					var _p17 = _p16._0;
+					var pushes = A2(_elm_lang$core$Dict$remove, _p17.joinRef, socket.pushes);
 					var channels = A3(
 						_elm_lang$core$Dict$insert,
-						_p14,
-						A2(_fbonetti$elm_phoenix_socket$Phoenix_Channel$setState, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joined, _p13),
+						_p18,
+						A2(_fbonetti$elm_phoenix_socket$Phoenix_Channel$setState, _fbonetti$elm_phoenix_socket$Phoenix_Channel$Joined, _p17),
 						socket.channels);
 					var socket_ = _elm_lang$core$Native_Utils.update(
 						socket,
@@ -13577,15 +13686,15 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$handleInternalPhxReply = F2(
 	function (socket, message) {
 		var msg = A2(
 			_elm_lang$core$Maybe$andThen,
-			function (_p15) {
-				var _p16 = _p15;
+			function (_p19) {
+				var _p20 = _p19;
 				return A2(
 					_elm_lang$core$Maybe$andThen,
 					function (ref) {
 						return A2(
 							_elm_lang$core$Maybe$andThen,
 							function (channel) {
-								return _elm_lang$core$Native_Utils.eq(_p16._0, 'ok') ? (_elm_lang$core$Native_Utils.eq(ref, channel.joinRef) ? _elm_lang$core$Maybe$Just(
+								return _elm_lang$core$Native_Utils.eq(_p20._0, 'ok') ? (_elm_lang$core$Native_Utils.eq(ref, channel.joinRef) ? _elm_lang$core$Maybe$Just(
 									_fbonetti$elm_phoenix_socket$Phoenix_Socket$ChannelJoined(message.topic)) : (_elm_lang$core$Native_Utils.eq(ref, channel.leaveRef) ? _elm_lang$core$Maybe$Just(
 									_fbonetti$elm_phoenix_socket$Phoenix_Socket$ChannelClosed(message.topic)) : _elm_lang$core$Maybe$Nothing)) : _elm_lang$core$Maybe$Nothing;
 							},
@@ -13599,12 +13708,12 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$handleInternalPhxReply = F2(
 	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$mapInternalMsgs = F2(
 	function (socket, maybeMessage) {
-		var _p17 = maybeMessage;
-		if (_p17.ctor === 'Just') {
-			var _p19 = _p17._0;
-			var message = socket.debug ? A2(_elm_lang$core$Debug$log, 'Phoenix message', _p19) : _p19;
-			var _p18 = message.event;
-			switch (_p18) {
+		var _p21 = maybeMessage;
+		if (_p21.ctor === 'Just') {
+			var _p23 = _p21._0;
+			var message = socket.debug ? A2(_elm_lang$core$Debug$log, 'Phoenix message', _p23) : _p23;
+			var _p22 = message.event;
+			switch (_p22) {
 				case 'phx_reply':
 					return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$handleInternalPhxReply, socket, message);
 				case 'phx_error':
@@ -13628,35 +13737,35 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$handlePhxReply = F2(
 	function (socket, message) {
 		var msg = A2(
 			_elm_lang$core$Maybe$andThen,
-			function (_p20) {
-				var _p21 = _p20;
-				var _p25 = _p21._1;
+			function (_p24) {
+				var _p25 = _p24;
+				var _p29 = _p25._1;
 				return A2(
 					_elm_lang$core$Maybe$andThen,
 					function (ref) {
 						return A2(
 							_elm_lang$core$Maybe$andThen,
 							function (push) {
-								var _p22 = _p21._0;
-								switch (_p22) {
+								var _p26 = _p25._0;
+								switch (_p26) {
 									case 'ok':
 										return A2(
 											_elm_lang$core$Maybe$map,
 											function (f) {
-												return function (_p23) {
+												return function (_p27) {
 													return _fbonetti$elm_phoenix_socket$Phoenix_Socket$ExternalMsg(
-														f(_p23));
-												}(_p25);
+														f(_p27));
+												}(_p29);
 											},
 											push.onOk);
 									case 'error':
 										return A2(
 											_elm_lang$core$Maybe$map,
 											function (f) {
-												return function (_p24) {
+												return function (_p28) {
 													return _fbonetti$elm_phoenix_socket$Phoenix_Socket$ExternalMsg(
-														f(_p24));
-												}(_p25);
+														f(_p28));
+												}(_p29);
 											},
 											push.onError);
 									default:
@@ -13673,28 +13782,28 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$handlePhxReply = F2(
 	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$handleEvent = F2(
 	function (socket, message) {
-		var _p26 = A2(
+		var _p30 = A2(
 			_elm_lang$core$Dict$get,
 			{ctor: '_Tuple2', _0: message.event, _1: message.topic},
 			socket.events);
-		if (_p26.ctor === 'Just') {
+		if (_p30.ctor === 'Just') {
 			return _fbonetti$elm_phoenix_socket$Phoenix_Socket$ExternalMsg(
-				_p26._0(message.payload));
+				_p30._0(message.payload));
 		} else {
 			return _fbonetti$elm_phoenix_socket$Phoenix_Socket$NoOp;
 		}
 	});
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$mapExternalMsgs = F2(
 	function (socket, maybeMessage) {
-		var _p27 = maybeMessage;
-		if (_p27.ctor === 'Just') {
-			var _p31 = _p27._0;
-			var _p28 = _p31.event;
-			switch (_p28) {
+		var _p31 = maybeMessage;
+		if (_p31.ctor === 'Just') {
+			var _p35 = _p31._0;
+			var _p32 = _p35.event;
+			switch (_p32) {
 				case 'phx_reply':
-					return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$handlePhxReply, socket, _p31);
+					return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$handlePhxReply, socket, _p35);
 				case 'phx_error':
-					var channel = A2(_elm_lang$core$Dict$get, _p31.topic, socket.channels);
+					var channel = A2(_elm_lang$core$Dict$get, _p35.topic, socket.channels);
 					var onError = A2(
 						_elm_lang$core$Maybe$andThen,
 						function (_) {
@@ -13704,15 +13813,15 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$mapExternalMsgs = F2(
 					var msg = A2(
 						_elm_lang$core$Maybe$map,
 						function (f) {
-							return function (_p29) {
+							return function (_p33) {
 								return _fbonetti$elm_phoenix_socket$Phoenix_Socket$ExternalMsg(
-									f(_p29));
-							}(_p31.payload);
+									f(_p33));
+							}(_p35.payload);
 						},
 						onError);
 					return A2(_elm_lang$core$Maybe$withDefault, _fbonetti$elm_phoenix_socket$Phoenix_Socket$NoOp, msg);
 				case 'phx_close':
-					var channel = A2(_elm_lang$core$Dict$get, _p31.topic, socket.channels);
+					var channel = A2(_elm_lang$core$Dict$get, _p35.topic, socket.channels);
 					var onClose = A2(
 						_elm_lang$core$Maybe$andThen,
 						function (_) {
@@ -13722,15 +13831,15 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$mapExternalMsgs = F2(
 					var msg = A2(
 						_elm_lang$core$Maybe$map,
 						function (f) {
-							return function (_p30) {
+							return function (_p34) {
 								return _fbonetti$elm_phoenix_socket$Phoenix_Socket$ExternalMsg(
-									f(_p30));
-							}(_p31.payload);
+									f(_p34));
+							}(_p35.payload);
 						},
 						onClose);
 					return A2(_elm_lang$core$Maybe$withDefault, _fbonetti$elm_phoenix_socket$Phoenix_Socket$NoOp, msg);
 				default:
-					return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$handleEvent, socket, _p31);
+					return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$handleEvent, socket, _p35);
 			}
 		} else {
 			return _fbonetti$elm_phoenix_socket$Phoenix_Socket$NoOp;
@@ -13744,11 +13853,11 @@ var _fbonetti$elm_phoenix_socket$Phoenix_Socket$externalMsgs = function (socket)
 };
 var _fbonetti$elm_phoenix_socket$Phoenix_Socket$listen = F2(
 	function (socket, fn) {
-		return function (_p32) {
+		return function (_p36) {
 			return A2(
 				_elm_lang$core$Platform_Sub$map,
 				_fbonetti$elm_phoenix_socket$Phoenix_Socket$mapAll(fn),
-				_elm_lang$core$Platform_Sub$batch(_p32));
+				_elm_lang$core$Platform_Sub$batch(_p36));
 		}(
 			{
 				ctor: '::',
