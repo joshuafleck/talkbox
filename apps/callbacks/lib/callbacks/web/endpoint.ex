@@ -1,4 +1,4 @@
-defmodule Callbacks.Endpoint do
+defmodule Callbacks.Web.Endpoint do
   use Phoenix.Endpoint, otp_app: :callbacks
 
   # Serve at "/" the static files from "priv/static" directory.
@@ -28,5 +28,5 @@ defmodule Callbacks.Endpoint do
     key: "_callbacks_key",
     signing_salt: "9/zewwfV"
 
-  plug Callbacks.Router
+  plug Callbacks.Web.Router
 end

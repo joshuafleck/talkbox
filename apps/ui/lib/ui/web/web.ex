@@ -1,12 +1,12 @@
-defmodule Callbacks.Web do
+defmodule Ui.Web do
   @moduledoc """
   A module that keeps using definitions for controllers,
   views and so on.
 
   This can be used in your application as:
 
-      use Callbacks.Web, :controller
-      use Callbacks.Web, :view
+      use Ui.Web, :controller
+      use Ui.Web, :view
 
   The definitions below will be executed for every view,
   controller, etc, so keep them short and clean, focused
@@ -18,16 +18,17 @@ defmodule Callbacks.Web do
 
   def controller do
     quote do
-      use Phoenix.Controller
+      use Phoenix.Controller, namespace: Ui.Web
 
-      import Callbacks.Router.Helpers
-      import Callbacks.Gettext
+      import Ui.Web.Router.Helpers
+      import Ui.Web.Gettext
     end
   end
 
   def view do
     quote do
-      use Phoenix.View, root: "web/templates"
+      use Phoenix.View, root: "lib/ui/web/templates",
+                        namespace: Ui.Web
 
       # Import convenience functions from controllers
       import Phoenix.Controller, only: [get_csrf_token: 0, get_flash: 2, view_module: 1]
@@ -35,15 +36,22 @@ defmodule Callbacks.Web do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import Callbacks.Router.Helpers
-      import Callbacks.ErrorHelpers
-      import Callbacks.Gettext
+      import Ui.Web.Router.Helpers
+      import Ui.Web.ErrorHelpers
+      import Ui.Web.Gettext
     end
   end
 
   def router do
     quote do
       use Phoenix.Router
+    end
+  end
+
+  def channel do
+    quote do
+      use Phoenix.Channel
+      import Ui.Web.Gettext
     end
   end
 

@@ -1,5 +1,5 @@
-defmodule Callbacks.Twilio.ConferenceControllerTest do
-  use Callbacks.ConnCase, async: false
+defmodule Callbacks.Web.Twilio.ConferenceControllerTest do
+  use Callbacks.Web.ConnCase, async: false
 
   setup do
     Application.stop(:events)

@@ -1,4 +1,4 @@
-defmodule Ui.ErrorHelpers do
+defmodule Callbacks.Web.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """
@@ -32,9 +32,9 @@ defmodule Ui.ErrorHelpers do
     #     dgettext "errors", "is invalid"
     #
     if count = opts[:count] do
-      Gettext.dngettext(Ui.Gettext, "errors", msg, msg, count, opts)
+      Gettext.dngettext(Callbacks.Gettext, "errors", msg, msg, count, opts)
     else
-      Gettext.dgettext(Ui.Gettext, "errors", msg, opts)
+      Gettext.dgettext(Callbacks.Gettext, "errors", msg, opts)
     end
   end
 end

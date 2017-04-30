@@ -1,4 +1,4 @@
-defmodule Callbacks.Twilio.ConferenceController do
+defmodule Callbacks.Web.Twilio.ConferenceController do
   @moduledoc """
   This controller is responsible for responding to requests from Twilio
   regarding the status of conferences.

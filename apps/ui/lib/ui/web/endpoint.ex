@@ -1,4 +1,4 @@
-defmodule Ui.Endpoint do
+defmodule Ui.Web.Endpoint do
   @moduledoc """
   This is the endpoint through which other applications can
   broadcast events to clients. `Router.Web` uses this module
@@ -7,7 +7,7 @@ defmodule Ui.Endpoint do
   """
   use Phoenix.Endpoint, otp_app: :ui
 
-  socket "/socket", Ui.UserSocket
+  socket "/socket", Ui.Web.UserSocket
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -44,5 +44,5 @@ defmodule Ui.Endpoint do
     key: "_ui_key",
     signing_salt: "grJhKfsY"
 
-  plug Ui.Router
+  plug Ui.Web.Router
 end

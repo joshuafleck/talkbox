@@ -1,4 +1,4 @@
-defmodule Ui.TwilioChannel do
+defmodule Ui.Web.TwilioChannel do
   @moduledoc """
   Channel through which we communicate with the SPA. Given messages
   from the client, will translate those into events published with the

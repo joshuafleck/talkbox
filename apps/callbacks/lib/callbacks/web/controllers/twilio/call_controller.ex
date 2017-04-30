@@ -1,4 +1,4 @@
-defmodule Callbacks.Twilio.CallController do
+defmodule Callbacks.Web.Twilio.CallController do
   @moduledoc """
   This controller is responsible for responding to requests from Twilio
   regarding the status of call legs.

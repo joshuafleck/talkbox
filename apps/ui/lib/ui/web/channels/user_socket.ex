@@ -1,9 +1,9 @@
-defmodule Ui.UserSocket do
+defmodule Ui.Web.UserSocket do
   use Phoenix.Socket
 
   ## Channels
   # channel "room:*", Ui.RoomChannel
-  channel "twilio:*", Ui.TwilioChannel
+  channel "twilio:*", Ui.Web.TwilioChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

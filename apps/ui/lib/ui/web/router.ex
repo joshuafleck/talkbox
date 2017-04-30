@@ -1,4 +1,4 @@
-defmodule Ui.Router do
+defmodule Ui.Web.Router do
   use Ui.Web, :router
 
   pipeline :browser do
@@ -9,7 +9,7 @@ defmodule Ui.Router do
     plug :put_secure_browser_headers
   end
 
-  scope "/", Ui do
+  scope "/", Ui.Web do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
