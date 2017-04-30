@@ -29,4 +29,3 @@ config :router, consumers: System.schedulers_online()
 # here (which is why it is important to import them last).
 #
 import_config "#{Mix.env}.exs"
-

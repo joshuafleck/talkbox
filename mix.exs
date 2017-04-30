@@ -5,8 +5,7 @@ defmodule Talkbox.Mixfile do
     [apps_path: "apps",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps(),
-     dialyzer: [plt_add_deps: :transitive]]
+     deps: deps()]
   end
 
   # Dependencies can be Hex packages:
@@ -23,7 +22,7 @@ defmodule Talkbox.Mixfile do
   # and cannot be accessed from applications inside the apps folder
   defp deps do
     [{:credo, "~> 0.7", only: [:dev, :test]},
-     {:dialyxir, "~> 0.5", only: :dev},
+     {:dialyxir, "~> 0.5", only: :dev, runtime: false},
      {:ex_doc, "~> 0.15", only: :dev}]
   end
 end
