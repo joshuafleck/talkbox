@@ -45,7 +45,7 @@ Each of these components is implemented as a child-project under the `/apps` dir
 1. Install Node packages
 
     ```
-    # within the `apps/ui` directory:
+    # within the `apps/ui/assets` directory:
     npm install
     ```
 

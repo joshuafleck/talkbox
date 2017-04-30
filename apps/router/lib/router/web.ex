@@ -7,7 +7,7 @@ defmodule Router.Web do
   @spec broadcast(String.t, String.t, Telephony.Conference.t | nil) :: any
   def broadcast(user, message, conference) do
     # TODO: log that we are broadcasing an event
-    Ui.Endpoint.broadcast(channel(user), "conference_changed", %{message: message, conference: conference_message(conference)})
+    Ui.Web.Endpoint.broadcast(channel(user), "conference_changed", %{message: message, conference: conference_message(conference)})
   end
 
   @spec channel(String.t) :: String.t

@@ -1,4 +1,4 @@
-defmodule Callbacks.Router do
+defmodule Callbacks.Web.Router do
   use Callbacks.Web, :router
 
   pipeline :twilio do
@@ -6,7 +6,7 @@ defmodule Callbacks.Router do
     plug :accepts, ["html"]
   end
 
-  scope "/callbacks", Callbacks do
+  scope "/callbacks", Callbacks.Web do
     scope "/twilio" do
       pipe_through :twilio
       scope "/call" do

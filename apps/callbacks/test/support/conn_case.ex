@@ -1,4 +1,4 @@
-defmodule Callbacks.ConnCase do
+defmodule Callbacks.Web.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -20,10 +20,10 @@ defmodule Callbacks.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import Callbacks.Router.Helpers
+      import Callbacks.Web.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint Callbacks.Endpoint
+      @endpoint Callbacks.Web.Endpoint
     end
   end
 

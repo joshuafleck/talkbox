@@ -1,5 +1,5 @@
-defmodule Callbacks.ErrorView do
-  use Callbacks.Web, :view
+defmodule Ui.Web.ErrorView do
+  use Ui.Web, :view
 
   def render("404.html", _assigns) do
     "Page not found"

@@ -1,4 +1,4 @@
-defmodule Ui.ChannelCase do
+defmodule Ui.Web.ChannelCase do
   @moduledoc """
   This module defines the test case to be used by
   channel tests.
@@ -20,9 +20,8 @@ defmodule Ui.ChannelCase do
       # Import conveniences for testing with channels
       use Phoenix.ChannelTest
 
-
       # The default endpoint for testing
-      @endpoint Ui.Endpoint
+      @endpoint Ui.Web.Endpoint
     end
   end
 
