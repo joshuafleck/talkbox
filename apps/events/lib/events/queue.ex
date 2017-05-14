@@ -14,6 +14,11 @@ defmodule Events.Queue do
     GenServer.start_link(__MODULE__, :queue.new, name: __MODULE__)
   end
 
+  def init(state) do
+    Events.Persistence.init()
+    {:ok, state}
+  end
+
   @doc """
   Puts an event onto the queue
 
@@ -46,6 +51,7 @@ defmodule Events.Queue do
   end
 
   def handle_call({:put, event}, _from, queue) do
+    Events.Persistence.write(event)
     {:reply, {:ok, event}, :queue.in(event, queue)}
   end
 

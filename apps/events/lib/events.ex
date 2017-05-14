@@ -23,9 +23,7 @@ defmodule Events do
   """
   @spec publish(struct) :: {:ok, struct} | {:error, String.t}
   def publish(event) do
-    Logger.debug "#{__MODULE__} publishing #{inspect(event)}"
-    event
-    |> Events.Queue.put
+    Events.Queue.put(event)
   end
 
   @doc """
