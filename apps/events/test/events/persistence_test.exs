@@ -15,7 +15,7 @@ defmodule Events.PersistenceTest do
   test "ability to write events to file then have them read back into the queue" do
     assert Events.Queue.pop == {:error, "queue is empty"}
     event = %Events.UserRequestsCall{callee: "amy", user: "josh"}
-    Events.Persistence.write(event)
+    assert Events.Persistence.write(event) == :ok
     Logger.flush
     assert Events.Persistence.read(Application.get_env(:events, :persistence_file_path)) == [ok: event]
     assert Events.Queue.pop == {:ok, event}
