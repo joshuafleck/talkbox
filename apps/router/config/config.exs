@@ -20,7 +20,7 @@ use Mix.Config
 #
 #     config :logger, level: :info
 #
-config :router, consumers: System.schedulers_online()
+config :router, consumers: 1
 
 # It is also possible to import configuration files, relative to this
 # directory. For example, you can emulate configuration per environment
