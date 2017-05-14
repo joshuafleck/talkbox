@@ -6,7 +6,7 @@ defmodule Events.Persistence do
   require Logger
 
   @doc """
-  Initializes the output file
+  Initializes the output file. Removes any previously existing file.
   """
   @spec init :: any
   def init do
