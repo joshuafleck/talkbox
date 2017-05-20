@@ -38,7 +38,7 @@ defmodule Callbacks.Mixfile do
       {:phoenix_html, "~> 2.6"},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
-      {:ex_twiml, "~> 2.1.0"}, # For serving TwiML responses to Twilio
+      {:ex_twiml, github: "danielberkompas/ex_twiml"}, # For serving TwiML responses to Twilio
       {:events, in_umbrella: true} # For publishing events to other apps
     ]
   end
