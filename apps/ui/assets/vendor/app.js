@@ -13974,33 +13974,20 @@ var _user$project$Conference$findCallLegAndRequestHangup = F2(
 var _user$project$Conference$update = F2(
 	function (message, model) {
 		var _p0 = message;
-		if (_p0.ctor === 'Hangup') {
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{
-						participants: A2(
-							_elm_lang$core$List$map,
-							function (participant) {
-								return A2(_user$project$Conference$findCallLegAndRequestHangup, participant, _p0._0);
-							},
-							model.participants)
-					}),
-				_1: _elm_lang$core$Platform_Cmd$none
-			};
-		} else {
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{
-						pending_participant: _elm_lang$core$Maybe$Just(
-							_user$project$Conference$requestHangup(_p0._0))
-					}),
-				_1: _elm_lang$core$Platform_Cmd$none
-			};
-		}
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				model,
+				{
+					participants: A2(
+						_elm_lang$core$List$map,
+						function (participant) {
+							return A2(_user$project$Conference$findCallLegAndRequestHangup, participant, _p0._0);
+						},
+						model.participants)
+				}),
+			_1: _elm_lang$core$Platform_Cmd$none
+		};
 	});
 var _user$project$Conference$CallLeg = F4(
 	function (a, b, c, d) {
@@ -14016,17 +14003,14 @@ var _user$project$Conference$decodeCallLeg = A5(
 		A2(_elm_lang$core$Json_Decode$field, 'call_sid', _elm_lang$core$Json_Decode$string)),
 	_elm_lang$core$Json_Decode$succeed(false));
 var _user$project$Conference$decodeParticipants = _elm_lang$core$Json_Decode$list(_user$project$Conference$decodeCallLeg);
-var _user$project$Conference$Model = F4(
-	function (a, b, c, d) {
-		return {identifier: a, chair: b, pending_participant: c, participants: d};
+var _user$project$Conference$Model = F2(
+	function (a, b) {
+		return {identifier: a, participants: b};
 	});
-var _user$project$Conference$decodeConference = A5(
-	_elm_lang$core$Json_Decode$map4,
+var _user$project$Conference$decodeConference = A3(
+	_elm_lang$core$Json_Decode$map2,
 	_user$project$Conference$Model,
 	A2(_elm_lang$core$Json_Decode$field, 'identifier', _elm_lang$core$Json_Decode$string),
-	A2(_elm_lang$core$Json_Decode$field, 'chair', _user$project$Conference$decodeCallLeg),
-	_elm_lang$core$Json_Decode$maybe(
-		A2(_elm_lang$core$Json_Decode$field, 'pending_participant', _user$project$Conference$decodeCallLeg)),
 	A2(_elm_lang$core$Json_Decode$field, 'participants', _user$project$Conference$decodeParticipants));
 var _user$project$Conference$Response = F2(
 	function (a, b) {
@@ -14038,103 +14022,54 @@ var _user$project$Conference$decodeResponse = A3(
 	A2(_elm_lang$core$Json_Decode$field, 'message', _elm_lang$core$Json_Decode$string),
 	_elm_lang$core$Json_Decode$maybe(
 		A2(_elm_lang$core$Json_Decode$field, 'conference', _user$project$Conference$decodeConference)));
-var _user$project$Conference$Cancel = function (a) {
-	return {ctor: 'Cancel', _0: a};
-};
 var _user$project$Conference$Hangup = function (a) {
 	return {ctor: 'Hangup', _0: a};
 };
-var _user$project$Conference$viewCallLeg = F2(
-	function (callLeg, callLegType) {
-		var _p1 = callLegType;
-		if (_p1.ctor === 'Participant') {
-			return A2(
-				_elm_lang$html$Html$button,
-				{
+var _user$project$Conference$viewCallLeg = function (callLeg) {
+	return A2(
+		_elm_lang$html$Html$button,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$type_('button'),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(
+					_user$project$Conference$Hangup(callLeg)),
+				_1: {
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$type_('button'),
+					_0: _elm_lang$html$Html_Attributes$disabled(
+						callLeg.hangupRequested || _elm_lang$core$Native_Utils.eq(callLeg.callSid, _elm_lang$core$Maybe$Nothing)),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(
-							_user$project$Conference$Hangup(callLeg)),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$disabled(
-								callLeg.hangupRequested || _elm_lang$core$Native_Utils.eq(callLeg.callSid, _elm_lang$core$Maybe$Nothing)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('list-group-item'),
-								_1: {ctor: '[]'}
-							}
-						}
+						_0: _elm_lang$html$Html_Attributes$class('list-group-item'),
+						_1: {ctor: '[]'}
 					}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text(callLeg.identifier),
-					_1: {ctor: '[]'}
-				});
-		} else {
-			return A2(
-				_elm_lang$html$Html$button,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$type_('button'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(
-							_user$project$Conference$Cancel(callLeg)),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$disabled(
-								callLeg.hangupRequested || _elm_lang$core$Native_Utils.eq(callLeg.callSid, _elm_lang$core$Maybe$Nothing)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$class('list-group-item'),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text(
+				}
+			}
+		},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text(
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					callLeg.identifier,
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						' (',
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							callLeg.identifier,
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								' (',
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									A2(_elm_lang$core$Maybe$withDefault, 'pending', callLeg.callStatus),
-									')')))),
-					_1: {ctor: '[]'}
-				});
-		}
-	});
-var _user$project$Conference$PendingParticipant = {ctor: 'PendingParticipant'};
-var _user$project$Conference$Participant = {ctor: 'Participant'};
+							A2(_elm_lang$core$Maybe$withDefault, 'pending', callLeg.callStatus),
+							')')))),
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$Conference$allCallLegs = function (model) {
-	var callLegs = A2(
+	return A2(
 		_elm_lang$core$List$map,
 		function (participant) {
-			return A2(_user$project$Conference$viewCallLeg, participant, _user$project$Conference$Participant);
+			return _user$project$Conference$viewCallLeg(participant);
 		},
 		model.participants);
-	var _p2 = model.pending_participant;
-	if (_p2.ctor === 'Just') {
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			callLegs,
-			{
-				ctor: '::',
-				_0: A2(_user$project$Conference$viewCallLeg, _p2._0, _user$project$Conference$PendingParticipant),
-				_1: {ctor: '[]'}
-			});
-	} else {
-		return callLegs;
-	}
 };
 var _user$project$Conference$view = function (model) {
 	return A2(
@@ -14163,7 +14098,7 @@ var _user$project$App$decodeCallRequestFailure = A2(
 		_1: {ctor: '[]'}
 	},
 	_elm_lang$core$Json_Decode$string);
-var _user$project$App$encodedParticipantReference = F2(
+var _user$project$App$encodedCallLeg = F2(
 	function (conference, callLeg) {
 		return _elm_lang$core$Json_Encode$object(
 			{
@@ -14177,48 +14112,10 @@ var _user$project$App$encodedParticipantReference = F2(
 					ctor: '::',
 					_0: {
 						ctor: '_Tuple2',
-						_0: 'chair',
-						_1: _elm_lang$core$Json_Encode$string(conference.chair.identifier)
+						_0: 'call',
+						_1: _elm_lang$core$Json_Encode$string(callLeg.identifier)
 					},
-					_1: {
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'call_sid',
-							_1: _elm_lang$core$Json_Encode$string(
-								A2(_elm_lang$core$Maybe$withDefault, '', callLeg.callSid))
-						},
-						_1: {ctor: '[]'}
-					}
-				}
-			});
-	});
-var _user$project$App$encodedPendingParticipantReference = F2(
-	function (conference, callLeg) {
-		return _elm_lang$core$Json_Encode$object(
-			{
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'conference',
-					_1: _elm_lang$core$Json_Encode$string(conference.identifier)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'chair',
-						_1: _elm_lang$core$Json_Encode$string(conference.chair.identifier)
-					},
-					_1: {
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'pending_participant',
-							_1: _elm_lang$core$Json_Encode$string(callLeg.identifier)
-						},
-						_1: {ctor: '[]'}
-					}
+					_1: {ctor: '[]'}
 				}
 			});
 	});
@@ -14301,40 +14198,24 @@ var _user$project$App$view = function (model) {
 								_user$project$App$LineMsg,
 								_user$project$Line$view(model.line));
 						} else {
-							var _p2 = _p0._0;
-							var _p1 = _p2.pending_participant;
-							if (_p1.ctor === 'Nothing') {
-								return A2(
-									_elm_lang$html$Html$p,
-									{ctor: '[]'},
-									{
+							return A2(
+								_elm_lang$html$Html$p,
+								{ctor: '[]'},
+								{
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$map,
+										_user$project$App$ConferenceMsg,
+										_user$project$Conference$view(_p0._0)),
+									_1: {
 										ctor: '::',
 										_0: A2(
 											_elm_lang$html$Html$map,
-											_user$project$App$ConferenceMsg,
-											_user$project$Conference$view(_p2)),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$map,
-												_user$project$App$LineMsg,
-												_user$project$Line$view(model.line)),
-											_1: {ctor: '[]'}
-										}
-									});
-							} else {
-								return A2(
-									_elm_lang$html$Html$p,
-									{ctor: '[]'},
-									{
-										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$map,
-											_user$project$App$ConferenceMsg,
-											_user$project$Conference$view(_p2)),
+											_user$project$App$LineMsg,
+											_user$project$Line$view(model.line)),
 										_1: {ctor: '[]'}
-									});
-							}
+									}
+								});
 						}
 					}(),
 					_1: {ctor: '[]'}
@@ -14369,9 +14250,9 @@ var _user$project$App$sendRequest = F3(
 						_fbonetti$elm_phoenix_socket$Phoenix_Push$init,
 						requestName,
 						_user$project$App$clientsChannel(model.clientName)))));
-		var _p3 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, phxPush, model.phxSocket);
-		var phxSocket = _p3._0;
-		var phxCmd = _p3._1;
+		var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, phxPush, model.phxSocket);
+		var phxSocket = _p1._0;
+		var phxCmd = _p1._1;
 		return {ctor: '_Tuple2', _0: phxSocket, _1: phxCmd};
 	});
 var _user$project$App$sendStartCall = F2(
@@ -14382,21 +14263,13 @@ var _user$project$App$sendStartCall = F2(
 			'start_call',
 			A2(_user$project$App$encodedCall, callee, model.clientName));
 	});
-var _user$project$App$sendRequestToCancelPendingParticipant = F3(
-	function (model, conference, callLeg) {
-		return A3(
-			_user$project$App$sendRequest,
-			model,
-			'request_to_cancel_pending_participant',
-			A2(_user$project$App$encodedPendingParticipantReference, conference, callLeg));
-	});
 var _user$project$App$sendRequestToHangupParticipant = F3(
 	function (model, conference, callLeg) {
 		return A3(
 			_user$project$App$sendRequest,
 			model,
-			'request_to_hangup_participant',
-			A2(_user$project$App$encodedParticipantReference, conference, callLeg));
+			'request_to_remove_call',
+			A2(_user$project$App$encodedCallLeg, conference, callLeg));
 	});
 var _user$project$App$ConferenceChanged = function (a) {
 	return {ctor: 'ConferenceChanged', _0: a};
@@ -14407,7 +14280,7 @@ var _user$project$App$PhoenixMsg = function (a) {
 var _user$project$App$init = function (flags) {
 	var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init(
 		_user$project$App$clientsChannel(flags.clientName));
-	var _p4 = A2(
+	var _p2 = A2(
 		_fbonetti$elm_phoenix_socket$Phoenix_Socket$join,
 		channel,
 		A4(
@@ -14422,8 +14295,8 @@ var _user$project$App$init = function (flags) {
 				_user$project$App$ConferenceChanged,
 				_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
 					_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:5000/socket/websocket')))));
-	var initSocket = _p4._0;
-	var phxCmd = _p4._1;
+	var initSocket = _p2._0;
+	var phxCmd = _p2._1;
 	var model = {phxSocket: initSocket, status: 'All good', clientName: flags.clientName, twilioStatus: 'All good', line: '', conference: _elm_lang$core$Maybe$Nothing, conferenceStatus: 'All good'};
 	return {
 		ctor: '_Tuple2',
@@ -14433,46 +14306,46 @@ var _user$project$App$init = function (flags) {
 };
 var _user$project$App$update = F2(
 	function (msg, model) {
-		var _p5 = msg;
-		switch (_p5.ctor) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'TwilioStatusChanged':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{twilioStatus: _p5._0}),
+						{twilioStatus: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SetupTwilio':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeTwilioToken, _p5._0);
-				var _p6 = decodeResult;
-				if (_p6.ctor === 'Ok') {
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeTwilioToken, _p3._0);
+				var _p4 = decodeResult;
+				if (_p4.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{status: 'Twilio token received'}),
-						_1: _user$project$Twilio$setup(_p6._0)
+						_1: _user$project$Twilio$setup(_p4._0)
 					};
 				} else {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{status: _p6._0}),
+							{status: _p4._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'ConferenceChanged':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p5._0);
-				var _p7 = decodeResult;
-				if (_p7.ctor === 'Ok') {
-					var _p8 = _p7._0;
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p3._0);
+				var _p5 = decodeResult;
+				if (_p5.ctor === 'Ok') {
+					var _p6 = _p5._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{conference: _p8.conference, conferenceStatus: _p8.message}),
+							{conference: _p6.conference, conferenceStatus: _p6.message}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
@@ -14480,20 +14353,20 @@ var _user$project$App$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{status: _p7._0}),
+							{status: _p5._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'RequestFailed':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p5._0);
-				var _p9 = decodeResult;
-				if (_p9.ctor === 'Ok') {
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p3._0);
+				var _p7 = decodeResult;
+				if (_p7.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Request failed with error: ', _p9._0)
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Request failed with error: ', _p7._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -14503,7 +14376,7 @@ var _user$project$App$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p9._0)
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p7._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -14517,20 +14390,20 @@ var _user$project$App$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'LineMsg':
-				var _p13 = _p5._0;
-				var _p10 = function () {
-					var _p11 = _p13;
-					if (_p11.ctor === 'RequestCall') {
+				var _p11 = _p3._0;
+				var _p8 = function () {
+					var _p9 = _p11;
+					if (_p9.ctor === 'RequestCall') {
 						return A2(_user$project$App$sendStartCall, model, model.line);
 					} else {
 						return {ctor: '_Tuple2', _0: model.phxSocket, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				}();
-				var phxSocket = _p10._0;
-				var phxCmd = _p10._1;
-				var _p12 = A2(_user$project$Line$update, _p13, model.line);
-				var updatedLineModel = _p12._0;
-				var lineCmd = _p12._1;
+				var phxSocket = _p8._0;
+				var phxCmd = _p8._1;
+				var _p10 = A2(_user$project$Line$update, _p11, model.line);
+				var updatedLineModel = _p10._0;
+				var lineCmd = _p10._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -14548,24 +14421,20 @@ var _user$project$App$update = F2(
 						})
 				};
 			case 'ConferenceMsg':
-				var _p18 = _p5._0;
-				var _p14 = model.conference;
-				if (_p14.ctor === 'Nothing') {
+				var _p16 = _p3._0;
+				var _p12 = model.conference;
+				if (_p12.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
-					var _p15 = A2(_user$project$Conference$update, _p18, _p14._0);
-					var updatedConferenceModel = _p15._0;
-					var conferenceCmd = _p15._1;
-					var _p16 = function () {
-						var _p17 = _p18;
-						if (_p17.ctor === 'Cancel') {
-							return A3(_user$project$App$sendRequestToCancelPendingParticipant, model, updatedConferenceModel, _p17._0);
-						} else {
-							return A3(_user$project$App$sendRequestToHangupParticipant, model, updatedConferenceModel, _p17._0);
-						}
+					var _p13 = A2(_user$project$Conference$update, _p16, _p12._0);
+					var updatedConferenceModel = _p13._0;
+					var conferenceCmd = _p13._1;
+					var _p14 = function () {
+						var _p15 = _p16;
+						return A3(_user$project$App$sendRequestToHangupParticipant, model, updatedConferenceModel, _p15._0);
 					}();
-					var phxSocket = _p16._0;
-					var phxCmd = _p16._1;
+					var phxSocket = _p14._0;
+					var phxCmd = _p14._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -14587,9 +14456,9 @@ var _user$project$App$update = F2(
 					};
 				}
 			default:
-				var _p19 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p5._0, model.phxSocket);
-				var phxSocket = _p19._0;
-				var phxCmd = _p19._1;
+				var _p17 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p3._0, model.phxSocket);
+				var phxSocket = _p17._0;
+				var phxCmd = _p17._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -14624,7 +14493,7 @@ var _user$project$App$main = _elm_lang$html$Html$programWithFlags(
 var Elm = {};
 Elm['App'] = Elm['App'] || {};
 if (typeof _user$project$App$main !== 'undefined') {
-    _user$project$App$main(Elm['App'], 'App', {"types":{"unions":{"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"App.Msg":{"args":[],"tags":{"SetupTwilio":["Json.Encode.Value"],"RequestFailed":["Json.Encode.Value"],"PhoenixMsg":["Phoenix.Socket.Msg App.Msg"],"ConferenceChanged":["Json.Encode.Value"],"LineMsg":["Line.Msg"],"ConferenceMsg":["Conference.Msg"],"RequestSubmitted":["Json.Encode.Value"],"TwilioStatusChanged":["String"]}},"Conference.Msg":{"args":[],"tags":{"Hangup":["Conference.CallLeg"],"Cancel":["Conference.CallLeg"]}},"Line.Msg":{"args":[],"tags":{"RequestCall":[],"DialInput":["Line.Callee"]}},"Phoenix.Socket.Msg":{"args":["msg"],"tags":{"ChannelErrored":["String"],"ChannelClosed":["String"],"ExternalMsg":["msg"],"ChannelJoined":["String"],"Heartbeat":["Time.Time"],"NoOp":[],"ReceiveReply":["String","Int"]}}},"aliases":{"Conference.CallLeg":{"args":[],"type":"{ identifier : String , callStatus : Maybe.Maybe String , callSid : Maybe.Maybe String , hangupRequested : Bool }"},"Line.Callee":{"args":[],"type":"String"},"Time.Time":{"args":[],"type":"Float"}},"message":"App.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$App$main(Elm['App'], 'App', {"types":{"unions":{"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"App.Msg":{"args":[],"tags":{"SetupTwilio":["Json.Encode.Value"],"RequestFailed":["Json.Encode.Value"],"PhoenixMsg":["Phoenix.Socket.Msg App.Msg"],"ConferenceChanged":["Json.Encode.Value"],"LineMsg":["Line.Msg"],"ConferenceMsg":["Conference.Msg"],"RequestSubmitted":["Json.Encode.Value"],"TwilioStatusChanged":["String"]}},"Conference.Msg":{"args":[],"tags":{"Hangup":["Conference.CallLeg"]}},"Line.Msg":{"args":[],"tags":{"RequestCall":[],"DialInput":["Line.Callee"]}},"Phoenix.Socket.Msg":{"args":["msg"],"tags":{"ChannelErrored":["String"],"ChannelClosed":["String"],"ExternalMsg":["msg"],"ChannelJoined":["String"],"Heartbeat":["Time.Time"],"NoOp":[],"ReceiveReply":["String","Int"]}}},"aliases":{"Conference.CallLeg":{"args":[],"type":"{ identifier : String , callStatus : Maybe.Maybe String , callSid : Maybe.Maybe String , hangupRequested : Bool }"},"Line.Callee":{"args":[],"type":"String"},"Time.Time":{"args":[],"type":"Float"}},"message":"App.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])

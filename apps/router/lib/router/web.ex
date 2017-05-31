@@ -18,11 +18,10 @@ defmodule Router.Web do
   @spec conference_message(Telephony.Conference.t) :: nil | map
   defp conference_message(conference) when is_nil(conference), do: nil
   defp conference_message(conference) do
+    participants = Map.values(conference.calls)
     %{
       identifier: conference.identifier,
-      chair: call_leg_message(conference.chair),
-      pending_participant: call_leg_message(conference.pending_participant),
-      participants: Enum.map(conference.participants, fn({_, participant}) -> call_leg_message(participant) end)
+      participants: Enum.map(participants, fn(participant) -> call_leg_message(participant) end)
     }
   end
 
@@ -31,8 +30,8 @@ defmodule Router.Web do
   defp call_leg_message(call_leg) do
     %{
       identifier: call_leg.identifier,
-      call_status: elem(call_leg.call_status, 0),
-      call_sid: call_leg.call_sid
+      call_status: elem(call_leg.status, 0),
+      call_sid: call_leg.providers_identifier
     }
   end
 end

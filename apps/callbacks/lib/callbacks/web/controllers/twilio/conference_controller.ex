@@ -22,8 +22,16 @@ defmodule Callbacks.Web.Twilio.ConferenceController do
   In the case that a participant has joined the conference, we publish an event
   indicating so.
   """
-  def status_changed(conn, %{"conference" => conference, "chair" => chair, "ConferenceSid" => conference_sid, "CallSid" => call_sid, "StatusCallbackEvent" => event}) when participant_joined(event) do
-    {:ok, _} = Events.publish(%Events.ParticipantJoinedConference{conference: conference, chair: chair, call_sid: call_sid, conference_sid: conference_sid})
+  def status_changed(conn, %{
+        "conference_id" => conference,
+        "ConferenceSid" => conference_sid,
+        "CallSid" => call_sid,
+        "StatusCallbackEvent" => event})
+  when participant_joined(event) do
+    {:ok, _} = Events.publish(%Events.CallJoinedConference{
+          conference: conference,
+          providers_identifier: conference_sid,
+          providers_call_identifier: call_sid})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
@@ -34,8 +42,16 @@ defmodule Callbacks.Web.Twilio.ConferenceController do
   In the case that a participant has left the conference, we publish an event
   indicating so.
   """
-  def status_changed(conn, %{"conference" => conference, "chair" => chair, "ConferenceSid" => conference_sid, "CallSid" => call_sid, "StatusCallbackEvent" => event}) when participant_left(event) do
-    {:ok, _} = Events.publish(%Events.ParticipantLeftConference{conference: conference, chair: chair, call_sid: call_sid, conference_sid: conference_sid})
+  def status_changed(conn, %{
+        "conference_id" => conference,
+        "ConferenceSid" => conference_sid,
+        "CallSid" => call_sid,
+        "StatusCallbackEvent" => event})
+  when participant_left(event) do
+    {:ok, _} = Events.publish(%Events.CallLeftConference{
+          conference: conference,
+          providers_identifier: conference_sid,
+          providers_call_identifier: call_sid})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")
@@ -45,8 +61,14 @@ defmodule Callbacks.Web.Twilio.ConferenceController do
   Called when Twilio informs us that the status of the conference has changed.
   In the case that the conference has ended, we publish an event indicating so.
   """
-  def status_changed(conn, %{"conference" => conference, "chair" => chair, "ConferenceSid" => conference_sid, "StatusCallbackEvent" => event}) when conference_ended(event) do
-    {:ok, _} = Events.publish(%Events.ConferenceEnded{conference: conference, chair: chair, conference_sid: conference_sid})
+  def status_changed(conn, %{
+        "conference_id" => conference,
+        "ConferenceSid" => conference_sid,
+        "StatusCallbackEvent" => event})
+  when conference_ended(event) do
+    {:ok, _} = Events.publish(%Events.ConferenceEnded{
+          conference: conference,
+          providers_identifier: conference_sid})
     conn
     |> put_resp_content_type("text/xml")
     |> text("ok")

@@ -106,14 +106,9 @@ sendStartCall model callee =
     sendRequest model "start_call" (encodedCall callee model.clientName)
 
 
-sendRequestToCancelPendingParticipant : Model -> Conference.Model -> Conference.CallLeg -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
-sendRequestToCancelPendingParticipant model conference callLeg =
-    sendRequest model "request_to_cancel_pending_participant" (encodedPendingParticipantReference conference callLeg)
-
-
 sendRequestToHangupParticipant : Model -> Conference.Model -> Conference.CallLeg -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendRequestToHangupParticipant model conference callLeg =
-    sendRequest model "request_to_hangup_participant" (encodedParticipantReference conference callLeg)
+    sendRequest model "request_to_remove_call" (encodedCallLeg conference callLeg)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -214,9 +209,6 @@ update msg model =
 
                         ( phxSocket, phxCmd ) =
                             case subMsg of
-                                (Conference.Cancel callLeg) ->
-                                    sendRequestToCancelPendingParticipant model updatedConferenceModel callLeg
-
                                 (Conference.Hangup callLeg) ->
                                     sendRequestToHangupParticipant model updatedConferenceModel callLeg
                     in
@@ -257,16 +249,11 @@ view model =
                   Html.map LineMsg (Line.view model.line)
 
               Just conference ->
-                  case conference.pending_participant of
-                      Nothing ->
-                          p [ ]
-                            [ Html.map ConferenceMsg (Conference.view conference)
-                            , Html.map LineMsg (Line.view model.line)
-                            ]
+                  p [ ]
+                      [ Html.map ConferenceMsg (Conference.view conference)
+                      , Html.map LineMsg (Line.view model.line)
+                      ]
 
-                      Just _ ->
-                          p [ ]
-                            [ Html.map ConferenceMsg (Conference.view conference) ]
         ]
 
 
@@ -290,21 +277,11 @@ encodedCall callee user =
       ]
 
 
-encodedPendingParticipantReference: Conference.Model -> Conference.CallLeg -> JsDecode.Value
-encodedPendingParticipantReference conference callLeg =
+encodedCallLeg: Conference.Model -> Conference.CallLeg -> JsDecode.Value
+encodedCallLeg conference callLeg =
     JsEncode.object
       [ ( "conference", JsEncode.string conference.identifier )
-      , ( "chair", JsEncode.string conference.chair.identifier )
-      , ( "pending_participant", JsEncode.string callLeg.identifier )
-      ]
-
-
-encodedParticipantReference: Conference.Model -> Conference.CallLeg -> JsDecode.Value
-encodedParticipantReference conference callLeg =
-    JsEncode.object
-      [ ( "conference", JsEncode.string conference.identifier )
-      , ( "chair", JsEncode.string conference.chair.identifier )
-      , ( "call_sid", JsEncode.string (Maybe.withDefault "" callLeg.callSid) )
+      , ( "call", JsEncode.string callLeg.identifier )
       ]
 
 

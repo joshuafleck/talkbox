@@ -20,8 +20,6 @@ type alias CallLeg =
 
 type alias Model =
     { identifier : String
-    , chair : CallLeg
-    , pending_participant : Maybe CallLeg
     , participants : List CallLeg
     }
 
@@ -41,10 +39,8 @@ decodeResponse =
 
 decodeConference: JsDecode.Decoder Model
 decodeConference =
-    JsDecode.map4 Model
+    JsDecode.map2 Model
         (JsDecode.field "identifier" JsDecode.string)
-        (JsDecode.field "chair" decodeCallLeg)
-        (JsDecode.maybe (JsDecode.field "pending_participant" decodeCallLeg))
         (JsDecode.field "participants" decodeParticipants)
 
 
@@ -66,7 +62,6 @@ decodeParticipants =
 
 type Msg
     = Hangup CallLeg
-    | Cancel CallLeg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,11 +71,6 @@ update message model =
             ( { model
                   | participants = List.map (\participant -> findCallLegAndRequestHangup participant callLeg) model.participants
               }
-            , Cmd.none
-            )
-
-        Cancel callLeg ->
-            ( { model | pending_participant = Just (requestHangup callLeg) }
             , Cmd.none
             )
 
@@ -100,10 +90,6 @@ requestHangup callLeg =
 
 -- VIEW
 
-type CallLegType
-    = Participant
-    | PendingParticipant
-
 
 view : Model -> Html Msg
 view model =
@@ -113,34 +99,14 @@ view model =
 
 allCallLegs : Model -> List (Html Msg)
 allCallLegs model =
-    let
-        callLegs =
-            List.map (\participant -> viewCallLeg participant Participant) model.participants
-    in
-        case model.pending_participant of
-            Just pendingParticipant ->
-                callLegs ++ [ viewCallLeg pendingParticipant PendingParticipant ]
-                    
-            Nothing ->
-                callLegs
+    List.map (\participant -> viewCallLeg participant) model.participants
 
 
-viewCallLeg : CallLeg -> CallLegType -> Html Msg
-viewCallLeg callLeg callLegType =
-    case callLegType of
-        Participant ->
-            button [ type_ "button"
-                   , onClick (Hangup callLeg)
-                   , disabled (callLeg.hangupRequested || (callLeg.callSid == Nothing))
-                   , class "list-group-item"
-                   ]
-                   [ text callLeg.identifier ]
-
-        PendingParticipant ->
-            button [ type_ "button"
-                   , onClick (Cancel callLeg)
-                   , disabled (callLeg.hangupRequested || (callLeg.callSid == Nothing))
-                   , class "list-group-item"
-                   ]
-                   [ text (callLeg.identifier ++ " (" ++ (Maybe.withDefault "pending" callLeg.callStatus) ++ ")")
-                   ]
+viewCallLeg : CallLeg -> Html Msg
+viewCallLeg callLeg =
+    button [ type_ "button"
+           , onClick (Hangup callLeg)
+           , disabled (callLeg.hangupRequested || (callLeg.callSid == Nothing))
+           , class "list-group-item"
+           ]
+           [ text (callLeg.identifier ++ " (" ++ (Maybe.withDefault "pending" callLeg.callStatus) ++ ")") ]
