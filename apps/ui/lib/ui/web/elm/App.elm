@@ -46,7 +46,12 @@ type alias Model =
 
 clientsChannel : String -> String
 clientsChannel clientName =
-    "twilio:" ++ clientName
+    "user:" ++ clientName
+
+
+conferenceChannel : Conference.Model -> String
+conferenceChannel conference =
+    "conference:" ++ conference.identifier
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -58,7 +63,7 @@ init flags =
         ( initSocket, phxCmd ) =
             Phoenix.Socket.init "ws://localhost:5000/socket/websocket"
                 |> Phoenix.Socket.withDebug
-                |> Phoenix.Socket.on "conference_changed" (clientsChannel flags.clientName) ConferenceChanged
+                |> Phoenix.Socket.on "conference_started" (clientsChannel flags.clientName) ConferenceStarted
                 |> Phoenix.Socket.on "set_token" (clientsChannel flags.clientName) SetupTwilio
                 |> Phoenix.Socket.join channel
 
@@ -79,7 +84,9 @@ init flags =
 
 type Msg
     = PhoenixMsg (Phoenix.Socket.Msg Msg)
+    | ConferenceStarted JsEncode.Value
     | ConferenceChanged JsEncode.Value
+    | ConferenceEnded JsEncode.Value
     | RequestFailed JsEncode.Value
     | RequestSubmitted JsEncode.Value
     | TwilioStatusChanged String
@@ -87,11 +94,11 @@ type Msg
     | LineMsg Line.Msg
     | ConferenceMsg Conference.Msg
 
-sendRequest : Model -> String -> JsDecode.Value -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
-sendRequest model requestName payload =
+sendRequest : Model -> String -> String -> JsDecode.Value -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
+sendRequest model requestName channel payload =
     let
         phxPush =
-            Phoenix.Push.init requestName (clientsChannel model.clientName)
+            Phoenix.Push.init requestName channel
                 |> Phoenix.Push.withPayload payload
                 |> Phoenix.Push.onOk RequestSubmitted
                 |> Phoenix.Push.onError RequestFailed
@@ -103,12 +110,34 @@ sendRequest model requestName payload =
 
 sendStartCall : Model -> Line.Callee -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendStartCall model callee =
-    sendRequest model "start_call" (encodedCall callee model.clientName)
+    sendRequest model "start_call" (clientsChannel model.clientName) (encodedCall callee model.clientName)
 
 
 sendRequestToHangupParticipant : Model -> Conference.Model -> Conference.CallLeg -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendRequestToHangupParticipant model conference callLeg =
-    sendRequest model "request_to_remove_call" (encodedCallLeg conference callLeg)
+    sendRequest model "request_to_remove_call" (conferenceChannel conference) (encodedCallLeg conference callLeg)
+
+
+joinConferenceChannel : Model -> Conference.Model -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
+joinConferenceChannel model conference =
+    let
+        channel =
+            Phoenix.Channel.init (conferenceChannel conference)
+    in
+        model.phxSocket
+            |> Phoenix.Socket.on "conference_changed" (conferenceChannel conference) ConferenceChanged
+            |> Phoenix.Socket.on "conference_ended" (conferenceChannel conference) ConferenceEnded
+            |> Phoenix.Socket.join channel
+
+
+leaveConferenceChannel : Model -> Conference.Model -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
+leaveConferenceChannel model conference =
+    let
+        channel =
+            (conferenceChannel conference)
+    in
+        model.phxSocket
+            |> Phoenix.Socket.leave channel
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -135,6 +164,58 @@ update msg model =
                         , Cmd.none
                         )
 
+        ConferenceStarted raw ->
+            let
+                decodeResult =
+                    JsDecode.decodeValue Conference.decodeResponse raw
+            in
+                case decodeResult of
+                    Ok response ->
+                        let
+                            conference =
+                                response.conference
+                            (phxSocket, phxCmd) =
+                                joinConferenceChannel model conference
+                         in
+                             ( { model
+                                   | conference = Just conference
+                                   , conferenceStatus = response.message
+                                   , phxSocket = phxSocket
+                               }
+                             , Cmd.map PhoenixMsg phxCmd
+                             )
+
+                    Err error ->
+                        ( { model | status = error }
+                        , Cmd.none
+                        )
+
+        ConferenceEnded raw ->
+            let
+                decodeResult =
+                    JsDecode.decodeValue Conference.decodeResponse raw
+            in
+                case decodeResult of
+                    Ok response ->
+                        let
+                            conference =
+                                response.conference
+                            (phxSocket, phxCmd) =
+                                leaveConferenceChannel model conference
+                         in
+                             ( { model
+                                   | conference = Nothing
+                                   , conferenceStatus = response.message
+                                   , phxSocket = phxSocket
+                               }
+                             , Cmd.map PhoenixMsg phxCmd
+                             )
+
+                    Err error ->
+                        ( { model | status = error }
+                        , Cmd.none
+                        )
+
         ConferenceChanged raw ->
             let
                 decodeResult =
@@ -143,7 +224,7 @@ update msg model =
                 case decodeResult of
                     Ok response ->
                         ( { model
-                              | conference = response.conference
+                              | conference = Just response.conference
                               , conferenceStatus = response.message
                           }
                         , Cmd.none

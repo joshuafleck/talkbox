@@ -17,9 +17,9 @@ defmodule Router do
     def routing(event) do
       case Telephony.add_participant_or_initiate_conference(event.user, event.callee) do
         {:ok, conference} ->
-          Router.Web.broadcast(event.user, "Starting call", conference)
+          Router.Web.broadcast_conference_start(event.user, "Starting call", conference)
         {:error, message, conference} ->
-          Router.Web.broadcast(event.user, "Error starting call: #{message}", conference)
+          Router.Web.broadcast_conference_start(event.user, "Error starting call: #{message}", conference)
       end
     end
   end
@@ -30,7 +30,7 @@ defmodule Router do
       conference = Telephony.remove_call(
         event.conference,
         event.call)
-      Router.Web.broadcast("Josh", "Failed to reach #{event.call}", conference)
+      Router.Web.broadcast_conference_changed("Failed to reach #{event.call}", conference)
     end
   end
 
@@ -43,7 +43,7 @@ defmodule Router do
         event.providers_call_identifier,
         event.status,
         event.sequence_number)
-      Router.Web.broadcast("Josh", "Call status changed for #{event.call}", conference)
+      Router.Web.broadcast_conference_changed("Call status changed for #{event.call}", conference)
     end
   end
 
@@ -56,9 +56,9 @@ defmodule Router do
         event.providers_call_identifier)
       case result do
         {:ok, conference} ->
-          Router.Web.broadcast("Josh", "Someone joined", conference)
+          Router.Web.broadcast_conference_changed("Someone joined", conference)
         {:error, message, conference} ->
-          Router.Web.broadcast("Josh", "Failed to join participant to conference due to: #{message}", conference)
+          Router.Web.broadcast_conference_changed("Failed to join participant to conference due to: #{message}", conference)
       end
     end
   end
@@ -73,7 +73,7 @@ defmodule Router do
         nil ->
           nil
         conference ->
-          Router.Web.broadcast("Josh", "Someone left", conference)
+          Router.Web.broadcast_conference_changed("Someone left", conference)
       end
     end
   end
@@ -81,9 +81,9 @@ defmodule Router do
   defimpl Routing, for: Events.ConferenceEnded do
     @spec routing(Events.ConferenceEnded.t) :: any
     def routing(event) do
-      Telephony.remove_conference(
+      conference = Telephony.remove_conference(
         event.conference)
-      Router.Web.broadcast("Josh", "Call ended", nil)
+      Router.Web.broadcast_conference_end("Call ended", conference)
     end
   end
 

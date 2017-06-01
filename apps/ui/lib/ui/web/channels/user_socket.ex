@@ -3,7 +3,8 @@ defmodule Ui.Web.UserSocket do
 
   ## Channels
   # channel "room:*", Ui.RoomChannel
-  channel "twilio:*", Ui.Web.TwilioChannel
+  channel "user:*", Ui.Web.UserChannel
+  channel "conference:*", Ui.Web.ConferenceChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

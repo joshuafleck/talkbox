@@ -26,7 +26,7 @@ type alias Model =
 
 type alias Response =
     { message : String
-    , conference : Maybe Model
+    , conference : Model
     }
 
 
@@ -34,7 +34,7 @@ decodeResponse: JsDecode.Decoder Response
 decodeResponse =
     JsDecode.map2 Response
         (JsDecode.field "message" JsDecode.string)
-        (JsDecode.maybe (JsDecode.field "conference" decodeConference))
+        (JsDecode.field "conference" decodeConference)
 
 
 decodeConference: JsDecode.Decoder Model

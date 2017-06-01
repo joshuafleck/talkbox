@@ -3,16 +3,19 @@ defmodule Router.Web do
   Responsible for encoding and sending messages in a format that can be handled by the
   client-side Javascript. This is where we trigger Websocket responses back to the clients.
   """
-
-  @spec broadcast(String.t, String.t, Telephony.Conference.t | nil) :: any
-  def broadcast(user, message, conference) do
-    # TODO: log that we are broadcasing an event
-    Ui.Web.Endpoint.broadcast(channel(user), "conference_changed", %{message: message, conference: conference_message(conference)})
+  @spec broadcast_conference_start(String.t, String.t, Telephony.Conference.t) :: any
+  def broadcast_conference_start(user, message, conference) do
+    Ui.Web.Endpoint.broadcast("user:#{user}", "conference_started", %{message: message, conference: conference_message(conference)})
   end
 
-  @spec channel(String.t) :: String.t
-  defp channel(user) do
-    "twilio:" <> user
+  @spec broadcast_conference_end(String.t, Telephony.Conference.t) :: any
+  def broadcast_conference_end(message, conference) do
+    Ui.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_ended", %{message: message, conference: conference_message(conference)})
+  end
+
+  @spec broadcast_conference_changed(String.t, Telephony.Conference.t) :: any
+  def broadcast_conference_changed(message, conference) do
+    Ui.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_changed", %{message: message, conference: conference_message(conference)})
   end
 
   @spec conference_message(Telephony.Conference.t) :: nil | map

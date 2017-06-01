@@ -14020,8 +14020,7 @@ var _user$project$Conference$decodeResponse = A3(
 	_elm_lang$core$Json_Decode$map2,
 	_user$project$Conference$Response,
 	A2(_elm_lang$core$Json_Decode$field, 'message', _elm_lang$core$Json_Decode$string),
-	_elm_lang$core$Json_Decode$maybe(
-		A2(_elm_lang$core$Json_Decode$field, 'conference', _user$project$Conference$decodeConference)));
+	A2(_elm_lang$core$Json_Decode$field, 'conference', _user$project$Conference$decodeConference));
 var _user$project$Conference$Hangup = function (a) {
 	return {ctor: 'Hangup', _0: a};
 };
@@ -14140,8 +14139,16 @@ var _user$project$App$encodedCall = F2(
 				}
 			});
 	});
+var _user$project$App$conferenceChannel = function (conference) {
+	return A2(_elm_lang$core$Basics_ops['++'], 'conference:', conference.identifier);
+};
+var _user$project$App$leaveConferenceChannel = F2(
+	function (model, conference) {
+		var channel = _user$project$App$conferenceChannel(conference);
+		return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$leave, channel, model.phxSocket);
+	});
 var _user$project$App$clientsChannel = function (clientName) {
-	return A2(_elm_lang$core$Basics_ops['++'], 'twilio:', clientName);
+	return A2(_elm_lang$core$Basics_ops['++'], 'user:', clientName);
 };
 var _user$project$App$Flags = function (a) {
 	return {clientName: a};
@@ -14235,8 +14242,8 @@ var _user$project$App$RequestSubmitted = function (a) {
 var _user$project$App$RequestFailed = function (a) {
 	return {ctor: 'RequestFailed', _0: a};
 };
-var _user$project$App$sendRequest = F3(
-	function (model, requestName, payload) {
+var _user$project$App$sendRequest = F4(
+	function (model, requestName, channel, payload) {
 		var phxPush = A2(
 			_fbonetti$elm_phoenix_socket$Phoenix_Push$onError,
 			_user$project$App$RequestFailed,
@@ -14246,10 +14253,7 @@ var _user$project$App$sendRequest = F3(
 				A2(
 					_fbonetti$elm_phoenix_socket$Phoenix_Push$withPayload,
 					payload,
-					A2(
-						_fbonetti$elm_phoenix_socket$Phoenix_Push$init,
-						requestName,
-						_user$project$App$clientsChannel(model.clientName)))));
+					A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, requestName, channel))));
 		var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, phxPush, model.phxSocket);
 		var phxSocket = _p1._0;
 		var phxCmd = _p1._1;
@@ -14257,22 +14261,49 @@ var _user$project$App$sendRequest = F3(
 	});
 var _user$project$App$sendStartCall = F2(
 	function (model, callee) {
-		return A3(
+		return A4(
 			_user$project$App$sendRequest,
 			model,
 			'start_call',
+			_user$project$App$clientsChannel(model.clientName),
 			A2(_user$project$App$encodedCall, callee, model.clientName));
 	});
 var _user$project$App$sendRequestToHangupParticipant = F3(
 	function (model, conference, callLeg) {
-		return A3(
+		return A4(
 			_user$project$App$sendRequest,
 			model,
 			'request_to_remove_call',
+			_user$project$App$conferenceChannel(conference),
 			A2(_user$project$App$encodedCallLeg, conference, callLeg));
 	});
+var _user$project$App$ConferenceEnded = function (a) {
+	return {ctor: 'ConferenceEnded', _0: a};
+};
 var _user$project$App$ConferenceChanged = function (a) {
 	return {ctor: 'ConferenceChanged', _0: a};
+};
+var _user$project$App$joinConferenceChannel = F2(
+	function (model, conference) {
+		var channel = _fbonetti$elm_phoenix_socket$Phoenix_Channel$init(
+			_user$project$App$conferenceChannel(conference));
+		return A2(
+			_fbonetti$elm_phoenix_socket$Phoenix_Socket$join,
+			channel,
+			A4(
+				_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
+				'conference_ended',
+				_user$project$App$conferenceChannel(conference),
+				_user$project$App$ConferenceEnded,
+				A4(
+					_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
+					'conference_changed',
+					_user$project$App$conferenceChannel(conference),
+					_user$project$App$ConferenceChanged,
+					model.phxSocket)));
+	});
+var _user$project$App$ConferenceStarted = function (a) {
+	return {ctor: 'ConferenceStarted', _0: a};
 };
 var _user$project$App$PhoenixMsg = function (a) {
 	return {ctor: 'PhoenixMsg', _0: a};
@@ -14290,9 +14321,9 @@ var _user$project$App$init = function (flags) {
 			_user$project$App$SetupTwilio,
 			A4(
 				_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
-				'conference_changed',
+				'conference_started',
 				_user$project$App$clientsChannel(flags.clientName),
-				_user$project$App$ConferenceChanged,
+				_user$project$App$ConferenceStarted,
 				_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
 					_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:5000/socket/websocket')))));
 	var initSocket = _p2._0;
@@ -14336,17 +14367,25 @@ var _user$project$App$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
-			case 'ConferenceChanged':
+			case 'ConferenceStarted':
 				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p3._0);
 				var _p5 = decodeResult;
 				if (_p5.ctor === 'Ok') {
-					var _p6 = _p5._0;
+					var _p7 = _p5._0;
+					var conference = _p7.conference;
+					var _p6 = A2(_user$project$App$joinConferenceChannel, model, conference);
+					var phxSocket = _p6._0;
+					var phxCmd = _p6._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{conference: _p6.conference, conferenceStatus: _p6.message}),
-						_1: _elm_lang$core$Platform_Cmd$none
+							{
+								conference: _elm_lang$core$Maybe$Just(conference),
+								conferenceStatus: _p7.message,
+								phxSocket: phxSocket
+							}),
+						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$App$PhoenixMsg, phxCmd)
 					};
 				} else {
 					return {
@@ -14357,16 +14396,65 @@ var _user$project$App$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
-			case 'RequestFailed':
-				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p3._0);
-				var _p7 = decodeResult;
-				if (_p7.ctor === 'Ok') {
+			case 'ConferenceEnded':
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p3._0);
+				var _p8 = decodeResult;
+				if (_p8.ctor === 'Ok') {
+					var _p10 = _p8._0;
+					var conference = _p10.conference;
+					var _p9 = A2(_user$project$App$leaveConferenceChannel, model, conference);
+					var phxSocket = _p9._0;
+					var phxCmd = _p9._1;
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{conference: _elm_lang$core$Maybe$Nothing, conferenceStatus: _p10.message, phxSocket: phxSocket}),
+						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$App$PhoenixMsg, phxCmd)
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{status: _p8._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'ConferenceChanged':
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Conference$decodeResponse, _p3._0);
+				var _p11 = decodeResult;
+				if (_p11.ctor === 'Ok') {
+					var _p12 = _p11._0;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Request failed with error: ', _p7._0)
+								conference: _elm_lang$core$Maybe$Just(_p12.conference),
+								conferenceStatus: _p12.message
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{status: _p11._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'RequestFailed':
+				var decodeResult = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$App$decodeCallRequestFailure, _p3._0);
+				var _p13 = decodeResult;
+				if (_p13.ctor === 'Ok') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Request failed with error: ', _p13._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -14376,7 +14464,7 @@ var _user$project$App$update = F2(
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
 							{
-								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p7._0)
+								status: A2(_elm_lang$core$Basics_ops['++'], 'Failed to decode call request failure: ', _p13._0)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
@@ -14390,20 +14478,20 @@ var _user$project$App$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'LineMsg':
-				var _p11 = _p3._0;
-				var _p8 = function () {
-					var _p9 = _p11;
-					if (_p9.ctor === 'RequestCall') {
+				var _p17 = _p3._0;
+				var _p14 = function () {
+					var _p15 = _p17;
+					if (_p15.ctor === 'RequestCall') {
 						return A2(_user$project$App$sendStartCall, model, model.line);
 					} else {
 						return {ctor: '_Tuple2', _0: model.phxSocket, _1: _elm_lang$core$Platform_Cmd$none};
 					}
 				}();
-				var phxSocket = _p8._0;
-				var phxCmd = _p8._1;
-				var _p10 = A2(_user$project$Line$update, _p11, model.line);
-				var updatedLineModel = _p10._0;
-				var lineCmd = _p10._1;
+				var phxSocket = _p14._0;
+				var phxCmd = _p14._1;
+				var _p16 = A2(_user$project$Line$update, _p17, model.line);
+				var updatedLineModel = _p16._0;
+				var lineCmd = _p16._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -14421,20 +14509,20 @@ var _user$project$App$update = F2(
 						})
 				};
 			case 'ConferenceMsg':
-				var _p16 = _p3._0;
-				var _p12 = model.conference;
-				if (_p12.ctor === 'Nothing') {
+				var _p22 = _p3._0;
+				var _p18 = model.conference;
+				if (_p18.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
-					var _p13 = A2(_user$project$Conference$update, _p16, _p12._0);
-					var updatedConferenceModel = _p13._0;
-					var conferenceCmd = _p13._1;
-					var _p14 = function () {
-						var _p15 = _p16;
-						return A3(_user$project$App$sendRequestToHangupParticipant, model, updatedConferenceModel, _p15._0);
+					var _p19 = A2(_user$project$Conference$update, _p22, _p18._0);
+					var updatedConferenceModel = _p19._0;
+					var conferenceCmd = _p19._1;
+					var _p20 = function () {
+						var _p21 = _p22;
+						return A3(_user$project$App$sendRequestToHangupParticipant, model, updatedConferenceModel, _p21._0);
 					}();
-					var phxSocket = _p14._0;
-					var phxCmd = _p14._1;
+					var phxSocket = _p20._0;
+					var phxCmd = _p20._1;
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -14456,9 +14544,9 @@ var _user$project$App$update = F2(
 					};
 				}
 			default:
-				var _p17 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p3._0, model.phxSocket);
-				var phxSocket = _p17._0;
-				var phxCmd = _p17._1;
+				var _p23 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p3._0, model.phxSocket);
+				var phxSocket = _p23._0;
+				var phxCmd = _p23._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -14493,7 +14581,7 @@ var _user$project$App$main = _elm_lang$html$Html$programWithFlags(
 var Elm = {};
 Elm['App'] = Elm['App'] || {};
 if (typeof _user$project$App$main !== 'undefined') {
-    _user$project$App$main(Elm['App'], 'App', {"types":{"unions":{"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"App.Msg":{"args":[],"tags":{"SetupTwilio":["Json.Encode.Value"],"RequestFailed":["Json.Encode.Value"],"PhoenixMsg":["Phoenix.Socket.Msg App.Msg"],"ConferenceChanged":["Json.Encode.Value"],"LineMsg":["Line.Msg"],"ConferenceMsg":["Conference.Msg"],"RequestSubmitted":["Json.Encode.Value"],"TwilioStatusChanged":["String"]}},"Conference.Msg":{"args":[],"tags":{"Hangup":["Conference.CallLeg"]}},"Line.Msg":{"args":[],"tags":{"RequestCall":[],"DialInput":["Line.Callee"]}},"Phoenix.Socket.Msg":{"args":["msg"],"tags":{"ChannelErrored":["String"],"ChannelClosed":["String"],"ExternalMsg":["msg"],"ChannelJoined":["String"],"Heartbeat":["Time.Time"],"NoOp":[],"ReceiveReply":["String","Int"]}}},"aliases":{"Conference.CallLeg":{"args":[],"type":"{ identifier : String , callStatus : Maybe.Maybe String , callSid : Maybe.Maybe String , hangupRequested : Bool }"},"Line.Callee":{"args":[],"type":"String"},"Time.Time":{"args":[],"type":"Float"}},"message":"App.Msg"},"versions":{"elm":"0.18.0"}});
+    _user$project$App$main(Elm['App'], 'App', {"types":{"unions":{"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"App.Msg":{"args":[],"tags":{"SetupTwilio":["Json.Encode.Value"],"ConferenceStarted":["Json.Encode.Value"],"RequestFailed":["Json.Encode.Value"],"PhoenixMsg":["Phoenix.Socket.Msg App.Msg"],"ConferenceChanged":["Json.Encode.Value"],"LineMsg":["Line.Msg"],"ConferenceMsg":["Conference.Msg"],"ConferenceEnded":["Json.Encode.Value"],"RequestSubmitted":["Json.Encode.Value"],"TwilioStatusChanged":["String"]}},"Conference.Msg":{"args":[],"tags":{"Hangup":["Conference.CallLeg"]}},"Line.Msg":{"args":[],"tags":{"RequestCall":[],"DialInput":["Line.Callee"]}},"Phoenix.Socket.Msg":{"args":["msg"],"tags":{"ChannelErrored":["String"],"ChannelClosed":["String"],"ExternalMsg":["msg"],"ChannelJoined":["String"],"Heartbeat":["Time.Time"],"NoOp":[],"ReceiveReply":["String","Int"]}}},"aliases":{"Conference.CallLeg":{"args":[],"type":"{ identifier : String , callStatus : Maybe.Maybe String , callSid : Maybe.Maybe String , hangupRequested : Bool }"},"Line.Callee":{"args":[],"type":"String"},"Time.Time":{"args":[],"type":"Float"}},"message":"App.Msg"},"versions":{"elm":"0.18.0"}});
 }
 
 if (typeof define === "function" && define['amd'])
