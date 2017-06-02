@@ -15,7 +15,7 @@ defmodule Router do
   defimpl Routing, for: Events.UserRequestsCall do
     @spec routing(Events.UserRequestsCall.t) :: any
     def routing(event) do
-      case Telephony.add_participant_or_initiate_conference(event.user, event.callee) do
+      case Telephony.add_participant_or_initiate_conference(event.user, event.callee, event.conference) do
         {:ok, conference} ->
           Router.Web.broadcast_conference_start(event.user, "Starting call", conference)
         {:error, message, conference} ->

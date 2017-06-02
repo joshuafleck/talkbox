@@ -25,9 +25,9 @@ defmodule Telephony do
   leg until we've confirmed we have joined the chair's leg to the conference.
   This is to ensure that the participant does not end up in an empty conference.
   """
-  @spec add_participant_or_initiate_conference(String.t, String.t) :: response
-  def add_participant_or_initiate_conference(chairperson, destination) do
-    case Telephony.Conference.fetch(chairperson) do
+  @spec add_participant_or_initiate_conference(String.t, String.t, String.t | nil) :: response
+  def add_participant_or_initiate_conference(chairperson, destination, conference_identifier) do
+    case Telephony.Conference.fetch(conference_identifier) do
       nil ->
         initiate_conference(chairperson, destination)
       {:ok, conference} ->
@@ -53,7 +53,7 @@ defmodule Telephony do
   participant has joined the conference, thus we cannot rely on matching
   the participant based on its call_sid.
   """
-  @spec acknowledge_call_joined(Telephony.Conference.internal_identifier, String.t, String.t) :: response
+  @spec acknowledge_call_joined(Telephony.Intentifier.t, String.t, String.t) :: response
   def acknowledge_call_joined(conference_identifier, providers_identifier, providers_call_identifier) do
     {:ok, conference} = Telephony.Conference.fetch(conference_identifier)
     {:ok, conference} = Telephony.Conference.set_providers_identifier(conference, providers_identifier)
@@ -79,7 +79,7 @@ defmodule Telephony do
   chair remaining in the conference then their call leg will be hung up and the
   conference cleared.
   """
-  @spec acknowledge_call_left(Telephony.Conference.internal_identifier, String.t) :: Telephony.Conference.t | nil
+  @spec acknowledge_call_left(Telephony.Intentifier.t, String.t) :: Telephony.Conference.t | nil
   def acknowledge_call_left(conference_identifier, providers_call_identifier) do
     case Telephony.Conference.fetch(conference_identifier) do
       {:ok, conference} ->
@@ -97,7 +97,7 @@ defmodule Telephony do
   This is done because if the conference has ended then there is no way to
   salvage it and there is no path for reconnecting to it.
   """
-  @spec remove_conference(Telephony.Conference.internal_identifier) :: Telephony.Conference.t | nil
+  @spec remove_conference(Telephony.Intentifier.t) :: Telephony.Conference.t | nil
   def remove_conference(conference_identifier) do
     case Telephony.Conference.fetch(conference_identifier) do
       {:ok, conference} ->
@@ -112,7 +112,7 @@ defmodule Telephony do
 
   This will remove the pending participant and may end the conference as described in `remove_chair_or_participant/1`
   """
-  @spec remove_call(Telephony.Conference.internal_identifier, Telephony.Conference.internal_identifier) :: Telephony.Conference.t
+  @spec remove_call(Telephony.Intentifier.t, Telephony.Intentifier.t) :: Telephony.Conference.t
   def remove_call(conference_identifier, call_identifier) do
     case Telephony.Conference.fetch(conference_identifier) do
       {:ok, conference} ->
@@ -131,7 +131,7 @@ defmodule Telephony do
   will be a subsequent message from the telephony provider telling us that the leg has failed
   to connect, which will be handled in `remove_pending_participant/1`.
   """
-  @spec hangup_call(Telephony.Conference.internal_identifier, Telephony.Conference.internal_identifier) :: Telephony.Conference.t
+  @spec hangup_call(Telephony.Intentifier.t, Telephony.Intentifier.t) :: Telephony.Conference.t
   def hangup_call(conference_identifier, call_identifier) do
     {:ok, conference} = Telephony.Conference.fetch(conference_identifier)
     call = Map.get(conference.calls, call_identifier)
@@ -153,7 +153,7 @@ defmodule Telephony do
   Called when we receive a notification from the telephony provider that the status of the
   call leg for the pending participant has changed.
   """
-  @spec update_status_of_call(Telephony.Conference.internal_identifier, Telephony.Conference.internal_identifier, String.t, String.t, non_neg_integer) :: Telephony.Conference.t
+  @spec update_status_of_call(Telephony.Intentifier.t, Telephony.Intentifier.t, String.t, String.t, non_neg_integer) :: Telephony.Conference.t
   def update_status_of_call(conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number) do
     {:ok, conference} = Telephony.Conference.fetch(conference_identifier)
     {:ok, conference} = Telephony.Conference.set_providers_identifier_on_call(conference, call_identifier, providers_call_identifier)
@@ -206,7 +206,7 @@ defmodule Telephony do
     |> Enum.map(fn call -> initiate_call(conference.identifier, call.identifier, call.destination) end)
   end
 
-  @spec initiate_call(Telephony.Conference.internal_identifier, Telephony.Conference.internal_identifier, String.t) :: {:ok, String.t} | {:error, String.t}
+  @spec initiate_call(Telephony.Intentifier.t, Telephony.Intentifier.t, String.t) :: {:ok, String.t} | {:error, String.t}
   defp initiate_call(conference_identifier, call_identifier, destination) do
     result = @telephony_provider.call(
       to: destination,

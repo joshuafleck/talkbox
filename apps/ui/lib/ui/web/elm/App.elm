@@ -110,7 +110,7 @@ sendRequest model requestName channel payload =
 
 sendStartCall : Model -> Line.Callee -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
 sendStartCall model callee =
-    sendRequest model "start_call" (clientsChannel model.clientName) (encodedCall callee model.clientName)
+    sendRequest model "start_call" (clientsChannel model.clientName) (encodedCall callee model.clientName model.conference)
 
 
 sendRequestToHangupParticipant : Model -> Conference.Model -> Conference.CallLeg -> ( Phoenix.Socket.Socket Msg, Cmd (Phoenix.Socket.Msg Msg) )
@@ -350,12 +350,20 @@ subscriptions model =
 
 -- JSON
 
-encodedCall: String -> String -> JsDecode.Value
-encodedCall callee user =
-    JsEncode.object
-      [ ( "callee", JsEncode.string callee )
-      , ( "user", JsEncode.string user )
-      ]
+encodedCall: String -> String -> Maybe Conference.Model -> JsDecode.Value
+encodedCall callee user conference =
+    let identifier =
+        case conference of
+            Nothing ->
+                ""
+            Just conference ->
+                conference.identifier
+    in
+        JsEncode.object
+            [ ( "callee", JsEncode.string callee )
+            , ( "user", JsEncode.string user )
+            , ( "conference", JsEncode.string identifier )
+            ]
 
 
 encodedCallLeg: Conference.Model -> Conference.CallLeg -> JsDecode.Value

@@ -28,17 +28,16 @@ defmodule Telephony.Conference do
     * `calls` - A map of call identifier to call leg information about the conference participants
   """
   @type t :: %__MODULE__{
-    identifier: internal_identifier,
-    chairpersons_call_identifier: internal_identifier,
+    identifier: Telephony.Indentifier.t,
+    chairpersons_call_identifier: Telephony.Indentifier.t,
     providers_identifier: String.t | nil,
-    calls: %{required(internal_identifier) => Telephony.Conference.Call.t}
+    calls: %{required(Telephony.Indentifier.t) => Telephony.Conference.Call.t}
   }
 
   @type success :: {:ok, t}
   @type fail :: {:error, String.t}
   @type response :: success | fail
-  @type internal_identifier :: String.t
-  @type store :: %{required(internal_identifier) => t}
+  @type store :: %{required(Telephony.Indentifier.t) => t}
 
   # Client
 
@@ -68,7 +67,7 @@ defmodule Telephony.Conference do
   @doc """
   True, if the provided call identifier matches that of the chairperson
   """
-  @spec chairpersons_call?(t, internal_identifier) :: boolean
+  @spec chairpersons_call?(t, Telephony.Indentifier.t) :: boolean
   def chairpersons_call?(conference, call_identifier) do
     conference.chairpersons_call_identifier == call_identifier
   end
@@ -77,7 +76,7 @@ defmodule Telephony.Conference do
   Sets the provider's identifier on the specified call leg.
   Returns an error if the provider's identifier is already set to something different.
   """
-  @spec set_providers_identifier_on_call(t, internal_identifier, String.t) :: response
+  @spec set_providers_identifier_on_call(t, Telephony.Indentifier.t, String.t) :: response
   def set_providers_identifier_on_call(conference, call_identifier, providers_identifier) do
     GenServer.call(__MODULE__, {:set_providers_identifier_on_call, conference, call_identifier, providers_identifier})
   end
@@ -94,7 +93,7 @@ defmodule Telephony.Conference do
   @doc """
   Removes the call from the conference
   """
-  @spec remove_call(t, internal_identifier) :: response
+  @spec remove_call(t, Telephony.Indentifier.t) :: response
   def remove_call(conference, call_identifier) do
     GenServer.call(__MODULE__, {:remove_call, conference, call_identifier})
   end
@@ -112,7 +111,7 @@ defmodule Telephony.Conference do
   Returns an error if the provided sequence number is not greater than the
   sequence number associated with the current call status.
   """
-  @spec update_status_of_call(t, internal_identifier, String.t, non_neg_integer) :: response
+  @spec update_status_of_call(t, Telephony.Indentifier.t, String.t, non_neg_integer) :: response
   def update_status_of_call(conference, call_identifier, status, sequence_number) do
     GenServer.call(__MODULE__, {:update_status_of_call, conference, call_identifier, status, sequence_number})
   end
@@ -128,7 +127,7 @@ defmodule Telephony.Conference do
   @doc """
   Fetches the conference corresponding to the provided identifier
   """
-  @spec fetch(internal_identifier) :: response
+  @spec fetch(Telephony.Indentifier.t) :: response
   def fetch(identifier) do
     GenServer.call(__MODULE__, {:fetch, identifier})
   end
@@ -179,7 +178,7 @@ defmodule Telephony.Conference do
 
   def handle_call({:add_call, conference, destination}, _from, conferences) do
     with_conference(conferences, conference.identifier, fn conference ->
-      call = %Telephony.Conference.Call{identifier: conference.identifier <> "-" <> destination, destination: destination}
+      call = %Telephony.Conference.Call{identifier: Telephony.Identifier.get_next(), destination: destination}
       calls = Map.put(conference.calls, call.identifier, call)
       conference = %{conference | calls: calls}
       {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
@@ -225,16 +224,16 @@ defmodule Telephony.Conference do
   @spec new(String.t, String.t) :: t
   defp new(chairperson, destination) do
     calls = Enum.map([chairperson, destination], fn destination ->
-      %Telephony.Conference.Call{identifier: chairperson <> "-" <> destination, destination: destination}
+      %Telephony.Conference.Call{identifier: Telephony.Identifier.get_next(), destination: destination}
     end)
     %__MODULE__{
-      identifier: chairperson,
+      identifier: Telephony.Identifier.get_next(),
       chairpersons_call_identifier: Enum.at(calls, 0).identifier,
       calls: Enum.map(calls, fn call -> {call.identifier, call} end) |> Map.new
     }
   end
 
-  @spec with_conference(store, internal_identifier, (t -> response)) :: {:reply, response, store}
+  @spec with_conference(store, Telephony.Indentifier.t, (t -> response)) :: {:reply, response, store}
   defp with_conference(conferences, identifier, block) do
     case Map.get(conferences, identifier) do
       nil ->
@@ -244,7 +243,7 @@ defmodule Telephony.Conference do
     end
   end
 
-  @spec with_conference_and_call(store, internal_identifier, internal_identifier | String.t, ((t, Telephony.Conference.Call.t) -> response)) :: {:reply, response, store}
+  @spec with_conference_and_call(store, Telephony.Indentifier.t, Telephony.Indentifier.t | String.t, ((t, Telephony.Conference.Call.t) -> response)) :: {:reply, response, store}
   defp with_conference_and_call(conferences, identifier, call_identifier, block) do
     with_conference(conferences, identifier, fn conference ->
       case Map.get(conference.calls, call_identifier) do

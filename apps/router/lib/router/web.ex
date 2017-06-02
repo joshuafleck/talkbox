@@ -33,6 +33,7 @@ defmodule Router.Web do
   defp call_leg_message(call_leg) do
     %{
       identifier: call_leg.identifier,
+      destination: call_leg.destination,
       call_status: elem(call_leg.status, 0),
       call_sid: call_leg.providers_identifier
     }

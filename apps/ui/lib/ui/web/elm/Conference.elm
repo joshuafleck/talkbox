@@ -12,6 +12,7 @@ import Json.Decode as JsDecode
 
 type alias CallLeg =
     { identifier : String
+    , destination : String
     , callStatus : Maybe String
     , callSid : Maybe String
     , hangupRequested : Bool
@@ -46,8 +47,9 @@ decodeConference =
 
 decodeCallLeg: JsDecode.Decoder CallLeg
 decodeCallLeg =
-    JsDecode.map4 CallLeg
+    JsDecode.map5 CallLeg
         (JsDecode.field "identifier" JsDecode.string)
+        (JsDecode.field "destination" JsDecode.string)
         (JsDecode.maybe (JsDecode.field "call_status" JsDecode.string))
         (JsDecode.maybe (JsDecode.field "call_sid" JsDecode.string))
         (JsDecode.succeed False)
@@ -109,4 +111,4 @@ viewCallLeg callLeg =
            , disabled (callLeg.hangupRequested || (callLeg.callSid == Nothing))
            , class "list-group-item"
            ]
-           [ text (callLeg.identifier ++ " (" ++ (Maybe.withDefault "pending" callLeg.callStatus) ++ ")") ]
+           [ text (callLeg.destination ++ " (" ++ (Maybe.withDefault "pending" callLeg.callStatus) ++ ")") ]

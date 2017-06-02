@@ -35,8 +35,8 @@ defmodule Ui.Web.UserChannel do
     {:noreply, socket}
   end
 
-  def handle_in("start_call", %{"callee" => callee, "user" => user}, socket) do
-    Events.publish(%Events.UserRequestsCall{user: user, callee: callee})
+  def handle_in("start_call", %{"callee" => callee, "user" => user, "conference" => conference}, socket) do
+    Events.publish(%Events.UserRequestsCall{user: user, callee: callee, conference: conference})
     {:reply, {:ok, %{}}, socket}
   end
 

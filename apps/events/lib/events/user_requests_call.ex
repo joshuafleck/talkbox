@@ -2,10 +2,11 @@ defmodule Events.UserRequestsCall do
   @moduledoc """
   A user has requested to start a call.
   """
-  @enforce_keys [:user, :callee]
+  @enforce_keys [:user, :callee, :conference]
   defstruct [
     user: nil,
-    callee: nil
+    callee: nil,
+    conference: nil
   ]
 
   @typedoc """
@@ -13,9 +14,11 @@ defmodule Events.UserRequestsCall do
   Fields:
     * `user` - The name of the user requesting the call
     * `callee` - The name (when calling a client by name) or telephone number of the person being called
+    * `conference` - The identifier of the conference in progress (if a conference is in progress)
   """
   @type t :: %__MODULE__{
     user: String.t,
-    callee: String.t
+    callee: String.t,
+    conference: String.t | nil
   }
 end
