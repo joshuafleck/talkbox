@@ -35,7 +35,7 @@ defmodule Callbacks.Web.Twilio.CallController do
     "CallSid" => call_sid,
     "CallStatus" => status,
     "SequenceNumber" => sequence_number}) when progressing(status) do
-    {:ok, _} = Events.publish(%Events.CallStatusChanged{
+    :ok = Events.Registry.publish(%Events.CallStatusChanged{
       conference: conference,
       providers_call_identifier: call_sid,
       call: call,
@@ -57,7 +57,7 @@ defmodule Callbacks.Web.Twilio.CallController do
     "CallSid" => call_sid,
     "CallStatus" => status})
   when failed_to_connect(status) do
-    {:ok, _} = Events.publish(%Events.CallFailedToJoinConference{
+    :ok = Events.Registry.publish(%Events.CallFailedToJoinConference{
       conference: conference,
       providers_call_identifier: call_sid,
       call: call,

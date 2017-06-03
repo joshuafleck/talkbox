@@ -1,4 +1,4 @@
-defmodule Router.Web do
+defmodule Telephony.Web do
   @moduledoc """
   Responsible for encoding and sending messages in a format that can be handled by the
   client-side Javascript. This is where we trigger Websocket responses back to the clients.

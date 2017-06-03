@@ -36,7 +36,7 @@ defmodule Ui.Web.UserChannel do
   end
 
   def handle_in("start_call", %{"callee" => callee, "user" => user, "conference" => conference}, socket) do
-    Events.publish(%Events.UserRequestsCall{user: user, callee: callee, conference: conference})
+    :ok = Events.Registry.publish(%Events.UserRequestsCall{user: user, callee: callee, conference: conference})
     {:reply, {:ok, %{}}, socket}
   end
 

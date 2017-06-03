@@ -38,9 +38,11 @@ defmodule Telephony.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
+      {:events, in_umbrella: true}, # For publishing events to other apps
       {:ex_twilio, "~> 0.3.0"}, # For making requests to Twilio
       {:ex_ngrok, "~> 0.3.0", only: [:dev]}, # To allow webhook callbacks in dev
-      {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]} # To bootstrap Twilio application in dev
+      {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]}, # To bootstrap Twilio application in dev
+      {:ui, in_umbrella: true}
     ]
   end
 end

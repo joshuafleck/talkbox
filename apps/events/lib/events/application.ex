@@ -12,7 +12,7 @@ defmodule Events.Application do
     children = [
       # Starts a worker by calling: Events.Worker.start_link(arg1, arg2, arg3)
       # worker(Events.Worker, [arg1, arg2, arg3])
-      worker(Events.Queue, [])
+      supervisor(Registry, [:unique, Events.Registry])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

@@ -14,6 +14,7 @@ defmodule Telephony.Application do
       # worker(Telephony.Worker, [arg1, arg2, arg3]),
       worker(Telephony.Conference, []),
       worker(Telephony.Identifier, []),
+      worker(Telephony.Router, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
