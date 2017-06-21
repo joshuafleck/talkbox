@@ -8,3 +8,9 @@ config :callbacks, Callbacks.Web.Endpoint,
 
 # Print only warnings and errors during test
 config :logger, level: :warn
+
+config :callbacks,
+  cli: "+440000000000",
+  webhook_url: "http://test.com",
+  provider: Callbacks.Provider.Test,
+  provider_callback_url_prefix: "/callbacks/twilio"

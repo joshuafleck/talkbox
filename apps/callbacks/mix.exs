@@ -21,7 +21,8 @@ defmodule Callbacks.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {Callbacks, []},
-     applications: [:phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext, :events]]
+     extra_applications: [:logger]
+    ]
   end
 
   # Specifies which paths to compile per environment.
@@ -39,6 +40,9 @@ defmodule Callbacks.Mixfile do
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
       {:ex_twiml, github: "danielberkompas/ex_twiml"}, # For serving TwiML responses to Twilio
+      {:ex_twilio, "~> 0.3.0"}, # For making requests to Twilio
+      {:ex_ngrok, "~> 0.3.0", only: [:dev]}, # To allow webhook callbacks in dev
+      {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]}, # To bootstrap Twilio application in dev
       {:events, in_umbrella: true} # For publishing events to other apps
     ]
   end

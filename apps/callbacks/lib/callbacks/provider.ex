@@ -1,4 +1,4 @@
-defmodule Telephony.Provider do
+defmodule Callbacks.Provider do
   @moduledoc """
   This module defines the behaviour of a telephony provider. It allows for real
   providers to be replaced with fake providers during testing. It also allows

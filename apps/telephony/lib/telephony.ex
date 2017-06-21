@@ -10,8 +10,6 @@ defmodule Telephony do
   """
   require Logger
 
-  @telephony_provider Application.get_env(:telephony, :provider)
-
   @type success :: {:ok, Telephony.Conference.t}
   @type fail :: {:error, String.t, Telephony.Conference.t | nil}
   @type response :: success | fail
@@ -137,16 +135,20 @@ defmodule Telephony do
     call = Map.get(conference.calls, call_identifier)
     case call.status do
       "in-progress" ->
-        kick_call(conference, call)
+        Events.Registry.publish(%Events.RemoveRequested{
+              conference: conference.identifier,
+              providers_identifier: conference.providers_identifier,
+              call: call.identifier,
+              providers_call_identifier: call.providers_identifier
+        })
       _ ->
-        {:ok, providers_call_identifier} = @telephony_provider.hangup(call.providers_identifier)
+        Events.Registry.publish(%Events.HangupRequested{
+              conference: conference.identifier,
+              call: call.identifier,
+              providers_call_identifier: call.providers_identifier
+        })
     end
     conference
-  end
-
-  @spec kick_call(Telephony.Conference.t, Telephone.Conference.Call.t) :: {:ok, String.t} | {:error, String.t, number}
-  defp kick_call(conference, call) do
-    @telephony_provider.kick_participant_from_conference(conference.providers_identifier, call.providers_identifier)
   end
 
   @doc """
@@ -163,15 +165,19 @@ defmodule Telephony do
 
   @spec initiate_conference(String.t, String.t) :: response
   defp initiate_conference(chairperson, destination) do
-    with  {:ok, conference} <- Telephony.Conference.create(chairperson, destination),
-          {:ok, providers_call_identifier} <- initiate_call(conference.identifier, Telephony.Conference.chairpersons_call(conference).identifier, chairperson),
-          {:ok, conference} <- Telephony.Conference.set_providers_identifier_on_call(conference, Telephony.Conference.chairpersons_call(conference).identifier, providers_call_identifier)
-    do
+    {:ok, conference} = Telephony.Conference.create(chairperson, destination)
+    Events.Registry.publish(%Events.CallRequested{
+          destination: chairperson,
+          conference: conference.identifier,
+          call: Telephony.Conference.chairpersons_call(conference).identifier
+    })
+    #{:ok, conference} = Telephony.Conference.set_providers_identifier_on_call(conference, Telephony.Conference.chairpersons_call(conference).identifier, providers_call_identifier)
+    #do
       {:ok, conference}
-    else
-      {:error, message} ->
-        {:error, message, nil}
-    end
+    #else
+    #  {:error, message} ->
+    #    {:error, message, nil}
+    #end
   end
 
   @spec add_participant(Telephony.Conference.t, String.t) :: response
@@ -186,9 +192,13 @@ defmodule Telephony do
     chairpersons_call = Telephony.Conference.chairpersons_call(conference)
     number_of_calls = Enum.count(Map.values(conference.calls))
     if chairpersons_call != nil && number_of_calls == 1 do
-      kick_call(conference, chairpersons_call)
+      Events.Registry.publish(%Events.RemoveRequested{
+            conference: conference.identifier,
+            providers_identifier: conference.providers_identifier,
+            call: chairpersons_call.identifier,
+            providers_call_identifier: chairpersons_call.providers_identifier
+      })
     end
-
     conference
   end
 
@@ -203,36 +213,12 @@ defmodule Telephony do
   defp call_pending_participants(conference) do
     Map.values(conference.calls)
     |> Enum.filter(fn call -> call.providers_identifier == nil end)
-    |> Enum.map(fn call -> initiate_call(conference.identifier, call.identifier, call.destination) end)
-  end
-
-  @spec initiate_call(Telephony.Intentifier.t, Telephony.Intentifier.t, String.t) :: {:ok, String.t} | {:error, String.t}
-  defp initiate_call(conference_identifier, call_identifier, destination) do
-    result = @telephony_provider.call(
-      to: destination,
-      from: get_env(:cli),
-      url: Telephony.Callbacks.call_answered(conference_identifier, call_identifier),
-      status_callback: Telephony.Callbacks.call_status_updated(conference_identifier, call_identifier),
-      status_callback_events: ~w(initiated ringing answered completed))
-    case result do
-      {:error, message, _} ->
-        {:error, message}
-      result ->
-        result
-    end
-  end
-
-  @doc """
-  Get a setting from the application environment.
-  If the setting is lazy, will evaluate and return the setting.
-  """
-  @spec get_env(atom) :: any
-  def get_env(name) do
-    setting = Application.get_env(:telephony, name)
-    if is_function(setting) do
-      setting.()
-    else
-      setting
-    end
+    |> Enum.map(fn call ->
+      Events.Registry.publish(%Events.CallRequested{
+            destination: call.destination,
+            conference: conference.identifier,
+            call: call.identifier
+      })
+    end)
   end
 end

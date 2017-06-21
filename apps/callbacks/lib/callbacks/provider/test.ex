@@ -1,8 +1,8 @@
-defmodule Telephony.Provider.Test do
+defmodule Callbacks.Provider.Test do
   @moduledoc """
   Provides telephony provider behaviour without making any real calls
   """
-  @behaviour Telephony.Provider
+  @behaviour Callbacks.Provider
 
   @doc """
   Simulates initiation of a phone call.

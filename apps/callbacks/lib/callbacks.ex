@@ -17,6 +17,7 @@ defmodule Callbacks do
       supervisor(Callbacks.Web.Endpoint, []),
       # Start your own worker by calling: Callbacks.Worker.start_link(arg1, arg2, arg3)
       # worker(Callbacks.Worker, [arg1, arg2, arg3]),
+      worker(Callbacks.Router, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
