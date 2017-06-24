@@ -1,4 +1,4 @@
-defmodule Telephony.Router do
+defmodule Telephony.Consumer do
   use GenServer
   @moduledoc """
   Responsible for consuming events published by any users of the `Events`
@@ -7,13 +7,13 @@ defmodule Telephony.Router do
   """
 
   def init(_) do
-     Events.Registry.subscribe(Events.CallFailedToJoinConference)
-     Events.Registry.subscribe(Events.CallJoinedConference)
-     Events.Registry.subscribe(Events.CallLeftConference)
-     Events.Registry.subscribe(Events.CallStatusChanged)
-     Events.Registry.subscribe(Events.ChairpersonRequestsToRemoveCall)
-     Events.Registry.subscribe(Events.ConferenceEnded)
-     Events.Registry.subscribe(Events.UserRequestsCall)
+     Events.subscribe(Events.CallFailedToJoinConference)
+     Events.subscribe(Events.CallJoinedConference)
+     Events.subscribe(Events.CallLeftConference)
+     Events.subscribe(Events.CallStatusChanged)
+     Events.subscribe(Events.ChairpersonRequestsToRemoveCall)
+     Events.subscribe(Events.ConferenceEnded)
+     Events.subscribe(Events.UserRequestsCall)
      {:ok, nil}
   end
 

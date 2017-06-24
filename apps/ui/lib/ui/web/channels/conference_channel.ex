@@ -24,7 +24,7 @@ defmodule Ui.Web.ConferenceChannel do
   end
 
   def handle_in("request_to_remove_call", %{"conference" => conference, "call" => call}, socket) do
-    :ok = Events.Registry.publish(%Events.ChairpersonRequestsToRemoveCall{
+    :ok = Events.publish(%Events.ChairpersonRequestsToRemoveCall{
           conference: conference,
           call: call})
     {:reply, {:ok, %{}}, socket}

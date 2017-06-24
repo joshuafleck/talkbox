@@ -135,14 +135,14 @@ defmodule Telephony do
     call = Map.get(conference.calls, call_identifier)
     case call.status do
       "in-progress" ->
-        Events.Registry.publish(%Events.RemoveRequested{
+        Events.publish(%Events.RemoveRequested{
               conference: conference.identifier,
               providers_identifier: conference.providers_identifier,
               call: call.identifier,
               providers_call_identifier: call.providers_identifier
         })
       _ ->
-        Events.Registry.publish(%Events.HangupRequested{
+        Events.publish(%Events.HangupRequested{
               conference: conference.identifier,
               call: call.identifier,
               providers_call_identifier: call.providers_identifier
@@ -166,7 +166,7 @@ defmodule Telephony do
   @spec initiate_conference(String.t, String.t) :: response
   defp initiate_conference(chairperson, destination) do
     {:ok, conference} = Telephony.Conference.create(chairperson, destination)
-    Events.Registry.publish(%Events.CallRequested{
+    Events.publish(%Events.CallRequested{
           destination: chairperson,
           conference: conference.identifier,
           call: Telephony.Conference.chairpersons_call(conference).identifier
@@ -192,7 +192,7 @@ defmodule Telephony do
     chairpersons_call = Telephony.Conference.chairpersons_call(conference)
     number_of_calls = Enum.count(Map.values(conference.calls))
     if chairpersons_call != nil && number_of_calls == 1 do
-      Events.Registry.publish(%Events.RemoveRequested{
+      Events.publish(%Events.RemoveRequested{
             conference: conference.identifier,
             providers_identifier: conference.providers_identifier,
             call: chairpersons_call.identifier,
@@ -214,7 +214,7 @@ defmodule Telephony do
     Map.values(conference.calls)
     |> Enum.filter(fn call -> call.providers_identifier == nil end)
     |> Enum.map(fn call ->
-      Events.Registry.publish(%Events.CallRequested{
+      Events.publish(%Events.CallRequested{
             destination: call.destination,
             conference: conference.identifier,
             call: call.identifier

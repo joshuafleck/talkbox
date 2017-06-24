@@ -28,7 +28,7 @@ defmodule Callbacks.Web.Twilio.ConferenceController do
         "CallSid" => call_sid,
         "StatusCallbackEvent" => event})
   when participant_joined(event) do
-    :ok = Events.Registry.publish(%Events.CallJoinedConference{
+    :ok = Events.publish(%Events.CallJoinedConference{
           conference: conference,
           providers_identifier: conference_sid,
           providers_call_identifier: call_sid})
@@ -48,7 +48,7 @@ defmodule Callbacks.Web.Twilio.ConferenceController do
         "CallSid" => call_sid,
         "StatusCallbackEvent" => event})
   when participant_left(event) do
-    :ok = Events.Registry.publish(%Events.CallLeftConference{
+    :ok = Events.publish(%Events.CallLeftConference{
           conference: conference,
           providers_identifier: conference_sid,
           providers_call_identifier: call_sid})
@@ -66,7 +66,7 @@ defmodule Callbacks.Web.Twilio.ConferenceController do
         "ConferenceSid" => conference_sid,
         "StatusCallbackEvent" => status_callback_event})
   when conference_ended(status_callback_event) do
-    :ok = Events.Registry.publish(%Events.ConferenceEnded{
+    :ok = Events.publish(%Events.ConferenceEnded{
           conference: conference,
           providers_identifier: conference_sid})
     conn

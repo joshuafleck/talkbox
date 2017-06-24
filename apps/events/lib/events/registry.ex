@@ -16,7 +16,7 @@ defmodule Events.Registry do
   @doc """
   Publish an event on a given topic
   """
-  @spec publish(any) :: :ok
+  @spec publish(Events.t) :: :ok
   def publish(event) do
     Registry.dispatch(__MODULE__, event.__struct__, fn entries ->
       for {pid, _} <- entries, do: send(pid, {:broadcast, event})

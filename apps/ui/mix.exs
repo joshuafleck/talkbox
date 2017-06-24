@@ -39,6 +39,7 @@ defmodule Ui.Mixfile do
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
+      {:plug, "~> 1.0"}, # Resolved 'unknown function' dialyzer errors
       {:ex_twilio, "~> 0.3.0"}, # For generating Twilio client tokens
       {:events, in_umbrella: true} # For publishing events from the UI
     ]
