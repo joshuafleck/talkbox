@@ -4,13 +4,6 @@ defmodule Callbacks.Provider.Twilio do
   The telephony-specific logic is encapsulated in one module to enable swapping out
   telephony logic with stubs in tests, but also in case we want to introduce support
   for additional telephony providers.
-
-  TODO:
-    * Enhanced logging, including:
-      * Time of each request
-      * Outcome of each request
-      * JSON log format
-    * Ability to retry if we were unable to reach Twilio
   """
   require Logger
   @behaviour Callbacks.Provider
@@ -34,7 +27,7 @@ defmodule Callbacks.Provider.Twilio do
     status_callback: status_callback,
     status_callback_events: status_callback_events
   ) do
-    Logger.debug "#{__MODULE__} calling #{to} from #{from} on #{url}"
+    Logger.debug fn -> "#{__MODULE__} calling #{to} from #{from} on #{url}" end
     result = ExTwilio.Call.create([
       {:to, format_if_client(to)},
       {:from, from},
@@ -58,7 +51,7 @@ defmodule Callbacks.Provider.Twilio do
       hangup("call_sid1234")
   """
   def hangup(call_sid) do
-    Logger.debug "#{__MODULE__} ending call with sid #{call_sid}"
+    Logger.debug fn -> "#{__MODULE__} ending call with sid #{call_sid}" end
     result = ExTwilio.Call.complete(call_sid)
     case result do
       {:ok, call_data} ->
@@ -78,7 +71,7 @@ defmodule Callbacks.Provider.Twilio do
       kick_participant_from_conference("conference_sid1234","call_sid1234")
   """
   def kick_participant_from_conference(conference_sid, call_sid) do
-    Logger.debug "#{__MODULE__} kicking participant with sid #{call_sid} from conference #{conference_sid}"
+    Logger.debug fn -> "#{__MODULE__} kicking participant with sid #{call_sid} from conference #{conference_sid}" end
     result = ExTwilio.Participant.destroy(call_sid, [{:conference, conference_sid}])
     case result do
       :ok ->

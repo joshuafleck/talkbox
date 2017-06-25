@@ -27,12 +27,12 @@ defmodule Callbacks.Consumer do
     @spec handle(Events.CallRequested.t) :: any
     def handle(event) do
       url_prefix = Application.get_env(:callbacks, :webhook_url).()
-      provider = Callbacks.Consumer.provider
       from = Application.get_env(:callbacks, :cli).()
-      url = url_prefix <> Callbacks.Web.Router.Helpers.conference_call_answered_path(Callbacks.Web.Endpoint, :answered, event.conference, event.call, conference_status_callback: url_prefix <> Callbacks.Web.Router.Helpers.conference_status_changed_path(Callbacks.Web.Endpoint, :status_changed, event.conference))
+      conference_status_callback = url_prefix <> Callbacks.Web.Router.Helpers.conference_status_changed_path(Callbacks.Web.Endpoint, :status_changed, event.conference)
+      url = url_prefix <> Callbacks.Web.Router.Helpers.conference_call_answered_path(Callbacks.Web.Endpoint, :answered, event.conference, event.call, conference_status_callback: conference_status_callback)
       status_callback = url_prefix <> Callbacks.Web.Router.Helpers.conference_call_status_changed_path(Callbacks.Web.Endpoint, :status_changed, event.conference, event.call)
       result = Callbacks.Consumer.log_api_call(:call, fn ->
-        provider.call(
+        Callbacks.Consumer.provider.call(
           to: event.destination,
           from: from,
           url: url,
@@ -40,10 +40,10 @@ defmodule Callbacks.Consumer do
           status_callback_events: ~w(initiated ringing answered completed))
         end)
       case result do
-        {:error, message, _} ->
-          IO.puts("--------- CALL REQUEST FAILED WITH #{message}")
-          {:error, message}
-        result ->
+        {:error, _, _} ->
+          Events.publish(%Events.CallRequestFailed{conference: event.conference, call: event.call})
+          result
+        _ ->
           result
       end
     end
@@ -77,7 +77,7 @@ defmodule Callbacks.Consumer do
     started_at = System.monotonic_time(:microseconds)
     result = api_call.()
     ended_at = System.monotonic_time(:microseconds)
-    duration_in_ms = (ended_at-started_at)/1000
+    duration_in_ms = (ended_at - started_at) / 1000
     result_message = case result do
                        {:error, message, code} ->
                          "error (#{code}) #{message}"

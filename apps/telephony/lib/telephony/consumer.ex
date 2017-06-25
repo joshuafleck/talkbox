@@ -14,6 +14,7 @@ defmodule Telephony.Consumer do
      Events.subscribe(Events.ChairpersonRequestsToRemoveCall)
      Events.subscribe(Events.ConferenceEnded)
      Events.subscribe(Events.UserRequestsCall)
+     Events.subscribe(Events.CallRequestFailed)
      {:ok, nil}
   end
 
@@ -45,6 +46,16 @@ defmodule Telephony.Consumer do
         event.conference,
         event.call)
       Telephony.Web.broadcast_conference_changed("Failed to reach #{event.call}", conference)
+    end
+  end
+
+  defimpl Events.Handler, for: Events.CallRequestFailed do
+    @spec handle(Events.CallRequestFailed.t) :: any
+    def handle(event) do
+      conference = Telephony.remove_call(
+        event.conference,
+        event.call)
+      Telephony.Web.broadcast_conference_changed("Request for call #{event.call} failed", conference)
     end
   end
 

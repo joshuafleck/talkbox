@@ -15,6 +15,7 @@ defmodule Events do
   | CallJoinedConference.t
   | CallLeftConference.t
   | CallRequested.t
+  | CallRequestedFailed.t
   | CallStatusChanged.t
   | ChairpersonRequestsToRemoveCall.t
   | ConferenceEnded.t
