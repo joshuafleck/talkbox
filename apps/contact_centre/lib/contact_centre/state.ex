@@ -156,7 +156,7 @@ defmodule ContactCentre.State do
 
   def handle_call({:hangup_call, conference_identifier, call_identifier}, _from, state) do
     with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
-      hangup_or_remove_call(conference, call)
+      request_to_hangup_or_remove_call(conference, call)
       {:reply, {:ok, conference}, state}
     end)
   end
@@ -194,12 +194,7 @@ defmodule ContactCentre.State do
   defp clear_pointless_conference(conference) do
     if ContactCentre.State.Conference.chairperson_is_alone?(conference) do
       chairpersons_call = ContactCentre.State.Conference.chairpersons_call(conference)
-      Events.publish(%Events.RemoveRequested{
-            conference: conference.identifier,
-            providers_identifier: conference.providers_identifier,
-            call: chairpersons_call.identifier,
-            providers_call_identifier: chairpersons_call.providers_identifier
-      })
+      request_to_hangup_or_remove_call(conference, chairpersons_call)
     end
     conference
   end
@@ -209,13 +204,13 @@ defmodule ContactCentre.State do
     conference
     |> ContactCentre.State.Conference.requested_calls()
     |> Enum.each(fn call ->
-      hangup_or_remove_call(conference, call)
+      request_to_hangup_or_remove_call(conference, call)
     end)
     conference
   end
 
-  @spec hangup_or_remove_call(ContactCentre.State.Conference.t, ContactCentre.State.Call.t) :: ContactCentre.State.Conference.t
-  def hangup_or_remove_call(conference, call) do
+  @spec request_to_hangup_or_remove_call(ContactCentre.State.Conference.t, ContactCentre.State.Call.t) :: ContactCentre.State.Conference.t
+  def request_to_hangup_or_remove_call(conference, call) do
     if ContactCentre.State.Call.in_conference?(call) do
       Events.publish(%Events.RemoveRequested{
             conference: conference.identifier,
