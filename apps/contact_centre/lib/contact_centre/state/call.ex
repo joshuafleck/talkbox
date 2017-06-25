@@ -1,4 +1,4 @@
-defmodule ContactCentre.State.Conference.Call do
+defmodule ContactCentre.State.Call do
   @moduledoc """
   The representation of a conference participant or chairperson's call leg.
   """

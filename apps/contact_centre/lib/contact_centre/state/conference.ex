@@ -31,7 +31,7 @@ defmodule ContactCentre.State.Conference do
     identifier: ContactCentre.State.Indentifier.t,
     chairpersons_call_identifier: ContactCentre.State.Indentifier.t,
     providers_identifier: String.t | nil,
-    calls: %{required(ContactCentre.State.Indentifier.t) => ContactCentre.State.Conference.Call.t}
+    calls: %{required(ContactCentre.State.Indentifier.t) => ContactCentre.State.Call.t}
   }
 
   @type success :: {:ok, t}
@@ -59,7 +59,7 @@ defmodule ContactCentre.State.Conference do
   @doc """
   Returns the call leg of the chairperson
   """
-  @spec chairpersons_call(t) :: ContactCentre.State.Conference.Call.t | nil
+  @spec chairpersons_call(t) :: ContactCentre.State.Call.t | nil
   def chairpersons_call(conference) do
     Map.get(conference.calls, conference.chairpersons_call_identifier)
   end
@@ -178,7 +178,7 @@ defmodule ContactCentre.State.Conference do
 
   def handle_call({:add_call, conference, destination}, _from, conferences) do
     with_conference(conferences, conference.identifier, fn conference ->
-      call = %ContactCentre.State.Conference.Call{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
+      call = %ContactCentre.State.Call{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
       calls = Map.put(conference.calls, call.identifier, call)
       conference = %{conference | calls: calls}
       {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
@@ -224,7 +224,7 @@ defmodule ContactCentre.State.Conference do
   @spec new(String.t, String.t) :: t
   defp new(chairperson, destination) do
     calls = Enum.map([chairperson, destination], fn destination ->
-      %ContactCentre.State.Conference.Call{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
+      %ContactCentre.State.Call{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
     end)
     %__MODULE__{
       identifier: ContactCentre.State.Identifier.get_next(),
@@ -243,7 +243,7 @@ defmodule ContactCentre.State.Conference do
     end
   end
 
-  @spec with_conference_and_call(store, ContactCentre.State.Indentifier.t, ContactCentre.State.Indentifier.t | String.t, ((t, ContactCentre.State.Conference.Call.t) -> response)) :: {:reply, response, store}
+  @spec with_conference_and_call(store, ContactCentre.State.Indentifier.t, ContactCentre.State.Indentifier.t | String.t, ((t, ContactCentre.State.Call.t) -> response)) :: {:reply, response, store}
   defp with_conference_and_call(conferences, identifier, call_identifier, block) do
     with_conference(conferences, identifier, fn conference ->
       case Map.get(conference.calls, call_identifier) do
