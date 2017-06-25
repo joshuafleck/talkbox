@@ -163,8 +163,8 @@ defmodule ContactCentre.State do
 
   def handle_call({:update_status_of_call, conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number}, _from, state) do
     with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
-      with {:ok, conference} <- ContactCentre.State.Conference.update_status_of_call(conference, call, call_status, sequence_number),
-      {:ok, conference} <- ContactCentre.State.Conference.set_providers_identifier_on_call(conference, call, providers_call_identifier) do
+      with {:ok, conference, call} <- ContactCentre.State.Conference.set_providers_identifier_on_call(conference, call, providers_call_identifier),
+      {:ok, conference, _} <- ContactCentre.State.Conference.update_status_of_call(conference, call, call_status, sequence_number) do
         {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
       else
         {:error, message} ->

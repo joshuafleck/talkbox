@@ -31,8 +31,10 @@ defmodule ContactCentre.State.Conference do
   }
 
   @type success :: {:ok, t}
+  @type success_with_call :: {:ok, t, ContactCentre.State.Call.t}
   @type fail :: {:error, String.t}
   @type response :: success | fail
+  @type response_with_call :: success_with_call | fail
 
   @doc """
   Returns the call leg of the chairperson
@@ -112,16 +114,16 @@ defmodule ContactCentre.State.Conference do
   Sets the provider's identifier on the specified call leg.
   Returns an error if the provider's identifier is already set to something different.
   """
-  @spec set_providers_identifier_on_call(t, ContactCentre.State.Call.t, String.t) :: response
+  @spec set_providers_identifier_on_call(t, ContactCentre.State.Call.t, String.t) :: response_with_call
   def set_providers_identifier_on_call(conference, call, providers_identifier) do
     case call.providers_identifier do
       nil ->
         call = %{call | providers_identifier: providers_identifier}
         calls = Map.put(conference.calls, call.identifier, call)
         conference = %{conference | calls: calls}
-        {:ok, conference}
+        {:ok, conference, call}
       ^providers_identifier ->
-        {:ok, conference}
+        {:ok, conference, call}
       _ ->
         {:error, "providers_identifier already set on call"}
     end
@@ -167,13 +169,13 @@ defmodule ContactCentre.State.Conference do
   Returns an error if the provided sequence number is not greater than the
   sequence number associated with the current call status.
   """
-  @spec update_status_of_call(t, ContactCentre.State.Call.t, String.t, non_neg_integer) :: response
+  @spec update_status_of_call(t, ContactCentre.State.Call.t, String.t, non_neg_integer) :: response_with_call
   def update_status_of_call(conference, call, status, sequence_number) do
     if elem(call.status, 1) < sequence_number do
       call = %{call | status: {status, sequence_number}}
       calls = Map.put(conference.calls, call.identifier, call)
       conference = %{conference | calls: calls}
-      {:ok, conference}
+      {:ok, conference, call}
     else
       {:error, "call status has been superseded"}
     end
