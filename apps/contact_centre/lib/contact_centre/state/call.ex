@@ -1,4 +1,4 @@
-defmodule Telephony.Conference.Call do
+defmodule ContactCentre.State.Conference.Call do
   @moduledoc """
   The representation of a conference participant or chairperson's call leg.
   """
@@ -19,7 +19,7 @@ defmodule Telephony.Conference.Call do
     * `status` - The name of the most recent call status and the sequence in which the call status arrived
   """
   @type t :: %__MODULE__{
-    identifier: Telephony.Conference.internal_identifier,
+    identifier: ContactCentre.State.Conference.internal_identifier,
     destination: String.t,
     providers_identifier: String.t | nil,
     status: {String.t | nil, integer}

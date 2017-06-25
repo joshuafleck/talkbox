@@ -1,4 +1,4 @@
-defmodule Telephony.Consumer do
+defmodule ContactCentre.Consumer do
   use GenServer
   @moduledoc """
   Responsible for consuming events published by any users of the `Events`
@@ -30,11 +30,11 @@ defmodule Telephony.Consumer do
   defimpl Events.Handler, for: Events.UserRequestsCall do
     @spec handle(Events.UserRequestsCall.t) :: any
     def handle(event) do
-      case Telephony.add_participant_or_initiate_conference(event.user, event.callee, event.conference) do
+      case ContactCentre.State.add_participant_or_initiate_conference(event.user, event.callee, event.conference) do
         {:ok, conference} ->
-          Telephony.Web.broadcast_conference_start(event.user, "Starting call", conference)
+          ContactCentre.State.Web.broadcast_conference_start(event.user, "Starting call", conference)
         {:error, message, conference} ->
-          Telephony.Web.broadcast_conference_start(event.user, "Error starting call: #{message}", conference)
+          ContactCentre.State.Web.broadcast_conference_start(event.user, "Error starting call: #{message}", conference)
       end
     end
   end
@@ -42,48 +42,48 @@ defmodule Telephony.Consumer do
   defimpl Events.Handler, for: Events.CallFailedToJoinConference do
     @spec handle(Events.CallFailedToJoinConference.t) :: any
     def handle(event) do
-      conference = Telephony.remove_call(
+      conference = ContactCentre.State.remove_call(
         event.conference,
         event.call)
-      Telephony.Web.broadcast_conference_changed("Failed to reach #{event.call}", conference)
+      ContactCentre.State.Web.broadcast_conference_changed("Failed to reach #{event.call}", conference)
     end
   end
 
   defimpl Events.Handler, for: Events.CallRequestFailed do
     @spec handle(Events.CallRequestFailed.t) :: any
     def handle(event) do
-      conference = Telephony.remove_call(
+      conference = ContactCentre.State.remove_call(
         event.conference,
         event.call)
-      Telephony.Web.broadcast_conference_changed("Request for call #{event.call} failed", conference)
+      ContactCentre.State.Web.broadcast_conference_changed("Request for call #{event.call} failed", conference)
     end
   end
 
   defimpl Events.Handler, for: Events.CallStatusChanged do
     @spec handle(Events.CallStatusChanged.t) :: any
     def handle(event) do
-      conference = Telephony.update_status_of_call(
+      conference = ContactCentre.State.update_status_of_call(
         event.conference,
         event.call,
         event.providers_call_identifier,
         event.status,
         event.sequence_number)
-      Telephony.Web.broadcast_conference_changed("Call status changed for #{event.call}", conference)
+      ContactCentre.State.Web.broadcast_conference_changed("Call status changed for #{event.call}", conference)
     end
   end
 
   defimpl Events.Handler, for: Events.CallJoinedConference do
     @spec handle(Events.CallJoinedConference.t) :: any
     def handle(event) do
-      result = Telephony.acknowledge_call_joined(
+      result = ContactCentre.State.acknowledge_call_joined(
         event.conference,
         event.providers_identifier,
         event.providers_call_identifier)
       case result do
         {:ok, conference} ->
-          Telephony.Web.broadcast_conference_changed("Someone joined", conference)
+          ContactCentre.State.Web.broadcast_conference_changed("Someone joined", conference)
         {:error, message, conference} ->
-          Telephony.Web.broadcast_conference_changed("Failed to join participant to conference due to: #{message}", conference)
+          ContactCentre.State.Web.broadcast_conference_changed("Failed to join participant to conference due to: #{message}", conference)
       end
     end
   end
@@ -91,14 +91,14 @@ defmodule Telephony.Consumer do
   defimpl Events.Handler, for: Events.CallLeftConference do
     @spec handle(Events.CallLeftConference.t) :: any
     def handle(event) do
-      conference = Telephony.acknowledge_call_left(
+      conference = ContactCentre.State.acknowledge_call_left(
         event.conference,
         event.providers_call_identifier)
       case conference do
         nil ->
           nil
         conference ->
-          Telephony.Web.broadcast_conference_changed("Someone left", conference)
+          ContactCentre.State.Web.broadcast_conference_changed("Someone left", conference)
       end
     end
   end
@@ -106,16 +106,16 @@ defmodule Telephony.Consumer do
   defimpl Events.Handler, for: Events.ConferenceEnded do
     @spec handle(Events.ConferenceEnded.t) :: any
     def handle(event) do
-      conference = Telephony.remove_conference(
+      conference = ContactCentre.State.remove_conference(
         event.conference)
-      Telephony.Web.broadcast_conference_end("Call ended", conference)
+      ContactCentre.State.Web.broadcast_conference_end("Call ended", conference)
     end
   end
 
   defimpl Events.Handler, for: Events.ChairpersonRequestsToRemoveCall do
     @spec handle(Events.ChairpersonRequestsToRemoveCall.t) :: any
     def handle(event) do
-      Telephony.hangup_call(
+      ContactCentre.State.hangup_call(
         event.conference,
         event.call)
     end
