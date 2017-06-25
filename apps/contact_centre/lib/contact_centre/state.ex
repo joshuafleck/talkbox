@@ -1,18 +1,21 @@
 defmodule ContactCentre.State do
   @moduledoc """
-  The purpose of this module is to encapsulate the business logic
-  of the telephony system. It is responsible for initiating and hanging
-  up call legs as well as managing the state of the calls through the
-  `ContactCentre.State.Conference` module.
-
-  TODO:
-    * Upon startup, query the telephony provider for a list of in-progress conferences with which to prepopulate the local conference store.
+  The purpose of this module is to maintain the state
+  of the ContactCentre system and expose functions for
+  altering the state of the system.
   """
-  require Logger
+  use GenServer
 
   @type success :: {:ok, ContactCentre.State.Conference.t}
   @type fail :: {:error, String.t, ContactCentre.State.Conference.t | nil}
   @type response :: success | fail
+  @type store :: %{required(ContactCentre.State.Indentifier.t) => ContactCentre.State.Conference.t}
+
+  def start_link do
+    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  end
+
+  # Client
 
   @doc """
   Finds or initialises a conference, adding a pending participant to the
@@ -25,41 +28,51 @@ defmodule ContactCentre.State do
   """
   @spec add_participant_or_initiate_conference(String.t, String.t, String.t | nil) :: response
   def add_participant_or_initiate_conference(chairperson, destination, conference_identifier) do
-    case ContactCentre.State.Conference.fetch(conference_identifier) do
-      nil ->
-        initiate_conference(chairperson, destination)
-      {:ok, conference} ->
-        add_participant(conference, destination)
-    end
+    GenServer.call(__MODULE__, {:add_participant_or_initiate_conference, chairperson, destination, conference_identifier})
   end
 
   @doc """
-  Called when we receive notification that a participant has joined the conference.
-
-  If the chair has not yet been joined to the conference, this updates the
-  call leg details for the chair on the conference and will then initiate the
-  participant's call.
-
-  Otherwise, this updates the call leg details for the pending participant and
-  promotes the participant from pending to a fully-fledged participant.
-
-  The telephony provider will tell us when a participant has joined
-  the conference, but it's up to us to figure out whether it was the
-  chair's leg or the pending participant's leg. There is nothing that
-  guarantees that we've set the participant's call_sid in the conference
-  state before the telephony provider sends us a message telling us a
-  participant has joined the conference, thus we cannot rely on matching
-  the participant based on its call_sid.
+  Called when we receive a notification from the telephony provider that the status of the
+  call leg for the pending participant has changed.
   """
-  @spec acknowledge_call_joined(ContactCentre.State.Intentifier.t, String.t, String.t) :: response
-  def acknowledge_call_joined(conference_identifier, providers_identifier, providers_call_identifier) do
-    {:ok, conference} = ContactCentre.State.Conference.fetch(conference_identifier)
-    {:ok, conference} = ContactCentre.State.Conference.set_providers_identifier(conference, providers_identifier)
-    call = Enum.find(Map.values(conference.calls), fn call -> call.providers_identifier == providers_call_identifier end)
-    if ContactCentre.State.Conference.chairpersons_call?(conference, call.identifier) do
-      call_pending_participants(conference)
-    end
-    {:ok, conference}
+  @spec update_status_of_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t, String.t, String.t, non_neg_integer) :: response
+  def update_status_of_call(conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number) do
+    GenServer.call(__MODULE__, {:update_status_of_call, conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number})
+  end
+
+  @doc """
+  Call this to hang up the call leg for the pending participant. For example, if you decide
+  you want to cancel your attempt to call a participant.
+
+  Note that this does not remove the pending participant from the conference state as there
+  will be a subsequent message from the telephony provider telling us that the leg has failed
+  to connect, which will be handled in `remove_call`.
+  """
+  @spec hangup_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t) :: response
+  def hangup_call(conference_identifier, call_identifier) do
+    GenServer.call(__MODULE__, {:hangup_call, conference_identifier, call_identifier})
+  end
+
+  @doc """
+  Called when we receive notification that a pending participant's call leg has failed to connect.
+
+  This will remove the pending participant and may end the conference if the chairperson is all alone.
+  """
+  @spec remove_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t) :: response
+  def remove_call(conference_identifier, call_identifier) do
+    GenServer.call(__MODULE__, {:remove_call, conference_identifier, call_identifier})
+  end
+
+  @doc """
+  Called when we receive notification that a conference has ended.
+
+  This will clear the conference and hang up any pending participant call leg.
+  This is done because if the conference has ended then there is no way to
+  salvage it and there is no path for reconnecting to it.
+  """
+  @spec remove_conference(ContactCentre.State.Intentifier.t) :: response
+  def remove_conference(conference_identifier) do
+    GenServer.call(__MODULE__, {:remove_conference, conference_identifier})
   end
 
   @doc """
@@ -77,121 +90,110 @@ defmodule ContactCentre.State do
   chair remaining in the conference then their call leg will be hung up and the
   conference cleared.
   """
-  @spec acknowledge_call_left(ContactCentre.State.Intentifier.t, String.t) :: ContactCentre.State.Conference.t | nil
+  @spec acknowledge_call_left(ContactCentre.State.Intentifier.t, String.t) :: response
   def acknowledge_call_left(conference_identifier, providers_call_identifier) do
-    case ContactCentre.State.Conference.fetch(conference_identifier) do
-      {:ok, conference} ->
-        {:ok, conference} = ContactCentre.State.Conference.remove_call(conference, providers_call_identifier)
-        clear_pointless_conference(conference)
-      _ ->
-        nil
-    end
+    GenServer.call(__MODULE__, {:acknowledge_call_left, conference_identifier, providers_call_identifier})
   end
 
   @doc """
-  Called when we receive notification that a conference has ended.
+  Called when we receive notification that a participant has joined the conference.
 
-  This will clear the conference and hang up any pending participant call leg.
-  This is done because if the conference has ended then there is no way to
-  salvage it and there is no path for reconnecting to it.
+  If the chair has not yet been joined to the conference, this updates the
+  call leg details for the chair on the conference and will then initiate the
+  participant's call.
   """
-  @spec remove_conference(ContactCentre.State.Intentifier.t) :: ContactCentre.State.Conference.t | nil
-  def remove_conference(conference_identifier) do
-    case ContactCentre.State.Conference.fetch(conference_identifier) do
-      {:ok, conference} ->
-        hangup_pending_and_remove_conference(conference)
-      _ ->
-        nil
+  @spec acknowledge_call_joined(ContactCentre.State.Intentifier.t, String.t, String.t) :: response
+  def acknowledge_call_joined(conference_identifier, providers_identifier, providers_call_identifier) do
+    GenServer.call(__MODULE__, {:acknowledge_call_joined, conference_identifier, providers_identifier, providers_call_identifier})
+  end
+
+  # Server
+
+  def handle_call({:add_participant_or_initiate_conference, chairperson, destination, conference_identifier}, _from, state) do
+    conference = case Map.get(state, conference_identifier) do
+      nil ->
+        initiate_conference(chairperson, destination)
+      conference ->
+        add_participant(conference, destination)
     end
+    {:reply, {:ok, conference}, Map.put(state, conference.identifier, conference)}
   end
 
-  @doc """
-  Called when we receive notification that a pending participant's call leg has failed to connect.
-
-  This will remove the pending participant and may end the conference as described in `remove_chair_or_participant/1`
-  """
-  @spec remove_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t) :: ContactCentre.State.Conference.t
-  def remove_call(conference_identifier, call_identifier) do
-    case ContactCentre.State.Conference.fetch(conference_identifier) do
-      {:ok, conference} ->
-        {:ok, conference} = ContactCentre.State.Conference.remove_call(conference, call_identifier)
-        clear_pointless_conference(conference)
-      _ ->
-        nil
-    end
+  def handle_call({:acknowledge_call_joined, conference_identifier, providers_identifier, providers_call_identifier}, _from, state) do
+    with_conference_and_call(state, conference_identifier, providers_call_identifier, fn (conference, call) ->
+      {:ok, conference} = ContactCentre.State.Conference.set_providers_identifier(conference, providers_identifier)
+      if ContactCentre.State.Conference.chairpersons_call?(conference, call.identifier) do
+        call_pending_participants(conference)
+      end
+      {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+    end)
   end
 
-  @doc """
-  Call this to hang up the call leg for the pending participant. For example, if you decide
-  you want to cancel your attempt to call a participant.
-
-  Note that this does not remove the pending participant from the conference state as there
-  will be a subsequent message from the telephony provider telling us that the leg has failed
-  to connect, which will be handled in `remove_pending_participant/1`.
-  """
-  @spec hangup_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t) :: ContactCentre.State.Conference.t
-  def hangup_call(conference_identifier, call_identifier) do
-    {:ok, conference} = ContactCentre.State.Conference.fetch(conference_identifier)
-    call = Map.get(conference.calls, call_identifier)
-    case call.status do
-      "in-progress" ->
-        Events.publish(%Events.RemoveRequested{
-              conference: conference.identifier,
-              providers_identifier: conference.providers_identifier,
-              call: call.identifier,
-              providers_call_identifier: call.providers_identifier
-        })
-      _ ->
-        Events.publish(%Events.HangupRequested{
-              conference: conference.identifier,
-              call: call.identifier,
-              providers_call_identifier: call.providers_identifier
-        })
-    end
-    conference
+  def handle_call({:acknowledge_call_left, conference_identifier, providers_call_identifier}, _from, state) do
+    with_conference_and_call(state, conference_identifier, providers_call_identifier, fn (conference, call) ->
+      conference = conference
+      |> ContactCentre.State.Conference.remove_call(call)
+      |> clear_pointless_conference()
+      {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+    end)
   end
 
-  @doc """
-  Called when we receive a notification from the telephony provider that the status of the
-  call leg for the pending participant has changed.
-  """
-  @spec update_status_of_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t, String.t, String.t, non_neg_integer) :: ContactCentre.State.Conference.t
-  def update_status_of_call(conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number) do
-    {:ok, conference} = ContactCentre.State.Conference.fetch(conference_identifier)
-    {:ok, conference} = ContactCentre.State.Conference.set_providers_identifier_on_call(conference, call_identifier, providers_call_identifier)
-    {:ok, conference} = ContactCentre.State.Conference.update_status_of_call(conference, call_identifier, call_status, sequence_number)
-    conference
+  def handle_call({:remove_conference, conference_identifier}, _from, state) do
+    with_conference(state, conference_identifier, fn conference ->
+      conference = hangup_requested_calls(conference)
+      {:reply, {:ok, conference}, Map.delete(state, conference_identifier)}
+    end)
   end
 
-  @spec initiate_conference(String.t, String.t) :: response
+  def handle_call({:remove_call, conference_identifier, call_identifier}, _from, state) do
+    with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
+      conference = conference
+      |> ContactCentre.State.Conference.remove_call(call)
+      |> clear_pointless_conference()
+      {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+    end)
+  end
+
+  def handle_call({:hangup_call, conference_identifier, call_identifier}, _from, state) do
+    with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
+      hangup_or_remove_call(conference, call)
+      {:reply, {:ok, conference}, state}
+    end)
+  end
+
+  def handle_call({:update_status_of_call, conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number}, _from, state) do
+    with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
+      with {:ok, conference} <- ContactCentre.State.Conference.update_status_of_call(conference, call, call_status, sequence_number),
+      {:ok, conference} <- ContactCentre.State.Conference.set_providers_identifier_on_call(conference, call, providers_call_identifier) do
+        {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+      else
+        {:error, message} ->
+          {:reply, {:error, message, conference}, Map.put(state, conference_identifier, conference)}
+      end
+    end)
+  end
+
+  # Internals
+
+  @spec initiate_conference(String.t, String.t) :: ContactCentre.State.Conference.t
   defp initiate_conference(chairperson, destination) do
-    {:ok, conference} = ContactCentre.State.Conference.create(chairperson, destination)
-    Events.publish(%Events.CallRequested{
-          destination: chairperson,
-          conference: conference.identifier,
-          call: ContactCentre.State.Conference.chairpersons_call(conference).identifier
-    })
-    #{:ok, conference} = ContactCentre.State.Conference.set_providers_identifier_on_call(conference, ContactCentre.State.Conference.chairpersons_call(conference).identifier, providers_call_identifier)
-    #do
-      {:ok, conference}
-    #else
-    #  {:error, message} ->
-    #    {:error, message, nil}
-    #end
+    conference = ContactCentre.State.Conference.new(chairperson, destination)
+    chairpersons_call = ContactCentre.State.Conference.chairpersons_call(conference)
+    request_call(chairpersons_call, conference)
+    conference
   end
 
-  @spec add_participant(ContactCentre.State.Conference.t, String.t) :: response
+  @spec add_participant(ContactCentre.State.Conference.t, String.t) :: ContactCentre.State.Conference.t
   defp add_participant(conference, destination) do
-    {:ok, conference} = ContactCentre.State.Conference.add_call(conference, destination)
-    call_pending_participants(conference)
-    {:ok, conference}
+    conference
+    |> ContactCentre.State.Conference.add_call(destination)
+    |> call_pending_participants()
   end
 
   @spec clear_pointless_conference(ContactCentre.State.Conference.t) :: ContactCentre.State.Conference.t
   defp clear_pointless_conference(conference) do
-    chairpersons_call = ContactCentre.State.Conference.chairpersons_call(conference)
-    number_of_calls = Enum.count(Map.values(conference.calls))
-    if chairpersons_call != nil && number_of_calls == 1 do
+    if ContactCentre.State.Conference.chairperson_is_alone?(conference) do
+      chairpersons_call = ContactCentre.State.Conference.chairpersons_call(conference)
       Events.publish(%Events.RemoveRequested{
             conference: conference.identifier,
             providers_identifier: conference.providers_identifier,
@@ -202,23 +204,71 @@ defmodule ContactCentre.State do
     conference
   end
 
-  @spec hangup_pending_and_remove_conference(ContactCentre.State.Conference.t) :: ContactCentre.State.Conference.t
-  defp hangup_pending_and_remove_conference(conference) do
-    Enum.filter_map(Map.values(conference.calls), fn call -> call.providers_identifier == nil end, fn call -> hangup_call(conference.identifier, call.identifier) end)
-    {:ok, conference} = ContactCentre.State.Conference.remove(conference)
+  @spec hangup_requested_calls(ContactCentre.State.Conference.t) :: ContactCentre.State.Conference.t
+  defp hangup_requested_calls(conference) do
+    conference
+    |> ContactCentre.State.Conference.requested_calls()
+    |> Enum.each(fn call ->
+      hangup_or_remove_call(conference, call)
+    end)
     conference
   end
 
-  @spec call_pending_participants(ContactCentre.State.Conference.t) :: []
-  defp call_pending_participants(conference) do
-    Map.values(conference.calls)
-    |> Enum.filter(fn call -> call.providers_identifier == nil end)
-    |> Enum.map(fn call ->
-      Events.publish(%Events.CallRequested{
-            destination: call.destination,
+  @spec hangup_or_remove_call(ContactCentre.State.Conference.t, ContactCentre.State.Call.t) :: ContactCentre.State.Conference.t
+  def hangup_or_remove_call(conference, call) do
+    if ContactCentre.State.Call.in_conference?(call) do
+      Events.publish(%Events.RemoveRequested{
             conference: conference.identifier,
-            call: call.identifier
-      })
+            providers_identifier: conference.providers_identifier,
+            call: call.identifier,
+            providers_call_identifier: call.providers_identifier})
+    else
+      Events.publish(%Events.HangupRequested{
+            conference: conference.identifier,
+            call: call.identifier,
+            providers_call_identifier: call.providers_identifier})
+    end
+    conference
+  end
+
+  @spec call_pending_participants(ContactCentre.State.Conference.t) :: ContactCentre.State.Conference.t
+  defp call_pending_participants(conference) do
+    conference
+    |> ContactCentre.State.Conference.pending_calls()
+    |> Enum.each(fn call ->
+      request_call(call, conference)
+    end)
+    conference
+  end
+
+  @spec request_call(ContactCentre.State.Call.t, ContactCentre.State.Conference.t) :: ContactCentre.State.Conference.t
+  defp request_call(call, conference) do
+    Events.publish(%Events.CallRequested{
+          destination: call.destination,
+          conference: conference.identifier,
+          call: call.identifier})
+    conference
+  end
+
+  @spec with_conference(store, ContactCentre.State.Indentifier.t, (ContactCentre.State.Conference.t -> response)) :: {:reply, response, store}
+  defp with_conference(conferences, identifier, block) do
+    case Map.get(conferences, identifier) do
+      nil ->
+        {:reply, {:error, "matching conference not found", nil}, conferences}
+      conference ->
+        block.(conference)
+    end
+  end
+
+  @spec with_conference_and_call(store, ContactCentre.State.Indentifier.t, ContactCentre.State.Indentifier.t | String.t, ((ContactCentre.State.Conference.t, ContactCentre.State.Call.t) -> response)) :: {:reply, response, store}
+  defp with_conference_and_call(conferences, identifier, call_identifier, block) do
+    with_conference(conferences, identifier, fn conference ->
+      case ContactCentre.State.Conference.search_for_call(conference, call_identifier) do
+        nil ->
+          {:reply, {:error, "matching call not found", conference}, conferences}
+        call ->
+          block.(conference, call)
+      end
     end)
   end
 end

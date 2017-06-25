@@ -1,13 +1,9 @@
 defmodule ContactCentre.State.Conference do
   @moduledoc """
-  This module is responsible for maintaining the local state of the
+  This module is responsible for representing the
   conference and associated call legs, allowing the application to make
   decisions without needing to query the telephony provider for the state
-  of the conference or any of its call legs. The module also serves to
-  protect the state of the conference from concurrency issues, for example:
-  requests coming out of order. The system is designed such that if the local
-  copy of the conference state is lost, it can be retrieved from the telephony
-  provider with minimal interruption to ongoing calls.
+  of the conference or any of its call legs.
   """
   use GenServer
 
@@ -37,24 +33,6 @@ defmodule ContactCentre.State.Conference do
   @type success :: {:ok, t}
   @type fail :: {:error, String.t}
   @type response :: success | fail
-  @type store :: %{required(ContactCentre.State.Indentifier.t) => t}
-
-  # Client
-
-  @doc """
-  Starts a singleton GenServer
-  """
-  def start_link do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
-  end
-
-  @doc """
-  Creates a conference with the provided chairperson and destination.
-  """
-  @spec create(String.t, String.t) :: response
-  def create(chairperson, destination) do
-    GenServer.call(__MODULE__, {:create, chairperson, destination})
-  end
 
   @doc """
   Returns the call leg of the chairperson
@@ -73,12 +51,80 @@ defmodule ContactCentre.State.Conference do
   end
 
   @doc """
+  Returns true if the chairperson is alone in the conference
+  """
+  @spec chairperson_is_alone?(t) :: boolean
+  def chairperson_is_alone?(conference) do
+    [conference.chairpersons_call_identifier] == Map.keys(conference.calls)
+  end
+
+  @doc """
+  Searches for a call that has a matching call identifier
+  or provider's call identifier
+  """
+  @spec search_for_call(t, ContactCentre.State.Identifier.t | String.t) :: ContactCentre.State.Call.t | nil
+  def search_for_call(conference, call_identifier) do
+    case Map.get(conference.calls, call_identifier) do
+      nil ->
+        Enum.find(Map.values(conference.calls), fn call -> call.providers_identifier == call_identifier end)
+      call ->
+        call
+    end
+  end
+
+  @doc """
+  Returns a list of calls that have been requested
+  from the telephony provider.
+  """
+  @spec requested_calls(t) :: [ContactCentre.State.Call]
+  def requested_calls(conference) do
+    Enum.filter(Map.values(conference.calls), &ContactCentre.State.Call.requested?(&1))
+  end
+
+  @doc """
+  Returns a list of calls that have yet to be requested
+  to the telephony provider.
+  """
+  @spec pending_calls(t) :: [ContactCentre.State.Call]
+  def pending_calls(conference) do
+    Enum.reject(Map.values(conference.calls), &ContactCentre.State.Call.requested?(&1))
+  end
+
+  @doc """
+  Creates a conference with the provided chairperson and destination.
+  """
+  @spec new(String.t, String.t) :: t
+  def new(chairperson, destination) do
+    chairpersons_call = ContactCentre.State.Call.new(chairperson)
+    destination_call = ContactCentre.State.Call.new(destination)
+    calls = [chairpersons_call, destination_call]
+    |> Enum.map(fn call -> {call.identifier, call} end)
+    |> Map.new
+
+    %__MODULE__{
+      identifier: ContactCentre.State.Identifier.get_next(),
+      chairpersons_call_identifier: chairpersons_call.identifier,
+      calls: calls
+    }
+  end
+
+  @doc """
   Sets the provider's identifier on the specified call leg.
   Returns an error if the provider's identifier is already set to something different.
   """
-  @spec set_providers_identifier_on_call(t, ContactCentre.State.Indentifier.t, String.t) :: response
-  def set_providers_identifier_on_call(conference, call_identifier, providers_identifier) do
-    GenServer.call(__MODULE__, {:set_providers_identifier_on_call, conference, call_identifier, providers_identifier})
+  @spec set_providers_identifier_on_call(t, ContactCentre.State.Call.t, String.t) :: response
+  def set_providers_identifier_on_call(conference, call, providers_identifier) do
+    case call.providers_identifier do
+      nil ->
+        call = %{call | providers_identifier: providers_identifier}
+        calls = Map.put(conference.calls, call.identifier, call)
+        conference = %{conference | calls: calls}
+        {:ok, conference}
+      ^providers_identifier ->
+        {:ok, conference}
+      _ ->
+        {:error, "providers_identifier already set on call"}
+    end
   end
 
   @doc """
@@ -87,23 +133,33 @@ defmodule ContactCentre.State.Conference do
   """
   @spec set_providers_identifier(t, String.t) :: response
   def set_providers_identifier(conference, providers_identifier) do
-    GenServer.call(__MODULE__, {:set_providers_identifier, conference, providers_identifier})
+    case conference.providers_identifier do
+      nil ->
+        conference = %{conference | providers_identifier: providers_identifier}
+        {:ok, conference}
+      ^providers_identifier ->
+        {:ok, conference}
+      _ ->
+        {:error, "providers_identifier already set"}
+    end
   end
 
   @doc """
   Removes the call from the conference
   """
-  @spec remove_call(t, ContactCentre.State.Indentifier.t) :: response
-  def remove_call(conference, call_identifier) do
-    GenServer.call(__MODULE__, {:remove_call, conference, call_identifier})
+  @spec remove_call(t, ContactCentre.State.Call.t) :: t
+  def remove_call(conference, call) do
+    %{conference | calls: Map.delete(conference.calls, call.identifier)}
   end
 
   @doc """
   Adds a call to the conference
   """
-  @spec add_call(t, String.t) :: response
+  @spec add_call(t, String.t) :: t
   def add_call(conference, destination) do
-    GenServer.call(__MODULE__, {:add_call, conference, destination})
+    call = ContactCentre.State.Call.new(destination)
+    calls = Map.put(conference.calls, call.identifier, call)
+    %{conference | calls: calls}
   end
 
   @doc """
@@ -111,152 +167,15 @@ defmodule ContactCentre.State.Conference do
   Returns an error if the provided sequence number is not greater than the
   sequence number associated with the current call status.
   """
-  @spec update_status_of_call(t, ContactCentre.State.Indentifier.t, String.t, non_neg_integer) :: response
-  def update_status_of_call(conference, call_identifier, status, sequence_number) do
-    GenServer.call(__MODULE__, {:update_status_of_call, conference, call_identifier, status, sequence_number})
-  end
-
-  @doc """
-  Removes the provided conference from the local store
-  """
-  @spec remove(t) :: response
-  def remove(conference) do
-    GenServer.call(__MODULE__, {:remove, conference})
-  end
-
-  @doc """
-  Fetches the conference corresponding to the provided identifier
-  """
-  @spec fetch(ContactCentre.State.Indentifier.t) :: response
-  def fetch(identifier) do
-    GenServer.call(__MODULE__, {:fetch, identifier})
-  end
-
-  # Server (callbacks)
-
-  def handle_call({:create, chairperson, destination}, _from, conferences) do
-    conference = new(chairperson, destination)
-    {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
-  end
-
-  def handle_call({:set_providers_identifier_on_call, conference, call_identifier, providers_identifier}, _from, conferences) do
-    with_conference_and_call(conferences, conference.identifier, call_identifier, fn conference, call ->
-      case call.providers_identifier do
-        nil ->
-          call = %{call | providers_identifier: providers_identifier}
-          calls = Map.put(conference.calls, call.identifier, call)
-          conference = %{conference | calls: calls}
-          {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
-        ^providers_identifier ->
-          {:reply, {:ok, conference}, conferences}
-        _ ->
-          {:reply, {:error, "providers_identifier already set on call"}, conferences}
-      end
-    end)
-  end
-
-  def handle_call({:set_providers_identifier, conference, providers_identifier}, _from, conferences) do
-    with_conference(conferences, conference.identifier, fn conference ->
-      case conference.providers_identifier do
-        nil ->
-          conference = %{conference | providers_identifier: providers_identifier}
-          {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
-        ^providers_identifier ->
-          {:reply, {:ok, conference}, conferences}
-        _ ->
-          {:reply, {:error, "providers_identifier already set"}, conferences}
-      end
-    end)
-  end
-
-  def handle_call({:remove_call, conference, call_identifier}, _from, conferences) do
-    with_conference_and_call(conferences, conference.identifier, call_identifier, fn conference, call ->
-      conference = %{conference | calls: Map.delete(conference.calls, call.identifier)}
-      {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
-    end)
-  end
-
-  def handle_call({:add_call, conference, destination}, _from, conferences) do
-    with_conference(conferences, conference.identifier, fn conference ->
-      call = %ContactCentre.State.Call{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
+  @spec update_status_of_call(t, ContactCentre.State.Call.t, String.t, non_neg_integer) :: response
+  def update_status_of_call(conference, call, status, sequence_number) do
+    if elem(call.status, 1) < sequence_number do
+      call = %{call | status: {status, sequence_number}}
       calls = Map.put(conference.calls, call.identifier, call)
       conference = %{conference | calls: calls}
-      {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
-    end)
-  end
-
-  def handle_call({:update_status_of_call, conference, call_identifier, status, sequence_number}, _from, conferences) do
-    with_conference_and_call(conferences, conference.identifier, call_identifier, fn conference, call ->
-      if elem(call.status, 1) < sequence_number do
-        call = %{call | status: {status, sequence_number}}
-        calls = Map.put(conference.calls, call.identifier, call)
-        conference = %{conference | calls: calls}
-        {:reply, {:ok, conference}, Map.put(conferences, conference.identifier, conference)}
-      else
-        {:reply, {:error, "call status has been superceded"}, conferences}
-      end
-    end)
-  end
-
-  def handle_call({:remove, conference}, _from, conferences) do
-    case Map.pop(conferences, conference.identifier) do
-      {nil, conferences} ->
-        {:reply, {:error, "conference was not removed"}, conferences}
-      {conference, conferences} ->
-        {:reply, {:ok, conference}, conferences}
+      {:ok, conference}
+    else
+      {:error, "call status has been superseded"}
     end
-  end
-
-  def handle_call({:fetch, identifier}, _from, conferences) do
-    case with_conference(conferences, identifier,
-          fn conference ->
-            {:reply, {:ok, conference}, conferences}
-          end) do
-      {:reply, {:error, _}, _} ->
-        {:reply, nil, conferences}
-      result ->
-        result
-    end
-  end
-
-  # Internals
-
-  @spec new(String.t, String.t) :: t
-  defp new(chairperson, destination) do
-    calls = Enum.map([chairperson, destination], fn destination ->
-      %ContactCentre.State.Call{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
-    end)
-    %__MODULE__{
-      identifier: ContactCentre.State.Identifier.get_next(),
-      chairpersons_call_identifier: Enum.at(calls, 0).identifier,
-      calls: Enum.map(calls, fn call -> {call.identifier, call} end) |> Map.new
-    }
-  end
-
-  @spec with_conference(store, ContactCentre.State.Indentifier.t, (t -> response)) :: {:reply, response, store}
-  defp with_conference(conferences, identifier, block) do
-    case Map.get(conferences, identifier) do
-      nil ->
-        {:reply, {:error, "matching conference not found"}, conferences}
-      conference ->
-        block.(conference)
-    end
-  end
-
-  @spec with_conference_and_call(store, ContactCentre.State.Indentifier.t, ContactCentre.State.Indentifier.t | String.t, ((t, ContactCentre.State.Call.t) -> response)) :: {:reply, response, store}
-  defp with_conference_and_call(conferences, identifier, call_identifier, block) do
-    with_conference(conferences, identifier, fn conference ->
-      case Map.get(conference.calls, call_identifier) do
-        nil ->
-          case Enum.find(Map.values(conference.calls), fn call -> call.providers_identifier == call_identifier end) do
-            nil ->
-              {:reply, {:error, "matching call not found"}, conferences}
-            call ->
-              block.(conference, call)
-          end
-        call ->
-          block.(conference, call)
-      end
-    end)
   end
 end

@@ -17,7 +17,7 @@ defmodule ContactCentre do
       supervisor(ContactCentre.Web.Endpoint, []),
       # Start your own worker by calling: ContactCentre.Worker.start_link(arg1, arg2, arg3)
       # worker(ContactCentre.Worker, [arg1, arg2, arg3]),
-      worker(ContactCentre.State.Conference, []),
+      worker(ContactCentre.State, []),
       worker(ContactCentre.State.Identifier, []),
       worker(ContactCentre.Consumer, []),
     ]

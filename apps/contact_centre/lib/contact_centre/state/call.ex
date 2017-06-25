@@ -19,9 +19,38 @@ defmodule ContactCentre.State.Call do
     * `status` - The name of the most recent call status and the sequence in which the call status arrived
   """
   @type t :: %__MODULE__{
-    identifier: ContactCentre.State.Conference.internal_identifier,
+    identifier: ContactCentre.State.Identifier.t,
     destination: String.t,
     providers_identifier: String.t | nil,
     status: {String.t | nil, integer}
   }
+
+  @doc """
+  Returns true if the provider's identifier
+  has been set on the call, which indicates
+  that the call has been requested to the
+  telephony provider.
+  """
+  @spec requested?(t) :: boolean
+  def requested?(call) do
+    call.providers_identifier != nil
+  end
+
+  @doc """
+  Returns true if the call's status
+  is in progress, which indicates the
+  call is part of a conference.
+  """
+  @spec in_conference?(t) :: boolean
+  def in_conference?(call) do
+    "in-progress" == call.status
+  end
+
+  @doc"""
+  Creates a new Call struct
+  """
+  @spec new(String.t) :: t
+  def new(destination) do
+    %__MODULE__{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
+  end
 end
