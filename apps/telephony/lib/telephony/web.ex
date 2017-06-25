@@ -5,17 +5,17 @@ defmodule Telephony.Web do
   """
   @spec broadcast_conference_start(String.t, String.t, Telephony.Conference.t) :: any
   def broadcast_conference_start(user, message, conference) do
-    Ui.Web.Endpoint.broadcast("user:#{user}", "conference_started", %{message: message, conference: conference_message(conference)})
+    ContactCentre.Web.Endpoint.broadcast("user:#{user}", "conference_started", %{message: message, conference: conference_message(conference)})
   end
 
   @spec broadcast_conference_end(String.t, Telephony.Conference.t) :: any
   def broadcast_conference_end(message, conference) do
-    Ui.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_ended", %{message: message, conference: conference_message(conference)})
+    ContactCentre.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_ended", %{message: message, conference: conference_message(conference)})
   end
 
   @spec broadcast_conference_changed(String.t, Telephony.Conference.t) :: any
   def broadcast_conference_changed(message, conference) do
-    Ui.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_changed", %{message: message, conference: conference_message(conference)})
+    ContactCentre.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_changed", %{message: message, conference: conference_message(conference)})
   end
 
   @spec conference_message(Telephony.Conference.t) :: nil | map

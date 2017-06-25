@@ -39,7 +39,7 @@ defmodule Telephony.Mixfile do
   defp deps do
     [
       {:events, in_umbrella: true}, # For publishing events to other apps
-      {:ui, in_umbrella: true}
+      {:contact_centre, in_umbrella: true}
     ]
   end
 end
