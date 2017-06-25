@@ -27,7 +27,7 @@ defmodule Telephony.Web do
 
   def view do
     quote do
-      use Phoenix.View, root: "lib/callbacks/web/templates",
+      use Phoenix.View, root: "lib/telephony/web/templates",
                         namespace: Telephony.Web
 
       # Import convenience functions from controllers

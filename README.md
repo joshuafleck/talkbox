@@ -29,7 +29,7 @@ Each of these components is implemented as a child-project under the `/apps` dir
 ![Architecture](images/Talkbox.png)
 
 - **[UI](apps/ui)** Serves the single page web application. Translates websocket messages from the client into [events](apps/events). Provides an endpoint for other applications (i.e. [router](apps/router)) to send websocket messages back to the client.
-- **[Callbacks](apps/callbacks)** Accepts webhook requests from Twilio. Responds back with TwiML instructions and/or publishes [events](apps/events) to broadcast that call state in Twilio has changed.
+- **[Callbacks](apps/telephony)** Accepts webhook requests from Twilio. Responds back with TwiML instructions and/or publishes [events](apps/events) to broadcast that call state in Twilio has changed.
 - **[Telephony](apps/telephony)** Manages the core business logic for the system. Maintains its own version of the call state separate from Twilio.
 - **[Router](apps/router)** Handlers for [events](apps/events). Runs a pool of consumer processes that pull events from the event queue and delegate to the [telephony](apps/telephony) or [ui](apps/ui) applications.
 - **[Events](apps/events)** Contains event definitions used to communicate between applications and facilitates publishing of events

@@ -24,7 +24,7 @@ config :telephony,
   cli: fn -> TwilioBootstrap.TelephoneNumber.get.phone_number end,
   webhook_url: fn -> Ngrok.public_url end,
   provider: Telephony.Provider.Twilio,
-  provider_callback_url_prefix: "/callbacks/twilio"
+  provider_callback_url_prefix: "/telephony/twilio"
 
 config :ex_ngrok,
   options: "--region eu",

@@ -6,8 +6,8 @@ defmodule Telephony.Web.Twilio.CallControllerTest do
     :ok = Application.start(:events)
   end
 
-  test "POST /callbacks/twilio/call/chair_answered", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/chair_answered", %{
+  test "POST /telephony/twilio/call/chair_answered", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/chair_answered", %{
       "conference" => "conference_ident",
       "conference_status_callback" => "callback_url"
     }
@@ -16,8 +16,8 @@ defmodule Telephony.Web.Twilio.CallControllerTest do
     assert Events.consume == {:error, "queue is empty"}
   end
 
-  test "POST /callbacks/twilio/call/chair_status_changed", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/chair_status_changed", %{
+  test "POST /telephony/twilio/call/chair_status_changed", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/chair_status_changed", %{
       "conference" => "conference_ident",
       "chair" => "chair_name",
       "CallSid" => "call_sid",
@@ -27,16 +27,16 @@ defmodule Telephony.Web.Twilio.CallControllerTest do
     assert Events.consume == {:ok, %Events.ChairFailedToJoinConference{call_sid: "call_sid", chair: "chair_name", conference: "conference_ident", reason: "no-answer"}}
   end
 
-  test "POST /callbacks/twilio/call/chair_status_changed when the call status is not recognised", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/chair_status_changed", %{
+  test "POST /telephony/twilio/call/chair_status_changed when the call status is not recognised", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/chair_status_changed", %{
       "CallStatus" => "anything"
     }
     assert response(conn, 200) =~ "ok"
     assert Events.consume == {:error, "queue is empty"}
   end
 
-  test "POST /callbacks/twilio/call/pending_participant_answered", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/pending_participant_answered", %{
+  test "POST /telephony/twilio/call/pending_participant_answered", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/pending_participant_answered", %{
       "conference" => "conference_ident"
     }
     assert response(conn, 200) =~ "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Dial><Conference beep=\"false\" statusCallback=\"\" " <>
@@ -44,8 +44,8 @@ defmodule Telephony.Web.Twilio.CallControllerTest do
     assert Events.consume == {:error, "queue is empty"}
   end
 
-  test "POST /callbacks/twilio/call/participant_status_changed", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/participant_status_changed", %{
+  test "POST /telephony/twilio/call/participant_status_changed", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/participant_status_changed", %{
       "conference" => "conference_ident",
       "chair" => "chair_name",
       "CallSid" => "call_sid",
@@ -58,8 +58,8 @@ defmodule Telephony.Web.Twilio.CallControllerTest do
       call_sid: "call_sid", call_status: "ringing", chair: "chair_name", conference: "conference_ident", pending_participant: "participant_name", sequence_number: 0}}
   end
 
-  test "POST /callbacks/twilio/call/participant_status_changed when the call has failed", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/participant_status_changed", %{
+  test "POST /telephony/twilio/call/participant_status_changed when the call has failed", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/participant_status_changed", %{
       "conference" => "conference_ident",
       "chair" => "chair_name",
       "CallSid" => "call_sid",
@@ -72,8 +72,8 @@ defmodule Telephony.Web.Twilio.CallControllerTest do
       call_sid: "call_sid", chair: "chair_name", conference: "conference_ident", pending_participant: "participant_name", reason: "no-answer"}}
   end
 
-  test "POST /callbacks/twilio/call/participant_status_changed when the call status is not recognised", %{conn: conn} do
-    conn = post conn, "/callbacks/twilio/call/participant_status_changed", %{
+  test "POST /telephony/twilio/call/participant_status_changed when the call status is not recognised", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/call/participant_status_changed", %{
       "CallStatus" => "anything"
     }
     assert response(conn, 200) =~ "ok"

@@ -6,7 +6,7 @@ defmodule Telephony.Web.Router do
     plug :accepts, ["html"]
   end
 
-  scope "/callbacks", Telephony.Web do
+  scope "/telephony", Telephony.Web do
     scope "/twilio", Twilio do
       pipe_through :twilio
       resources "/conferences", ConferenceController, only: [:status_changed] do
