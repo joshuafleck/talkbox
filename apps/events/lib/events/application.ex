@@ -8,6 +8,9 @@ defmodule Events.Application do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
+    # Allows us to have a durable event log
+    Events.Persistence.init()
+
     # Define workers and child supervisors to be supervised
     children = [
       # Starts a worker by calling: Events.Worker.start_link(arg1, arg2, arg3)

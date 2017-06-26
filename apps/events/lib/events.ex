@@ -36,6 +36,7 @@ defmodule Events do
   """
   @spec publish(Events.t) :: :ok
   def publish(event) do
+    Events.Persistence.write(event)
     Events.Registry.publish(event)
   end
 end
