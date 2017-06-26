@@ -31,7 +31,7 @@ defmodule Events.Event do
       iex(25)> Events.Event.serialize(%Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil})
       "{\"name\":\"Elixir.Events.UserRequestsCall\",\"data\":\"{\\\"user\\\":\\\"josh\\\",\\\"conference\\\":null,\\\"callee\\\":\\\"amy\\\"}\"}"
   """
-  @spec serialize(any) :: String.t
+  @spec serialize(Events.t) :: String.t
   def serialize(event) do
     %name{} = event
     data = Poison.encode!(event)
@@ -49,7 +49,7 @@ defmodule Events.Event do
       iex(1)> Events.Event.deserialize("{\"name\":\"Elixir.Events.UserRequestsCall\",\"data\":\"{\\\"user\\\":\\\"josh\\\",\\\"conference\\\":null,\\\"callee\\\":\\\"amy\\\"}\"}")
       %Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil}
   """
-  @spec deserialize(String.t) :: any
+  @spec deserialize(String.t) :: Events.t
   def deserialize(raw) do
     event = Poison.decode!(raw, as: struct(__MODULE__))
     type = String.to_existing_atom(event.name)
