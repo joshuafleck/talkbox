@@ -1,4 +1,4 @@
-defmodule ContactCentre.State.Call do
+defmodule ContactCentre.Conferencing.Call do
   @moduledoc """
   The representation of a conference participant or chairperson's call leg.
   """
@@ -19,7 +19,7 @@ defmodule ContactCentre.State.Call do
     * `status` - The name of the most recent call status and the sequence in which the call status arrived
   """
   @type t :: %__MODULE__{
-    identifier: ContactCentre.State.Identifier.t,
+    identifier: ContactCentre.Conferencing.Identifier.t,
     destination: String.t,
     providers_identifier: String.t | nil,
     status: {String.t | nil, integer}
@@ -51,6 +51,6 @@ defmodule ContactCentre.State.Call do
   """
   @spec new(String.t) :: t
   def new(destination) do
-    %__MODULE__{identifier: ContactCentre.State.Identifier.get_next(), destination: destination}
+    %__MODULE__{identifier: ContactCentre.Conferencing.Identifier.get_next(), destination: destination}
   end
 end

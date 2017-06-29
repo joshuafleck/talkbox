@@ -15,10 +15,10 @@ defmodule ContactCentre do
     children = [
       # Start the endpoint when the application starts
       supervisor(ContactCentre.Web.Endpoint, []),
-      supervisor(Registry, [:unique, ContactCentre.State.Registry]),
+      supervisor(Registry, [:unique, ContactCentre.Conferencing.Registry]),
       # Start your own worker by calling: ContactCentre.Worker.start_link(arg1, arg2, arg3)
       # worker(ContactCentre.Worker, [arg1, arg2, arg3]),
-      worker(ContactCentre.State.Identifier, []),
+      worker(ContactCentre.Conferencing.Identifier, []),
       worker(ContactCentre.Consumer, []),
     ]
 

@@ -1,4 +1,4 @@
-defmodule ContactCentre.State.Conference do
+defmodule ContactCentre.Conferencing.Conference do
   @moduledoc """
   This module is responsible for representing the
   conference and associated call legs, allowing the application to make
@@ -24,14 +24,14 @@ defmodule ContactCentre.State.Conference do
     * `calls` - A map of call identifier to call leg information about the conference participants
   """
   @type t :: %__MODULE__{
-    identifier: ContactCentre.State.Indentifier.t,
-    chairpersons_call_identifier: ContactCentre.State.Indentifier.t,
+    identifier: ContactCentre.Conferencing.Indentifier.t,
+    chairpersons_call_identifier: ContactCentre.Conferencing.Indentifier.t,
     providers_identifier: String.t | nil,
-    calls: %{required(ContactCentre.State.Indentifier.t) => ContactCentre.State.Call.t}
+    calls: %{required(ContactCentre.Conferencing.Indentifier.t) => ContactCentre.Conferencing.Call.t}
   }
 
   @type success :: {:ok, t}
-  @type success_with_call :: {:ok, t, ContactCentre.State.Call.t}
+  @type success_with_call :: {:ok, t, ContactCentre.Conferencing.Call.t}
   @type fail :: {:error, String.t}
   @type response :: success | fail
   @type response_with_call :: success_with_call | fail
@@ -39,7 +39,7 @@ defmodule ContactCentre.State.Conference do
   @doc """
   Returns the call leg of the chairperson
   """
-  @spec chairpersons_call(t) :: ContactCentre.State.Call.t | nil
+  @spec chairpersons_call(t) :: ContactCentre.Conferencing.Call.t | nil
   def chairpersons_call(conference) do
     Map.get(conference.calls, conference.chairpersons_call_identifier)
   end
@@ -47,7 +47,7 @@ defmodule ContactCentre.State.Conference do
   @doc """
   True, if the provided call identifier matches that of the chairperson
   """
-  @spec chairpersons_call?(t, ContactCentre.State.Indentifier.t) :: boolean
+  @spec chairpersons_call?(t, ContactCentre.Conferencing.Indentifier.t) :: boolean
   def chairpersons_call?(conference, call_identifier) do
     conference.chairpersons_call_identifier == call_identifier
   end
@@ -64,7 +64,7 @@ defmodule ContactCentre.State.Conference do
   Searches for a call that has a matching call identifier
   or provider's call identifier
   """
-  @spec search_for_call(t, ContactCentre.State.Identifier.t | String.t) :: ContactCentre.State.Call.t | nil
+  @spec search_for_call(t, ContactCentre.Conferencing.Identifier.t | String.t) :: ContactCentre.Conferencing.Call.t | nil
   def search_for_call(conference, call_identifier) do
     case Map.get(conference.calls, call_identifier) do
       nil ->
@@ -78,18 +78,18 @@ defmodule ContactCentre.State.Conference do
   Returns a list of calls that have been requested
   from the telephony provider.
   """
-  @spec requested_calls(t) :: [ContactCentre.State.Call]
+  @spec requested_calls(t) :: [ContactCentre.Conferencing.Call]
   def requested_calls(conference) do
-    Enum.filter(Map.values(conference.calls), &ContactCentre.State.Call.requested?(&1))
+    Enum.filter(Map.values(conference.calls), &ContactCentre.Conferencing.Call.requested?(&1))
   end
 
   @doc """
   Returns a list of calls that have yet to be requested
   to the telephony provider.
   """
-  @spec pending_calls(t) :: [ContactCentre.State.Call]
+  @spec pending_calls(t) :: [ContactCentre.Conferencing.Call]
   def pending_calls(conference) do
-    Enum.reject(Map.values(conference.calls), &ContactCentre.State.Call.requested?(&1))
+    Enum.reject(Map.values(conference.calls), &ContactCentre.Conferencing.Call.requested?(&1))
   end
 
   @doc """
@@ -97,14 +97,14 @@ defmodule ContactCentre.State.Conference do
   """
   @spec new(String.t, String.t) :: t
   def new(chairperson, destination) do
-    chairpersons_call = ContactCentre.State.Call.new(chairperson)
-    destination_call = ContactCentre.State.Call.new(destination)
+    chairpersons_call = ContactCentre.Conferencing.Call.new(chairperson)
+    destination_call = ContactCentre.Conferencing.Call.new(destination)
     calls = [chairpersons_call, destination_call]
     |> Enum.map(fn call -> {call.identifier, call} end)
     |> Map.new
 
     %__MODULE__{
-      identifier: ContactCentre.State.Identifier.get_next(),
+      identifier: ContactCentre.Conferencing.Identifier.get_next(),
       chairpersons_call_identifier: chairpersons_call.identifier,
       calls: calls
     }
@@ -114,7 +114,7 @@ defmodule ContactCentre.State.Conference do
   Sets the provider's identifier on the specified call leg.
   Returns an error if the provider's identifier is already set to something different.
   """
-  @spec set_providers_identifier_on_call(t, ContactCentre.State.Call.t, String.t) :: response_with_call
+  @spec set_providers_identifier_on_call(t, ContactCentre.Conferencing.Call.t, String.t) :: response_with_call
   def set_providers_identifier_on_call(conference, call, providers_identifier) do
     case call.providers_identifier do
       nil ->
@@ -149,7 +149,7 @@ defmodule ContactCentre.State.Conference do
   @doc """
   Removes the call from the conference
   """
-  @spec remove_call(t, ContactCentre.State.Call.t) :: t
+  @spec remove_call(t, ContactCentre.Conferencing.Call.t) :: t
   def remove_call(conference, call) do
     %{conference | calls: Map.delete(conference.calls, call.identifier)}
   end
@@ -159,7 +159,7 @@ defmodule ContactCentre.State.Conference do
   """
   @spec add_call(t, String.t) :: t
   def add_call(conference, destination) do
-    call = ContactCentre.State.Call.new(destination)
+    call = ContactCentre.Conferencing.Call.new(destination)
     calls = Map.put(conference.calls, call.identifier, call)
     %{conference | calls: calls}
   end
@@ -169,7 +169,7 @@ defmodule ContactCentre.State.Conference do
   Returns an error if the provided sequence number is not greater than the
   sequence number associated with the current call status.
   """
-  @spec update_status_of_call(t, ContactCentre.State.Call.t, String.t, non_neg_integer) :: response_with_call
+  @spec update_status_of_call(t, ContactCentre.Conferencing.Call.t, String.t, non_neg_integer) :: response_with_call
   def update_status_of_call(conference, call, status, sequence_number) do
     if elem(call.status, 1) < sequence_number do
       call = %{call | status: {status, sequence_number}}

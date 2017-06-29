@@ -1,4 +1,4 @@
-defmodule ContactCentre.State.Identifier do
+defmodule ContactCentre.Conferencing.Identifier do
   @moduledoc """
   Provides the ability to generate deterministic
   identifiers.
