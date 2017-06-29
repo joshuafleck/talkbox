@@ -11,10 +11,6 @@ defmodule ContactCentre.State do
   @type response :: success | fail
   @type store :: %{required(ContactCentre.State.Indentifier.t) => ContactCentre.State.Conference.t}
 
-  def start_link do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
-  end
-
   # Client
 
   @doc """
@@ -28,7 +24,14 @@ defmodule ContactCentre.State do
   """
   @spec add_participant_or_initiate_conference(String.t, String.t, String.t | nil) :: response
   def add_participant_or_initiate_conference(chairperson, destination, conference_identifier) do
-    GenServer.call(__MODULE__, {:add_participant_or_initiate_conference, chairperson, destination, conference_identifier})
+    case conference_identifier do
+      nil ->
+        conference = initiate_conference(chairperson, destination)
+        {:ok, _} = GenServer.start(__MODULE__, conference, name: via_tuple(conference.identifier))
+        {:ok, conference}
+      conference_identifier ->
+        GenServer.call(via_tuple(conference_identifier), {:add_participant, destination})
+    end
   end
 
   @doc """
@@ -37,7 +40,7 @@ defmodule ContactCentre.State do
   """
   @spec update_status_of_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t, String.t, String.t, non_neg_integer) :: response
   def update_status_of_call(conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number) do
-    GenServer.call(__MODULE__, {:update_status_of_call, conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number})
+    GenServer.call(via_tuple(conference_identifier), {:update_status_of_call, call_identifier, providers_call_identifier, call_status, sequence_number})
   end
 
   @doc """
@@ -50,7 +53,7 @@ defmodule ContactCentre.State do
   """
   @spec hangup_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t) :: response
   def hangup_call(conference_identifier, call_identifier) do
-    GenServer.call(__MODULE__, {:hangup_call, conference_identifier, call_identifier})
+    GenServer.call(via_tuple(conference_identifier), {:hangup_call, call_identifier})
   end
 
   @doc """
@@ -60,7 +63,7 @@ defmodule ContactCentre.State do
   """
   @spec remove_call(ContactCentre.State.Intentifier.t, ContactCentre.State.Intentifier.t) :: response
   def remove_call(conference_identifier, call_identifier) do
-    GenServer.call(__MODULE__, {:remove_call, conference_identifier, call_identifier})
+    GenServer.call(via_tuple(conference_identifier), {:remove_call, call_identifier})
   end
 
   @doc """
@@ -72,7 +75,9 @@ defmodule ContactCentre.State do
   """
   @spec remove_conference(ContactCentre.State.Intentifier.t) :: response
   def remove_conference(conference_identifier) do
-    GenServer.call(__MODULE__, {:remove_conference, conference_identifier})
+    result = GenServer.call(via_tuple(conference_identifier), {:remove_conference})
+    GenServer.stop(via_tuple(conference_identifier))
+    result
   end
 
   @doc """
@@ -92,7 +97,7 @@ defmodule ContactCentre.State do
   """
   @spec acknowledge_call_left(ContactCentre.State.Intentifier.t, String.t) :: response
   def acknowledge_call_left(conference_identifier, providers_call_identifier) do
-    GenServer.call(__MODULE__, {:acknowledge_call_left, conference_identifier, providers_call_identifier})
+    GenServer.call(via_tuple(conference_identifier), {:acknowledge_call_left, providers_call_identifier})
   end
 
   @doc """
@@ -104,73 +109,66 @@ defmodule ContactCentre.State do
   """
   @spec acknowledge_call_joined(ContactCentre.State.Intentifier.t, String.t, String.t) :: response
   def acknowledge_call_joined(conference_identifier, providers_identifier, providers_call_identifier) do
-    GenServer.call(__MODULE__, {:acknowledge_call_joined, conference_identifier, providers_identifier, providers_call_identifier})
+    GenServer.call(via_tuple(conference_identifier), {:acknowledge_call_joined, providers_identifier, providers_call_identifier})
   end
 
   # Server
 
-  def handle_call({:add_participant_or_initiate_conference, chairperson, destination, conference_identifier}, _from, state) do
-    conference = case Map.get(state, conference_identifier) do
-      nil ->
-        initiate_conference(chairperson, destination)
-      conference ->
-        add_participant(conference, destination)
-    end
-    {:reply, {:ok, conference}, Map.put(state, conference.identifier, conference)}
+  def handle_call({:add_participant, destination}, _from, conference) do
+    conference = add_participant(conference, destination)
+    {:reply, {:ok, conference}, conference}
   end
 
-  def handle_call({:acknowledge_call_joined, conference_identifier, providers_identifier, providers_call_identifier}, _from, state) do
-    with_conference_and_call(state, conference_identifier, providers_call_identifier, fn (conference, call) ->
+  def handle_call({:acknowledge_call_joined, providers_identifier, providers_call_identifier}, _from, conference) do
+    with_call(conference, providers_call_identifier, fn (call) ->
       {:ok, conference} = ContactCentre.State.Conference.set_providers_identifier(conference, providers_identifier)
       if ContactCentre.State.Conference.chairpersons_call?(conference, call.identifier) do
         call_pending_participants(conference)
       end
-      {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+      {:reply, {:ok, conference}, conference}
     end)
   end
 
-  def handle_call({:acknowledge_call_left, conference_identifier, providers_call_identifier}, _from, state) do
-    with_conference_and_call(state, conference_identifier, providers_call_identifier, fn (conference, call) ->
+  def handle_call({:acknowledge_call_left, providers_call_identifier}, _from, conference) do
+    with_call(conference, providers_call_identifier, fn (call) ->
       conference = conference
       |> ContactCentre.State.Conference.remove_call(call)
       |> clear_pointless_conference()
-      {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+      {:reply, {:ok, conference}, conference}
     end)
   end
 
-  def handle_call({:remove_conference, conference_identifier}, _from, state) do
-    with_conference(state, conference_identifier, fn conference ->
-      conference = hangup_requested_calls(conference)
-      {:reply, {:ok, conference}, Map.delete(state, conference_identifier)}
-    end)
-  end
-
-  def handle_call({:remove_call, conference_identifier, call_identifier}, _from, state) do
-    with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
+  def handle_call({:remove_call, call_identifier}, _from, conference) do
+    with_call(conference, call_identifier, fn (call) ->
       conference = conference
       |> ContactCentre.State.Conference.remove_call(call)
       |> clear_pointless_conference()
-      {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+      {:reply, {:ok, conference}, conference}
     end)
   end
 
-  def handle_call({:hangup_call, conference_identifier, call_identifier}, _from, state) do
-    with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
+  def handle_call({:hangup_call, call_identifier}, _from, conference) do
+    with_call(conference, call_identifier, fn (call) ->
       request_to_hangup_or_remove_call(conference, call)
-      {:reply, {:ok, conference}, state}
+      {:reply, {:ok, conference}, conference}
     end)
   end
 
-  def handle_call({:update_status_of_call, conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number}, _from, state) do
-    with_conference_and_call(state, conference_identifier, call_identifier, fn (conference, call) ->
+  def handle_call({:update_status_of_call, call_identifier, providers_call_identifier, call_status, sequence_number}, _from, conference) do
+    with_call(conference, call_identifier, fn (call) ->
       with {:ok, conference, call} <- ContactCentre.State.Conference.set_providers_identifier_on_call(conference, call, providers_call_identifier),
       {:ok, conference, _} <- ContactCentre.State.Conference.update_status_of_call(conference, call, call_status, sequence_number) do
-        {:reply, {:ok, conference}, Map.put(state, conference_identifier, conference)}
+        {:reply, {:ok, conference}, conference}
       else
         {:error, message} ->
-          {:reply, {:error, message, conference}, Map.put(state, conference_identifier, conference)}
+          {:reply, {:error, message, conference}, conference}
       end
     end)
+  end
+
+  def handle_call({:remove_conference}, _from, conference) do
+    conference = hangup_requested_calls(conference)
+    {:reply, {:ok, conference}, conference}
   end
 
   # Internals
@@ -245,25 +243,16 @@ defmodule ContactCentre.State do
     conference
   end
 
-  @spec with_conference(store, ContactCentre.State.Indentifier.t, (ContactCentre.State.Conference.t -> response)) :: {:reply, response, store}
-  defp with_conference(conferences, identifier, block) do
-    case Map.get(conferences, identifier) do
+  @spec with_call(ContactCentre.State.Conference.t, ContactCentre.State.Indentifier.t | String.t, ((ContactCentre.State.Call.t) -> response)) :: {:reply, response, store}
+  defp with_call(conference, call_identifier, block) do
+    case ContactCentre.State.Conference.search_for_call(conference, call_identifier) do
       nil ->
-        {:reply, {:error, "matching conference not found", nil}, conferences}
-      conference ->
-        block.(conference)
+        {:reply, {:error, "matching call not found", conference}, conference}
+      call ->
+        block.(call)
     end
   end
 
-  @spec with_conference_and_call(store, ContactCentre.State.Indentifier.t, ContactCentre.State.Indentifier.t | String.t, ((ContactCentre.State.Conference.t, ContactCentre.State.Call.t) -> response)) :: {:reply, response, store}
-  defp with_conference_and_call(conferences, identifier, call_identifier, block) do
-    with_conference(conferences, identifier, fn conference ->
-      case ContactCentre.State.Conference.search_for_call(conference, call_identifier) do
-        nil ->
-          {:reply, {:error, "matching call not found", conference}, conferences}
-        call ->
-          block.(conference, call)
-      end
-    end)
-  end
+  @spec via_tuple(ContactCentre.State.Identifier.t) :: any
+  defp via_tuple(conference_identifier), do: {:via, Registry, {ContactCentre.State.Registry, conference_identifier}}
 end

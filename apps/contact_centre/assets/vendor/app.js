@@ -14124,9 +14124,9 @@ var _user$project$App$encodedCall = F3(
 		var identifier = function () {
 			var _p0 = conference;
 			if (_p0.ctor === 'Nothing') {
-				return '';
+				return _elm_lang$core$Json_Encode$null;
 			} else {
-				return _p0._0.identifier;
+				return _elm_lang$core$Json_Encode$string(_p0._0.identifier);
 			}
 		}();
 		return _elm_lang$core$Json_Encode$object(
@@ -14146,11 +14146,7 @@ var _user$project$App$encodedCall = F3(
 					},
 					_1: {
 						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'conference',
-							_1: _elm_lang$core$Json_Encode$string(identifier)
-						},
+						_0: {ctor: '_Tuple2', _0: 'conference', _1: identifier},
 						_1: {ctor: '[]'}
 					}
 				}

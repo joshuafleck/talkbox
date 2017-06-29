@@ -355,14 +355,14 @@ encodedCall callee user conference =
     let identifier =
         case conference of
             Nothing ->
-                ""
+                JsEncode.null
             Just conference ->
-                conference.identifier
+                JsEncode.string conference.identifier
     in
         JsEncode.object
             [ ( "callee", JsEncode.string callee )
             , ( "user", JsEncode.string user )
-            , ( "conference", JsEncode.string identifier )
+            , ( "conference", identifier )
             ]
 
 
