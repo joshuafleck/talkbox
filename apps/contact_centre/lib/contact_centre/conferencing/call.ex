@@ -43,7 +43,17 @@ defmodule ContactCentre.Conferencing.Call do
   """
   @spec in_conference?(t) :: boolean
   def in_conference?(call) do
-    "in-progress" == call.status
+    "in-progress" == elem(call.status, 0)
+  end
+
+  @doc """
+  Returns true if the provided sequence
+  number is greater than the current one, which
+  indicates that the status has been superseded.
+  """
+  @spec newer_status?(t, integer) :: boolean
+  def newer_status?(call, sequence_number) do
+    elem(call.status, 1) < sequence_number
   end
 
   @doc"""

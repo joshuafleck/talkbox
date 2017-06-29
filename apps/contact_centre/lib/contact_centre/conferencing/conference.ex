@@ -171,7 +171,7 @@ defmodule ContactCentre.Conferencing.Conference do
   """
   @spec update_status_of_call(t, ContactCentre.Conferencing.Call.t, String.t, non_neg_integer) :: response_with_call
   def update_status_of_call(conference, call, status, sequence_number) do
-    if elem(call.status, 1) < sequence_number do
+    if ContactCentre.Conferencing.Call.newer_status?(call, sequence_number) do
       call = %{call | status: {status, sequence_number}}
       calls = Map.put(conference.calls, call.identifier, call)
       conference = %{conference | calls: calls}
