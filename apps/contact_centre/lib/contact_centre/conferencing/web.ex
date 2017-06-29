@@ -5,17 +5,22 @@ defmodule ContactCentre.Conferencing.Web do
   """
   @spec broadcast_conference_start(String.t, String.t, ContactCentre.Conferencing.Conference.t) :: any
   def broadcast_conference_start(user, message, conference) do
-    ContactCentre.Web.Endpoint.broadcast("user:#{user}", "conference_started", %{message: message, conference: conference_message(conference)})
+    broadcast_conference("user:#{user}", "conference_started", message, conference)
   end
 
   @spec broadcast_conference_end(String.t, ContactCentre.Conferencing.Conference.t) :: any
   def broadcast_conference_end(message, conference) do
-    ContactCentre.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_ended", %{message: message, conference: conference_message(conference)})
+    broadcast_conference("conference:#{conference.identifier}", "conference_ended", message, conference)
   end
 
   @spec broadcast_conference_changed(String.t, ContactCentre.Conferencing.Conference.t) :: any
   def broadcast_conference_changed(message, conference) do
-    ContactCentre.Web.Endpoint.broadcast("conference:#{conference.identifier}", "conference_changed", %{message: message, conference: conference_message(conference)})
+    broadcast_conference("conference:#{conference.identifier}", "conference_changed", message, conference)
+  end
+
+  @spec broadcast_conference(String.t, String.t, String.t, ContactCentre.Conferencing.Conference.t) :: any
+  defp broadcast_conference(channel, event, message, conference) do
+    ContactCentre.Web.Endpoint.broadcast(channel, event, %{message: message, conference: conference_message(conference)})
   end
 
   @spec conference_message(ContactCentre.Conferencing.Conference.t) :: nil | map
