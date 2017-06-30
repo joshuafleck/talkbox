@@ -1,9 +1,10 @@
 # Telephony
 
-Manages the core business logic for the system. Maintains its own version of the call state separate from Twilio.
+Encapsulates the logic for communicating with the telephony provider. Makes API calls and accepts webhook requests from the telephony provider (also uses [Phoenix](http://www.phoenixframework.org/)).
 
 ## Interesting bits
 
-- **[Telephony API](lib/telephony.ex)** These are the operations that can be peformed against a conference or call leg
-- **[Conference state](lib/telephony/conference.ex)** This is where the conference state is maintained. It controls the allowed operations on the conference when it is in a given state. Stores the conferences in memory as a map of user -> conference.
-
+- **[Routing](lib/telephony/web/router.ex)** This controls the routing of the webhook calls from the telephony provider
+- **[Call controller](lib/telephony/web/controllers/twilio/call_controller.ex)** Handles webhook calls from Twilio pertaining to call legs and either publishes a corresponding event or returns a TwiML response.
+- **[Conference controller](lib/telephony/web/controllers/twilio/conference_controller.ex)** Handles webhook calls from Twilio pertaining to conferences and publishes a corresponding event.
+- **[Event consumer](lib/telephony/consumer.ex)** Subscribes to events concerning call state change and defines how each event is to be handled.

@@ -3,44 +3,47 @@ defmodule Telephony.Mixfile do
 
   def project do
     [app: :telephony,
-     version: "0.1.0",
+     version: "0.0.1",
      build_path: "../../_build",
      config_path: "../../config/config.exs",
      deps_path: "../../deps",
      lockfile: "../../mix.lock",
-     elixir: "~> 1.4",
+     elixir: "~> 1.2",
+     elixirc_paths: elixirc_paths(Mix.env),
+     compilers: [:phoenix, :gettext] ++ Mix.compilers,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps()]
   end
 
-  # Configuration for the OTP application
+  # Configuration for the OTP application.
   #
-  # Type "mix help compile.app" for more information
+  # Type `mix help compile.app` for more information.
   def application do
-    # Specify extra applications you'll use from Erlang/Elixir
-    [extra_applications: [:logger],
-     mod: {Telephony.Application, []}]
+    [mod: {Telephony, []},
+     extra_applications: [:logger]
+    ]
   end
 
-  # Dependencies can be Hex packages:
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_),     do: ["lib"]
+
+  # Specifies your project dependencies.
   #
-  #   {:my_dep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:my_dep, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
-  #
-  # To depend on another app inside the umbrella:
-  #
-  #   {:my_app, in_umbrella: true}
-  #
-  # Type "mix help deps" for more examples and options
+  # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:phoenix, "~> 1.3.0-rc"},
+      {:phoenix_pubsub, "~> 1.0"},
+      {:phoenix_html, "~> 2.6"},
+      {:gettext, "~> 0.11"},
+      {:cowboy, "~> 1.0"},
+      {:ex_twiml, github: "danielberkompas/ex_twiml"}, # For serving TwiML responses to Twilio
       {:ex_twilio, "~> 0.3.0"}, # For making requests to Twilio
       {:ex_ngrok, "~> 0.3.0", only: [:dev]}, # To allow webhook callbacks in dev
-      {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]} # To bootstrap Twilio application in dev
+      {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]}, # To bootstrap Twilio application in dev
+      {:events, in_umbrella: true} # For communicating with other applications
     ]
   end
 end

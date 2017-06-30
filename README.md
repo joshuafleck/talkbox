@@ -4,7 +4,9 @@ A proof of concept in building browser-based telephony applications using functi
 
 ## Why?
 
-To improve my knowledge of functional programming. To learn what types of problems are more/less difficult to solve in the telephony domain using functional languages vs. object oriented languages.
+- To improve my knowledge of functional programming.
+- To learn what types of problems are more/less difficult to solve in the telephony domain using functional languages vs. object oriented languages.
+- To gain more experience with event-driven architectures.
 
 ## What does it do?
 
@@ -15,7 +17,7 @@ To improve my knowledge of functional programming. To learn what types of proble
 
 ## Design
 
-This project serves as an [umbrella](https://elixirschool.com/lessons/advanced/umbrella-projects/) enclosing many smaller applications.
+This project serves as an [umbrella](https://elixirschool.com/lessons/advanced/umbrella-projects/) enclosing some smaller applications.
 
 ### Goals
 
@@ -24,14 +26,12 @@ This project serves as an [umbrella](https://elixirschool.com/lessons/advanced/u
 
 ### Components
 
-Each of these components is implemented as a child-project under the `/apps` directory. This was done to promote the abovementioned design goals.
+Each of these components is implemented as a child-project under the `/apps` directory. This was done to promote the abovementioned design goals. Communication between components is achieved by publishing and subscribing to events.
 
 ![Architecture](images/Talkbox.png)
 
-- **[UI](apps/ui)** Serves the single page web application. Translates websocket messages from the client into [events](apps/events). Provides an endpoint for other applications (i.e. [router](apps/router)) to send websocket messages back to the client.
-- **[Callbacks](apps/callbacks)** Accepts webhook requests from Twilio. Responds back with TwiML instructions and/or publishes [events](apps/events) to broadcast that call state in Twilio has changed.
-- **[Telephony](apps/telephony)** Manages the core business logic for the system. Maintains its own version of the call state separate from Twilio.
-- **[Router](apps/router)** Handlers for [events](apps/events). Runs a pool of consumer processes that pull events from the event queue and delegate to the [telephony](apps/telephony) or [ui](apps/ui) applications.
+- **[ContactCentre](apps/contact_centre)** A [Phoenix](http://www.phoenixframework.org/) application that serves the interface allowing the user to make and receive calls. Contains the core business logic for managing calls and conferences.
+- **[Telephony](apps/telephony)** Encapsulates the logic for communicating with the telephony provider. Makes API calls and accepts webhook requests from the telephony provider (also uses [Phoenix](http://www.phoenixframework.org/)).
 - **[Events](apps/events)** Contains event definitions used to communicate between applications and facilitates publishing of events
 
 ## Set up
@@ -45,7 +45,7 @@ Each of these components is implemented as a child-project under the `/apps` dir
 1. Install Node packages
 
     ```
-    # within the `apps/ui/assets` directory:
+    # within the `apps/contact_centre/assets` directory:
     npm install
     ```
 
@@ -65,7 +65,7 @@ Each of these components is implemented as a child-project under the `/apps` dir
 1. Start the applications
 
     ```
-    iex -S mix phoenix.server
+    iex -S mix phx.server
     ```
 
 1. Open the application

@@ -6,42 +6,37 @@ defmodule Events do
   such that the producers and consumers of these events can include
   this application to ensure event definitions are the same for both
   the producers and consumers.
-
-  Currently, events are published to an in-memory queue structure, but
-  could be published to a third-party application like RabbitMQ to take
-  advantage of topics, multiplexing, etc.
   """
-  require Logger
+
+  @typedoc """
+  All of the possible events
+  """
+  @type t :: CallFailedToJoinConference.t
+  | CallJoinedConference.t
+  | CallLeftConference.t
+  | CallRequested.t
+  | CallRequestedFailed.t
+  | CallStatusChanged.t
+  | ChairpersonRequestsToRemoveCall.t
+  | ConferenceEnded.t
+  | HangupRequested.t
+  | RemoveRequested.t
+  | UserRequestsCall.t
 
   @doc """
-  Publishes an event to the queue of events
-
-  ## Example
-
-    iex(1)> Events.publish(%Events.UserRequestsCall{user: "test_user", callee: "test_callee"})
-    {:ok, %Events.UserRequestsCall{callee: "test_callee", user: "test_user"}}
+  Subscribe to events of a given topic
   """
-  @spec publish(struct) :: {:ok, struct} | {:error, String.t}
-  def publish(event) do
-    Logger.debug "#{__MODULE__} publishing #{inspect(event)}"
-    event
-    |> Events.Queue.put
+  @spec subscribe(atom) :: :ok
+  def subscribe(topic) do
+    Events.Registry.subscribe(topic)
   end
 
   @doc """
-  Consumes an event from the queue of events
-
-  ## Example
-
-    iex(1)> Events.publish(%Events.UserRequestsCall{user: "test_user", callee: "test_callee"})
-    {:ok, %Events.UserRequestsCall{callee: "test_callee", user: "test_user"}}
-    iex(2)> Events.consume
-    {:ok, %Events.UserRequestsCall{callee: "test_callee", user: "test_user"}}
-    iex(3)> Events.consume
-    {:error, "queue is empty"}
+  Publish an event on a given topic
   """
-  @spec consume :: {:ok, struct} | {:error, String.t}
-  def consume do
-    Events.Queue.pop
+  @spec publish(Events.t) :: :ok
+  def publish(event) do
+    Events.Persistence.write(event)
+    Events.Registry.publish(event)
   end
 end
