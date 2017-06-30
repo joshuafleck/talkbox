@@ -21,7 +21,8 @@ defmodule ContactCentre.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {ContactCentre, []},
-     applications: [:phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger, :gettext]]
+     extra_applications: [:logger]
+    ]
   end
 
   # Specifies which paths to compile per environment.
@@ -41,7 +42,7 @@ defmodule ContactCentre.Mixfile do
       {:cowboy, "~> 1.0"},
       {:plug, "~> 1.0"}, # Resolved 'unknown function' dialyzer errors
       {:ex_twilio, "~> 0.3.0"}, # For generating Twilio client tokens
-      {:events, in_umbrella: true} # For publishing events from the UI
+      {:events, in_umbrella: true} # For communicating with other applications
     ]
   end
 end
