@@ -16,7 +16,7 @@ defmodule Events.PersistenceTest do
     event = %Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil}
     assert Events.Persistence.write(event) == :ok
     Logger.flush
-    assert Events.Persistence.read(Application.get_env(:events, :persistence_file_path)) == [:ok, :ok]
+    assert Events.Persistence.read(Application.get_env(:events, :persistence_file_path)) == [:ok]
     # TODO: assert Events.Queue.pop == {:ok, event}
   end
 end
