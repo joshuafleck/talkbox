@@ -30,8 +30,8 @@ Each of these components is implemented as a child-project under the `/apps` dir
 
 ![Architecture](images/Talkbox.png)
 
-- **[ContactCentre](apps/contact_centre)** A Phoenix application that serves the interface allowing the user to make and receive calls. Contains the core business logic for managing calls and conferences.
-- **[Telephony](apps/telephony)** Encapsulates the logic for communicating with the telephony provider. Makes API calls and accepts webhook requests from the telephony provider.
+- **[ContactCentre](apps/contact_centre)** A [Phoenix](http://www.phoenixframework.org/) application that serves the interface allowing the user to make and receive calls. Contains the core business logic for managing calls and conferences.
+- **[Telephony](apps/telephony)** Encapsulates the logic for communicating with the telephony provider. Makes API calls and accepts webhook requests from the telephony provider (also uses [Phoenix](http://www.phoenixframework.org/)).
 - **[Events](apps/events)** Contains event definitions used to communicate between applications and facilitates publishing of events
 
 ## Set up
