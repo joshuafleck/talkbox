@@ -1,9 +1,7 @@
 defmodule ContactCentre.Consumer do
   use GenServer
   @moduledoc """
-  Responsible for consuming events published by any users of the `Events`
-  application and translating these events into a series of actions against
-  one or more applications.
+  Responsible for consuming and actioning events pertaining to conferencing.
   """
 
   def init(_) do

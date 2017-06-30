@@ -1,8 +1,7 @@
 defmodule Telephony.Consumer do
   use GenServer
   @moduledoc """
-  Responsible for consuming an acting upon any applicable
-  events published by users of the `Events` application.
+  Responsible for consuming and actioning events pertaining to call state changes.
   """
 
   require Logger

@@ -1,6 +1,7 @@
 defmodule Telephony do
   @moduledoc """
-  Responsible for responding to callback requests from telephony providers.
+  Responsible for responding to callback requests from and sending
+  instructions via API to telephony providers.
   A typical response will either return a TwiML instruction with `Telephony.Twiml`
   or will fire an event using the `Events` module.
   """

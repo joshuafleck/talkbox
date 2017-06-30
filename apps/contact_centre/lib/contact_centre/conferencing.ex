@@ -1,8 +1,8 @@
 defmodule ContactCentre.Conferencing do
   @moduledoc """
-  The purpose of this module is to maintain the state
-  of the ContactCentre system and expose functions for
-  altering the state of the system.
+  Encapsulates the business logic around conferencing. Exposes
+  an API for the manipulation of conferences, which are represented
+  as processes and stored in a registry.
   """
   use GenServer
 
@@ -36,7 +36,7 @@ defmodule ContactCentre.Conferencing do
 
   @doc """
   Called when we receive a notification from the telephony provider that the status of the
-  call leg for the pending participant has changed.
+  call leg has changed.
   """
   @spec update_status_of_call(ContactCentre.Conferencing.Intentifier.t, ContactCentre.Conferencing.Intentifier.t, String.t, String.t, non_neg_integer) :: response
   def update_status_of_call(conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number) do
@@ -44,10 +44,10 @@ defmodule ContactCentre.Conferencing do
   end
 
   @doc """
-  Call this to hang up the call leg for the pending participant. For example, if you decide
+  Call this to hang up a call leg. For example, if you decide
   you want to cancel your attempt to call a participant.
 
-  Note that this does not remove the pending participant from the conference state as there
+  Note that this does not remove the call from the conference state as there
   will be a subsequent message from the telephony provider telling us that the leg has failed
   to connect, which will be handled in `remove_call`.
   """
@@ -57,9 +57,9 @@ defmodule ContactCentre.Conferencing do
   end
 
   @doc """
-  Called when we receive notification that a pending participant's call leg has failed to connect.
+  Called when we receive notification that a call leg has failed to connect.
 
-  This will remove the pending participant and may end the conference if the chairperson is all alone.
+  This will remove the call and may end the conference if the chairperson is all alone.
   """
   @spec remove_call(ContactCentre.Conferencing.Intentifier.t, ContactCentre.Conferencing.Intentifier.t) :: response
   def remove_call(conference_identifier, call_identifier) do
@@ -69,7 +69,7 @@ defmodule ContactCentre.Conferencing do
   @doc """
   Called when we receive notification that a conference has ended.
 
-  This will clear the conference and hang up any pending participant call leg.
+  This will clear the conference and hang up any pending call leg.
   This is done because if the conference has ended then there is no way to
   salvage it and there is no path for reconnecting to it.
   """
@@ -83,16 +83,12 @@ defmodule ContactCentre.Conferencing do
   @doc """
   Called when we receive notification that a participant has left the conference.
 
-  If the provided participant reference matches the call_sid of the chair,
-  the chair's call_sid will be cleared on the conference. Otherwise, the
-  matching participant is looked up in the participant's list and removed.
-
   Depending on who is remaining in the conference, the remaining call legs may
   be hung up and the conference cleared. If there are any participants
-  (including pending participants), then the conference will carry on (even if
-  the chair has left). The reasoning behind this is to allow the chair to reconnect
+  (including pending calls), then the conference will carry on (even if
+  the chair has left). The reasoning behind this is to allow the chairperson to reconnect
   after becoming disconnected from the conference. If, however, it is just the
-  chair remaining in the conference then their call leg will be hung up and the
+  chairperson remaining in the conference then their call leg will be hung up and the
   conference cleared.
   """
   @spec acknowledge_call_left(ContactCentre.Conferencing.Intentifier.t, String.t) :: response
@@ -103,8 +99,8 @@ defmodule ContactCentre.Conferencing do
   @doc """
   Called when we receive notification that a participant has joined the conference.
 
-  If the chair has not yet been joined to the conference, this updates the
-  call leg details for the chair on the conference and will then initiate the
+  If the chairperson has not yet been joined to the conference, this updates the
+  call leg details for the chairperson on the conference and will then initiate the
   participant's call.
   """
   @spec acknowledge_call_joined(ContactCentre.Conferencing.Intentifier.t, String.t, String.t) :: response

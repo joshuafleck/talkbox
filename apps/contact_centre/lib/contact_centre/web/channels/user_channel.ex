@@ -1,8 +1,7 @@
 defmodule ContactCentre.Web.UserChannel do
   @moduledoc """
-  Channel through which we communicate with the SPA. Given messages
-  from the client, will translate those into events published with the
-  `Events` module.
+  Channel through which we communicate with the SPA when no conference is in progress.
+  Communication regarding a conference will occur over a conference-specific channel.
   """
   use ContactCentre.Web, :channel
 
