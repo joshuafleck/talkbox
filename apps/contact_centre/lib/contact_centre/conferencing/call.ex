@@ -56,7 +56,7 @@ defmodule ContactCentre.Conferencing.Call do
     elem(call.status, 1) < sequence_number
   end
 
-  @doc"""
+  @doc """
   Creates a new Call struct
   """
   @spec new(String.t) :: t
