@@ -1,9 +1,10 @@
 # Telephony
 
-Accepts webhook requests from Twilio. Responds back with TwiML instructions and/or publishes [events](../events) to broadcast that call state in Twilio has changed.
+Encapsulates the logic for communicating with the telephony provider. Makes API calls and accepts webhook requests from the telephony provider (also uses [Phoenix](http://www.phoenixframework.org/)).
 
 ## Interesting bits
 
-- **[Routing](web/router.ex)** This controls the routing of requests
-- **[Call controller](web/controllers/twilio/call_controller.ex)** Handles requests pertaining to call legs
-- **[Conference controller](web/controllers/twilio/conference_controller.ex)** Handles requests pertaining to conferences
+- **[Routing](lib/telephony/web/router.ex)** This controls the routing of the webhook calls from the telephony provider
+- **[Call controller](lib/telephony/web/controllers/twilio/call_controller.ex)** Handles webhook calls from Twilio pertaining to call legs and either publishes a corresponding event or returns a TwiML response.
+- **[Conference controller](lib/telephony/web/controllers/twilio/conference_controller.ex)** Handles webhook calls from Twilio pertaining to conferences and publishes a corresponding event.
+- **[Event consumer](lib/telephony/consumer.ex)** Subscribes to events concerning call state change and defines how each event is to be handled.
