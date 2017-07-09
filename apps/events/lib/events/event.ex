@@ -28,8 +28,8 @@ defmodule Events.Event do
 
   ## Examples
 
-      iex(25)> Events.Event.serialize(%Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil})
-      "{\"name\":\"Elixir.Events.UserRequestsCall\",\"data\":\"{\\\"user\\\":\\\"josh\\\",\\\"conference\\\":null,\\\"callee\\\":\\\"amy\\\"}\"}"
+  iex(25)> Events.Event.serialize(%Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil})
+  "{\"name\":\"Elixir.Events.UserRequestsCall\",\"data\":\"{\\\"user\\\":\\\"josh\\\",\\\"conference\\\":null,\\\"callee\\\":\\\"amy\\\"}\"}"
   """
   @spec serialize(Events.t) :: String.t
   def serialize(event) do
@@ -46,8 +46,8 @@ defmodule Events.Event do
 
   ## Examples
 
-      iex(1)> Events.Event.deserialize("{\"name\":\"Elixir.Events.UserRequestsCall\",\"data\":\"{\\\"user\\\":\\\"josh\\\",\\\"conference\\\":null,\\\"callee\\\":\\\"amy\\\"}\"}")
-      %Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil}
+  iex(1)> Events.Event.deserialize("{\"name\":\"Elixir.Events.UserRequestsCall\",\"data\":\"{\\\"user\\\":\\\"josh\\\",\\\"conference\\\":null,\\\"callee\\\":\\\"amy\\\"}\"}")
+  %Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil}
   """
   @spec deserialize(String.t) :: Events.t
   def deserialize(raw) do

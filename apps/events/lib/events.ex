@@ -24,19 +24,46 @@ defmodule Events do
   | UserRequestsCall.t
 
   @doc """
-  Subscribe to events of a given topic
+  Subscribe to events of a given event type.
+
+  Subscribers should run a `GenServer` and implement
+  a customised `Events.Handler` behaviour for any
+  events to which they are subscribed. Events will be
+  sent as a `:broadcast` message and can be handled as
+  follows:
+
+  ```
+  def handle_info({:broadcast, event}, state) do
+  Events.Handler.handle(event)
+  {:noreply, state}
+  end
+  ```
+
+  ## Examples
+
+  iex(1)> Events.subscribe(UserRequestsCall)
+  :ok
   """
   @spec subscribe(atom) :: :ok
   def subscribe(topic) do
-    Events.Registry.subscribe(topic)
+    {:ok, _} = Registry.register(Events.Registry, topic, [])
+    :ok
   end
 
   @doc """
-  Publish an event on a given topic
+  Publish an event that will be routed to all
+  subscribers subscribed to that event type.
+
+  ## Examples
+
+  iex(2)> Events.publish(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
+  :ok
   """
   @spec publish(Events.t) :: :ok
   def publish(event) do
     Events.Persistence.write(event)
-    Events.Registry.publish(event)
+    Registry.dispatch(Events.Registry, event.__struct__, fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:broadcast, event})
+    end)
   end
 end

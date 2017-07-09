@@ -1,5 +1,6 @@
 defmodule Events.PersistenceTest do
   use ExUnit.Case, async: false
+  doctest Events.Persistence
 
   setup do
     Application.stop(:events)
@@ -12,11 +13,14 @@ defmodule Events.PersistenceTest do
     end
   end
 
-  test "ability to write events to file then have them read back into the queue" do
+  test "ability to write events to file then have them read back" do
     event = %Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil}
     assert Events.Persistence.write(event) == :ok
     Logger.flush
-    assert Events.Persistence.read(Application.get_env(:events, :persistence_file_path)) == [:ok]
-    # TODO: assert Events.Queue.pop == {:ok, event}
+    events_file_path = Application.get_env(:events, :persistence_file_path)
+    events = events_file_path
+    |> Events.Persistence.read()
+    |> Enum.map(&(&1))
+    assert events == [event]
   end
 end
