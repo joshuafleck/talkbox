@@ -41,6 +41,7 @@ defmodule ContactCentre.Mixfile do
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
       {:plug, "~> 1.0"}, # Resolved 'unknown function' dialyzer errors
+      {:appsignal, github: "appsignal/appsignal-elixir", branch: "phoenix-pre"}, # Application performance monitoring
       {:ex_twilio, "~> 0.3.0"}, # For generating Twilio client tokens
       {:events, in_umbrella: true} # For communicating with other applications
     ]

@@ -28,5 +28,6 @@ defmodule Telephony.Web.Endpoint do
     key: "_callbacks_key",
     signing_salt: "9/zewwfV"
 
+  use Appsignal.Phoenix # For Appsignal APM
   plug Telephony.Web.Router
 end

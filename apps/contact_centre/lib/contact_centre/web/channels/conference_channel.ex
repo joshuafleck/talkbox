@@ -5,6 +5,7 @@ defmodule ContactCentre.Web.ConferenceChannel do
   conference has ended.
   """
   use ContactCentre.Web, :channel
+  use Appsignal.Instrumentation.Decorators # For Appsignal APM
 
   @doc """
   Called when a conference is started, each conference has its own channel
@@ -23,6 +24,7 @@ defmodule ContactCentre.Web.ConferenceChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("request_to_remove_call", %{"conference" => conference, "call" => call}, socket) do
     :ok = Events.publish(%Events.ChairpersonRequestsToRemoveCall{
           conference: conference,

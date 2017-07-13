@@ -44,5 +44,6 @@ defmodule ContactCentre.Web.Endpoint do
     key: "_ui_key",
     signing_salt: "grJhKfsY"
 
+  use Appsignal.Phoenix # For Appsignal APM
   plug ContactCentre.Web.Router
 end

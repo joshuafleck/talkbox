@@ -39,6 +39,7 @@ defmodule Telephony.Mixfile do
       {:phoenix_html, "~> 2.6"},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
+      {:appsignal, github: "appsignal/appsignal-elixir", branch: "phoenix-pre"}, # Application performance monitoring
       {:ex_twiml, github: "danielberkompas/ex_twiml"}, # For serving TwiML responses to Twilio
       {:ex_twilio, "~> 0.3.0"}, # For making requests to Twilio
       {:ex_ngrok, "~> 0.3.0", only: [:dev]}, # To allow webhook callbacks in dev

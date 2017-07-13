@@ -7,11 +7,17 @@ use Mix.Config
 
 # Configures the endpoint
 config :contact_centre, ContactCentre.Web.Endpoint,
+  instrumenters: [Appsignal.Phoenix.Instrumenter], # For Appsignal APM
   url: [host: "localhost"],
   secret_key_base: "b3i2E1axl4c+47U8TS469YVNxwNMc3PLXCWJD4N98FSGu846CBle6QmiRcox3oYp",
   render_errors: [view: ContactCentre.Web.ErrorView, accepts: ~w(html json)],
   pubsub: [name: ContactCentre.PubSub,
            adapter: Phoenix.PubSub.PG2]
+
+# For Appsignal APM
+config :phoenix, :template_engines,
+  eex: Appsignal.Phoenix.Template.EExEngine,
+  exs: Appsignal.Phoenix.Template.ExsEngine
 
 # Configures Elixir's Logger
 config :logger, :console,

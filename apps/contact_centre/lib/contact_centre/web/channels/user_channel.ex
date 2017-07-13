@@ -4,6 +4,7 @@ defmodule ContactCentre.Web.UserChannel do
   Communication regarding a conference will occur over a conference-specific channel.
   """
   use ContactCentre.Web, :channel
+  use Appsignal.Instrumentation.Decorators # For Appsignal APM
 
   @doc """
   Called when the SPA is initially loaded, each client has its own channel
@@ -34,6 +35,7 @@ defmodule ContactCentre.Web.UserChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("start_call", %{"callee" => callee, "user" => user, "conference" => conference}, socket) do
     :ok = Events.publish(%Events.UserRequestsCall{user: user, callee: callee, conference: conference})
     {:reply, {:ok, %{}}, socket}
