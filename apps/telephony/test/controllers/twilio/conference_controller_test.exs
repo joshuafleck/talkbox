@@ -2,50 +2,49 @@ defmodule Telephony.Web.Twilio.ConferenceControllerTest do
   use Telephony.Web.ConnCase, async: false
 
   setup do
-    Application.stop(:events)
-    :ok = Application.start(:events)
+    Events.Persistence.init
+    Logger.metadata(application: :events)
+    Logger.configure(level: :info)
+    on_exit fn ->
+      Logger.metadata(application: nil)
+      Logger.configure(level: :warn)
+    end
   end
 
-  test "POST /telephony/twilio/conference/status_changed when a participant has joined", %{conn: conn} do
-    conn = post conn, "/telephony/twilio/conference/status_changed", %{
-      "conference" => "conference_ident",
-      "chair" => "chair_name",
+  test "POST /telephony/twilio/conferences/2/status_changed when a participant has joined", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/conferences/2/status_changed", %{
       "CallSid" => "call_sid",
       "ConferenceSid" => "conference_sid",
       "StatusCallbackEvent" => "participant-join"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.consume == {:ok, %Events.ParticipantJoinedConference{call_sid: "call_sid", chair: "chair_name", conference: "conference_ident", conference_sid: "conference_sid"}}
+    assert Events.Persistence.published == [%Events.CallJoinedConference{conference: "2", providers_call_identifier: "call_sid", providers_identifier: "conference_sid"}]
   end
 
-  test "POST /telephony/twilio/conference/status_changed when a participant has left", %{conn: conn} do
-    conn = post conn, "/telephony/twilio/conference/status_changed", %{
-      "conference" => "conference_ident",
-      "chair" => "chair_name",
+  test "POST /telephony/twilio/conferences/2/status_changed when a participant has left", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/conferences/2/status_changed", %{
       "CallSid" => "call_sid",
       "ConferenceSid" => "conference_sid",
       "StatusCallbackEvent" => "participant-leave"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.consume == {:ok, %Events.ParticipantLeftConference{call_sid: "call_sid", chair: "chair_name", conference: "conference_ident", conference_sid: "conference_sid"}}
+    assert Events.Persistence.published == [%Events.CallLeftConference{conference: "2", providers_call_identifier: "call_sid", providers_identifier: "conference_sid"}]
   end
 
-  test "POST /telephony/twilio/conference/status_changed when the conference has ended", %{conn: conn} do
-    conn = post conn, "/telephony/twilio/conference/status_changed", %{
-      "conference" => "conference_ident",
-      "chair" => "chair_name",
+  test "POST /telephony/twilio/conferences/2/status_changed when the conference has ended", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/conferences/2/status_changed", %{
       "ConferenceSid" => "conference_sid",
       "StatusCallbackEvent" => "conference-end"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.consume == {:ok, %Events.ConferenceEnded{chair: "chair_name", conference: "conference_ident", conference_sid: "conference_sid"}}
+    assert Events.Persistence.published == [%Events.ConferenceEnded{conference: "2", providers_identifier: "conference_sid"}]
   end
 
-  test "POST /telephony/twilio/conference/status_changed for any other event", %{conn: conn} do
-    conn = post conn, "/telephony/twilio/conference/status_changed", %{
+  test "POST /telephony/twilio/conferences/2/status_changed for any other event", %{conn: conn} do
+    conn = post conn, "/telephony/twilio/conferences/2/status_changed", %{
       "StatusCallbackEvent" => "anthing"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.consume == {:error, "queue is empty"}
+    assert Events.Persistence.published == []
   end
 end

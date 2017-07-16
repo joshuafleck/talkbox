@@ -16,11 +16,6 @@ defmodule Events.PersistenceTest do
   test "ability to write events to file then have them read back" do
     event = %Events.UserRequestsCall{callee: "amy", user: "josh", conference: nil}
     assert Events.Persistence.write(event) == :ok
-    Logger.flush
-    events_file_path = Application.get_env(:events, :persistence_file_path)
-    events = events_file_path
-    |> Events.Persistence.read()
-    |> Enum.map(&(&1))
-    assert events == [event]
+    assert Events.Persistence.published() == [event]
   end
 end

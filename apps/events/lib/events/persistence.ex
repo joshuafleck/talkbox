@@ -41,8 +41,23 @@ defmodule Events.Persistence do
   """
   @spec read(String.t) :: Enumerable.t
   def read(path) do
-    path
-    |> File.stream!()
-    |> Stream.map(&Events.Event.deserialize(&1))
+    unless File.exists?(path) do
+      []
+    else
+      path
+      |> File.stream!()
+      |> Stream.map(&Events.Event.deserialize(&1))
+    end
+  end
+
+  @doc """
+  Returns all of the events that have been published
+  to the events log.
+  """
+  @spec published() :: [Events.t]
+  def published do
+    path = Application.get_env(:events, :persistence_file_path)
+    Logger.flush
+    Enum.map(read(path), &(&1))
   end
 end
