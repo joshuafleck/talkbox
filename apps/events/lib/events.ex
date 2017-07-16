@@ -26,23 +26,15 @@ defmodule Events do
   @doc """
   Subscribe to events of a given event type.
 
-  Subscribers should run a `GenServer` and implement
-  a customised `Events.Handler` behaviour for any
-  events to which they are subscribed. Events will be
-  sent as a `:broadcast` message and can be handled as
-  follows:
-
-  ```
-  def handle_info({:broadcast, event}, state) do
-  Events.Handler.handle(event)
-  {:noreply, state}
-  end
-  ```
+  Applications wishing to subscribe and consume events
+  should implement the `Events.Handler` behaviour for
+  setting up subscriptions and defining handing of the
+  subscribed events.
 
   ## Examples
 
-  iex(1)> Events.subscribe(UserRequestsCall)
-  :ok
+      iex(1)> Events.subscribe(UserRequestsCall)
+      :ok
   """
   @spec subscribe(atom) :: :ok
   def subscribe(topic) do
@@ -56,8 +48,8 @@ defmodule Events do
 
   ## Examples
 
-  iex(2)> Events.publish(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
-  :ok
+      iex(2)> Events.publish(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
+      :ok
   """
   @spec publish(Events.t) :: :ok
   def publish(event) do

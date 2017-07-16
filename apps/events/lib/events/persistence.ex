@@ -26,8 +26,8 @@ defmodule Events.Persistence do
 
   ## Examples
 
-  iex(1)> Events.Persistence.write(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
-  :ok
+      iex(1)> Events.Persistence.write(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
+      :ok
   """
   @spec write(Events.t) :: :ok | {:error, String.t}
   def write(event) do
