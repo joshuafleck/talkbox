@@ -1,69 +1,48 @@
 defmodule Telephony.Consumer do
-  use GenServer
   @moduledoc """
   Responsible for consuming and actioning events pertaining to call state changes.
   """
+  @subscriptions [Events.CallRequested, Events.HangupRequested, Events.RemoveRequested]
+  use Events.Handler
 
   require Logger
 
-  def init(_) do
-    Events.subscribe(Events.CallRequested)
-    Events.subscribe(Events.HangupRequested)
-    Events.subscribe(Events.RemoveRequested)
-    {:ok, nil}
-  end
-
-  def start_link do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
-  end
-
-  def handle_info({:broadcast, event}, state) do
-    Events.Handler.handle(event)
-    {:noreply, state}
-  end
-
-  defimpl Events.Handler, for: Events.CallRequested do
-    @spec handle(Events.CallRequested.t) :: any
-    def handle(event) do
-      url_prefix = Application.get_env(:telephony, :webhook_url).()
-      from = Application.get_env(:telephony, :cli).()
-      conference_status_callback = url_prefix <> Telephony.Web.Router.Helpers.conference_status_changed_path(Telephony.Web.Endpoint, :status_changed, event.conference)
-      url = url_prefix <> Telephony.Web.Router.Helpers.conference_call_answered_path(Telephony.Web.Endpoint, :answered, event.conference, event.call, conference_status_callback: conference_status_callback)
-      status_callback = url_prefix <> Telephony.Web.Router.Helpers.conference_call_status_changed_path(Telephony.Web.Endpoint, :status_changed, event.conference, event.call)
-      result = Telephony.Consumer.log_api_call(:call, fn ->
-        Telephony.Consumer.provider.call(
-          to: event.destination,
-          from: from,
-          url: url,
-          status_callback: status_callback,
-          status_callback_events: ~w(initiated ringing answered completed))
-        end)
-      case result do
-        {:error, _, _} ->
-          Events.publish(%Events.CallRequestFailed{conference: event.conference, call: event.call})
-          result
-        _ ->
-          result
-      end
+  @spec handle(Events.CallRequested.t) :: any
+  def handle(event = %Events.CallRequested{}) do
+    url_prefix = Application.get_env(:telephony, :webhook_url).()
+    from = Application.get_env(:telephony, :cli).()
+    conference_status_callback = url_prefix <> Telephony.Web.Router.Helpers.conference_status_changed_path(Telephony.Web.Endpoint, :status_changed, event.conference)
+    url = url_prefix <> Telephony.Web.Router.Helpers.conference_call_answered_path(Telephony.Web.Endpoint, :answered, event.conference, event.call, conference_status_callback: conference_status_callback)
+    status_callback = url_prefix <> Telephony.Web.Router.Helpers.conference_call_status_changed_path(Telephony.Web.Endpoint, :status_changed, event.conference, event.call)
+    result = Telephony.Consumer.log_api_call(:call, fn ->
+      Telephony.Consumer.provider.call(
+        to: event.destination,
+        from: from,
+        url: url,
+        status_callback: status_callback,
+        status_callback_events: ~w(initiated ringing answered completed))
+    end)
+    case result do
+      {:error, _, _} ->
+        Events.publish(%Events.CallRequestFailed{conference: event.conference, call: event.call})
+        result
+      _ ->
+        result
     end
   end
 
-  defimpl Events.Handler, for: Events.HangupRequested do
-    @spec handle(Events.HangupRequested.t) :: any
-    def handle(event) do
-      Telephony.Consumer.log_api_call(:hangup, fn ->
-        Telephony.Consumer.provider.hangup(event.providers_call_identifier)
-       end)
-    end
+  @spec handle(Events.HangupRequested.t) :: any
+  def handle(event = %Events.HangupRequested{}) do
+    Telephony.Consumer.log_api_call(:hangup, fn ->
+      Telephony.Consumer.provider.hangup(event.providers_call_identifier)
+    end)
   end
 
-  defimpl Events.Handler, for: Events.RemoveRequested do
-    @spec handle(Events.RemoveRequested.t) :: any
-    def handle(event) do
-      Telephony.Consumer.log_api_call(:kick, fn ->
-        Telephony.Consumer.provider.kick_participant_from_conference(event.providers_identifier, event.providers_call_identifier)
-      end)
-    end
+  @spec handle(Events.RemoveRequested.t) :: any
+  def handle(event = %Events.RemoveRequested{}) do
+    Telephony.Consumer.log_api_call(:kick, fn ->
+      Telephony.Consumer.provider.kick_participant_from_conference(event.providers_identifier, event.providers_call_identifier)
+    end)
   end
 
   @spec provider :: module
