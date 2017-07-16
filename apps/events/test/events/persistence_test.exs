@@ -3,8 +3,7 @@ defmodule Events.PersistenceTest do
   doctest Events.Persistence
 
   setup do
-    Application.stop(:events)
-    :ok = Application.start(:events)
+    Events.Persistence.init
     Logger.metadata(application: :events)
     Logger.configure(level: :info)
     on_exit fn ->
