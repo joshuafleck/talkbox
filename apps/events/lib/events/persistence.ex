@@ -41,12 +41,12 @@ defmodule Events.Persistence do
   """
   @spec read(String.t) :: Enumerable.t
   def read(path) do
-    unless File.exists?(path) do
-      []
-    else
+    if File.exists?(path) do
       path
       |> File.stream!()
       |> Stream.map(&Events.Event.deserialize(&1))
+    else
+      []
     end
   end
 
