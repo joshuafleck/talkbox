@@ -23,6 +23,11 @@ defmodule Events.Persistence do
 
   @doc """
   Writes the event to file
+
+  ## Examples
+
+      iex(1)> Events.Persistence.write(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
+      :ok
   """
   @spec write(Events.t) :: :ok | {:error, String.t}
   def write(event) do
@@ -32,14 +37,27 @@ defmodule Events.Persistence do
   end
 
   @doc """
-  Reads the event stream from file and loads it into the
-  event queue.
+  Reads the event stream from file
   """
-  @spec read(String.t) :: []
+  @spec read(String.t) :: Enumerable.t
   def read(path) do
-    path
-    |> File.stream!()
-    |> Stream.map(&Events.Event.deserialize(&1))
-    |> Enum.map(&Events.publish(&1))
+    if File.exists?(path) do
+      path
+      |> File.stream!()
+      |> Stream.map(&Events.Event.deserialize(&1))
+    else
+      []
+    end
+  end
+
+  @doc """
+  Returns all of the events that have been published
+  to the events log.
+  """
+  @spec published() :: [Events.t]
+  def published do
+    path = Application.get_env(:events, :persistence_file_path)
+    Logger.flush
+    Enum.map(read(path), &(&1))
   end
 end

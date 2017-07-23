@@ -1,26 +1,29 @@
 defmodule Telephony.Provider.Test do
   @moduledoc """
-  Provides telephony provider behaviour without making any real calls
+  Provides telephony provider behaviour without making any real calls. Records the calls made and their arguments such that the tests can verify the correct arguments were passed to the provider.
   """
   @behaviour Telephony.Provider
+
+  def start_link do
+    Agent.start_link(fn -> [] end, name: __MODULE__)
+  end
+
+  def calls_received do
+    Agent.get(__MODULE__, &(&1))
+  end
 
   @doc """
   Simulates initiation of a phone call.
   The `to` argument will be returned as the call_sid.
   Pass a value of `error` as the `to` argument to simulate an error from the telephony provider
   """
-  def call(
-    to: to,
-    from: _from,
-    url: _url,
-    status_callback: _status_callback,
-    status_callback_events: _status_callback_events
-  ) do
-    case to do
+  def call(opts) do
+    Agent.update(__MODULE__, &List.insert_at(&1, -1, {:call, opts}))
+    case opts[:to] do
       "error" ->
         {:error, "call initiation failed", 500}
       _ ->
-        {:ok, to}
+        {:ok, opts[:to]}
     end
   end
 
@@ -30,6 +33,7 @@ defmodule Telephony.Provider.Test do
   Pass a value of `error` as the `call_sid` argument to simulate an error from the telephony provider
   """
   def hangup(call_sid) do
+    Agent.update(__MODULE__, &List.insert_at(&1, -1, {:hangup, call_sid}))
     case call_sid do
       "error" ->
         {:error, "hangup failed", 500}
@@ -44,6 +48,7 @@ defmodule Telephony.Provider.Test do
   Pass a value of `error` as the `call_sid` argument to simulate an error from the telephony provider
   """
   def kick_participant_from_conference(_conference_sid, call_sid) do
+    Agent.update(__MODULE__, &List.insert_at(&1, -1, {:kick_participant_from_conference, call_sid}))
     case call_sid do
       "error" ->
         {:error, "kick from conference failed", 500}

@@ -24,19 +24,38 @@ defmodule Events do
   | UserRequestsCall.t
 
   @doc """
-  Subscribe to events of a given topic
+  Subscribe to events of a given event type.
+
+  Applications wishing to subscribe and consume events
+  should implement the `Events.Handler` behaviour for
+  setting up subscriptions and defining handing of the
+  subscribed events.
+
+  ## Examples
+
+      iex(1)> Events.subscribe(UserRequestsCall)
+      :ok
   """
   @spec subscribe(atom) :: :ok
   def subscribe(topic) do
-    Events.Registry.subscribe(topic)
+    {:ok, _} = Registry.register(Events.Registry, topic, [])
+    :ok
   end
 
   @doc """
-  Publish an event on a given topic
+  Publish an event that will be routed to all
+  subscribers subscribed to that event type.
+
+  ## Examples
+
+      iex(2)> Events.publish(%Events.UserRequestsCall{user: "user", callee: "callee", conference: nil})
+      :ok
   """
   @spec publish(Events.t) :: :ok
   def publish(event) do
     Events.Persistence.write(event)
-    Events.Registry.publish(event)
+    Registry.dispatch(Events.Registry, event.__struct__, fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:broadcast, event})
+    end)
   end
 end
