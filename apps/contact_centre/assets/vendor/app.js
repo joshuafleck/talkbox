@@ -14176,6 +14176,19 @@ var _user$project$App$ConferenceMsg = function (a) {
 var _user$project$App$LineMsg = function (a) {
 	return {ctor: 'LineMsg', _0: a};
 };
+var _user$project$App$lineOrConnectingMessage = function (model) {
+	return _elm_lang$core$Native_Utils.eq(model.twilioStatus, 'Pending') ? A2(
+		_elm_lang$html$Html$i,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text('Connecting to Twilio...'),
+			_1: {ctor: '[]'}
+		}) : A2(
+		_elm_lang$html$Html$map,
+		_user$project$App$LineMsg,
+		_user$project$Line$view(model.line));
+};
 var _user$project$App$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -14213,10 +14226,7 @@ var _user$project$App$view = function (model) {
 					_0: function () {
 						var _p1 = model.conference;
 						if (_p1.ctor === 'Nothing') {
-							return A2(
-								_elm_lang$html$Html$map,
-								_user$project$App$LineMsg,
-								_user$project$Line$view(model.line));
+							return _user$project$App$lineOrConnectingMessage(model);
 						} else {
 							return A2(
 								_elm_lang$html$Html$p,
@@ -14229,10 +14239,7 @@ var _user$project$App$view = function (model) {
 										_user$project$Conference$view(_p1._0)),
 									_1: {
 										ctor: '::',
-										_0: A2(
-											_elm_lang$html$Html$map,
-											_user$project$App$LineMsg,
-											_user$project$Line$view(model.line)),
+										_0: _user$project$App$lineOrConnectingMessage(model),
 										_1: {ctor: '[]'}
 									}
 								});
@@ -14341,7 +14348,7 @@ var _user$project$App$init = function (flags) {
 					_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:5000/socket/websocket')))));
 	var initSocket = _p3._0;
 	var phxCmd = _p3._1;
-	var model = {phxSocket: initSocket, status: 'All good', clientName: flags.clientName, twilioStatus: 'All good', line: '', conference: _elm_lang$core$Maybe$Nothing, conferenceStatus: 'All good'};
+	var model = {phxSocket: initSocket, status: 'All good', clientName: flags.clientName, twilioStatus: 'Pending', line: '', conference: _elm_lang$core$Maybe$Nothing, conferenceStatus: 'All good'};
 	return {
 		ctor: '_Tuple2',
 		_0: model,

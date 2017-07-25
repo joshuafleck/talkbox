@@ -71,7 +71,7 @@ init flags =
             { phxSocket = initSocket
             , status = "All good"
             , clientName = flags.clientName
-            , twilioStatus = "All good"
+            , twilioStatus = "Pending"
             , line = ""
             , conference = Nothing
             , conferenceStatus = "All good"
@@ -327,16 +327,23 @@ view model =
         --, p [] [ text (toString model.conferenceStatus) ]
         , case model.conference of
               Nothing ->
-                  Html.map LineMsg (Line.view model.line)
+                  lineOrConnectingMessage model
 
               Just conference ->
                   p [ ]
                       [ Html.map ConferenceMsg (Conference.view conference)
-                      , Html.map LineMsg (Line.view model.line)
+                      , lineOrConnectingMessage model
                       ]
 
         ]
 
+
+lineOrConnectingMessage : Model -> Html Msg
+lineOrConnectingMessage model =
+    if model.twilioStatus == "Pending" then
+        i [] [ text "Connecting to Twilio..." ]
+    else
+        Html.map LineMsg (Line.view model.line)
 
 -- SUBSCRIPTIONS
 
