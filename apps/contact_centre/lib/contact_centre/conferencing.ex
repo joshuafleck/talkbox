@@ -9,7 +9,6 @@ defmodule ContactCentre.Conferencing do
   @type success :: {:ok, ContactCentre.Conferencing.Conference.t}
   @type fail :: {:error, String.t, ContactCentre.Conferencing.Conference.t | nil}
   @type response :: success | fail
-  @type store :: %{required(ContactCentre.Conferencing.Indentifier.t) => ContactCentre.Conferencing.Conference.t}
 
   # Client
 
@@ -239,7 +238,7 @@ defmodule ContactCentre.Conferencing do
     conference
   end
 
-  @spec with_call(ContactCentre.Conferencing.Conference.t, ContactCentre.Conferencing.Indentifier.t | String.t, ((ContactCentre.Conferencing.Call.t) -> response)) :: {:reply, response, store}
+  @spec with_call(ContactCentre.Conferencing.Conference.t, ContactCentre.Conferencing.Indentifier.t | String.t, ((ContactCentre.Conferencing.Call.t) -> response)) :: {:reply, response, ContactCentre.Conferencing.Conference.t}
   defp with_call(conference, call_identifier, block) do
     case ContactCentre.Conferencing.Conference.search_for_call(conference, call_identifier) do
       nil ->
