@@ -20,7 +20,7 @@ defmodule ContactCentre.Conferencing.Web do
 
   @spec broadcast_conference(String.t, String.t, String.t, ContactCentre.Conferencing.Conference.t) :: any
   defp broadcast_conference(channel, event, message, conference) do
-    ContactCentre.Web.Endpoint.broadcast(channel, event, %{message: message, conference: conference_message(conference)})
+    ContactCentreWeb.Endpoint.broadcast(channel, event, %{message: message, conference: conference_message(conference)})
   end
 
   @spec conference_message(ContactCentre.Conferencing.Conference.t) :: nil | map

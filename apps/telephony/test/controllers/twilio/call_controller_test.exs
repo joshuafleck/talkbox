@@ -1,5 +1,5 @@
-defmodule Telephony.Web.Twilio.CallControllerTest do
-  use Telephony.Web.ConnCase, async: false
+defmodule TelephonyWeb.Twilio.CallControllerTest do
+  use TelephonyWeb.ConnCase, async: false
 
   setup do
     Events.Persistence.init

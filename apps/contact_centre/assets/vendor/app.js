@@ -1102,6 +1102,7 @@ return {
 };
 
 }();
+
 //import Native.Utils //
 
 var _elm_lang$core$Native_Basics = function() {
@@ -1243,6 +1244,7 @@ return {
 };
 
 }();
+
 //import //
 
 var _elm_lang$core$Native_Utils = function() {
@@ -1731,6 +1733,7 @@ return {
 };
 
 }();
+
 var _elm_lang$core$Basics$never = function (_p0) {
 	never:
 	while (true) {
@@ -2067,6 +2070,7 @@ return {
 };
 
 }();
+
 var _elm_lang$core$List$sortWith = _elm_lang$core$Native_List.sortWith;
 var _elm_lang$core$List$sortBy = _elm_lang$core$Native_List.sortBy;
 var _elm_lang$core$List$sort = function (xs) {
@@ -2689,6 +2693,7 @@ return {
 };
 
 }();
+
 var _elm_lang$core$Char$fromCode = _elm_lang$core$Native_Char.fromCode;
 var _elm_lang$core$Char$toCode = _elm_lang$core$Native_Char.toCode;
 var _elm_lang$core$Char$toLocaleLower = _elm_lang$core$Native_Char.toLocaleLower;
@@ -3013,6 +3018,7 @@ return {
 };
 
 }();
+
 //import //
 
 var _elm_lang$core$Native_Platform = function() {
@@ -3973,6 +3979,7 @@ return {
 };
 
 }();
+
 //import Maybe, Native.List, Native.Utils, Result //
 
 var _elm_lang$core$Native_String = function() {
@@ -5301,6 +5308,7 @@ return {
 };
 
 }();
+
 var _elm_lang$core$Time$setInterval = _elm_lang$core$Native_Time.setInterval_;
 var _elm_lang$core$Time$spawnHelp = F3(
 	function (router, intervals, processes) {

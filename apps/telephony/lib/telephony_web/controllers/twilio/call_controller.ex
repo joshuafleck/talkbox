@@ -1,9 +1,9 @@
-defmodule Telephony.Web.Twilio.CallController do
+defmodule TelephonyWeb.Twilio.CallController do
   @moduledoc """
   This controller is responsible for responding to requests from Twilio
   regarding the status of call legs.
   """
-  use Telephony.Web, :controller
+  use TelephonyWeb, :controller
 
   defmacrop failed_to_connect(status) do
     quote do: unquote(status) in ~w(busy canceled failed no-answer)

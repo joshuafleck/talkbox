@@ -1,5 +1,5 @@
-defmodule Telephony.Web.ErrorView do
-  use Telephony.Web, :view
+defmodule ContactCentreWeb.ErrorView do
+  use ContactCentreWeb, :view
 
   def render("404.html", _assigns) do
     "Page not found"

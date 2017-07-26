@@ -1,12 +1,12 @@
-defmodule ContactCentre.Web do
+defmodule TelephonyWeb do
   @moduledoc """
   A module that keeps using definitions for controllers,
   views and so on.
 
   This can be used in your application as:
 
-      use ContactCentre.Web, :controller
-      use ContactCentre.Web, :view
+      use TelephonyWeb, :controller
+      use TelephonyWeb, :view
 
   The definitions below will be executed for every view,
   controller, etc, so keep them short and clean, focused
@@ -18,17 +18,17 @@ defmodule ContactCentre.Web do
 
   def controller do
     quote do
-      use Phoenix.Controller, namespace: ContactCentre.Web
+      use Phoenix.Controller, namespace: TelephonyWeb
 
-      import ContactCentre.Web.Router.Helpers
-      import ContactCentre.Web.Gettext
+      import TelephonyWeb.Router.Helpers
+      import TelephonyWeb.Gettext
     end
   end
 
   def view do
     quote do
-      use Phoenix.View, root: "lib/contact_centre/web/templates",
-                        namespace: ContactCentre.Web
+      use Phoenix.View, root: "lib/telephony_web/templates",
+                        namespace: TelephonyWeb
 
       # Import convenience functions from controllers
       import Phoenix.Controller, only: [get_csrf_token: 0, get_flash: 2, view_module: 1]
@@ -36,22 +36,15 @@ defmodule ContactCentre.Web do
       # Use all HTML functionality (forms, tags, etc)
       use Phoenix.HTML
 
-      import ContactCentre.Web.Router.Helpers
-      import ContactCentre.Web.ErrorHelpers
-      import ContactCentre.Web.Gettext
+      import TelephonyWeb.Router.Helpers
+      import TelephonyWeb.ErrorHelpers
+      import TelephonyWeb.Gettext
     end
   end
 
   def router do
     quote do
       use Phoenix.Router
-    end
-  end
-
-  def channel do
-    quote do
-      use Phoenix.Channel
-      import ContactCentre.Web.Gettext
     end
   end
 

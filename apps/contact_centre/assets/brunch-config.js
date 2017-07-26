@@ -45,7 +45,7 @@ exports.config = {
         "css",
         "js",
         "vendor",
-        "../lib/contact_centre/web/elm"
+        "../lib/contact_centre_web/elm"
     ],
 
     // Where to compile files to
@@ -55,9 +55,9 @@ exports.config = {
   // Configure your plugins
   plugins: {
     elmBrunch: {
-      elmFolder: "../lib/contact_centre/web/elm",
+      elmFolder: "../lib/contact_centre_web/elm",
       mainModules: ["App.elm"],
-      outputFolder: "../../../../assets/vendor",
+      outputFolder: "../../../assets/vendor",
       makeParameters: ['--debug']
     },
     babel: {

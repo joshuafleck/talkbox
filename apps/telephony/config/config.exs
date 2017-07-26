@@ -6,10 +6,10 @@
 use Mix.Config
 
 # Configures the endpoint
-config :telephony, Telephony.Web.Endpoint,
+config :telephony, TelephonyWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "D5xm+Hb0OZOZafUPXavtn604NXib1Pzb1ERU8O5sUGlgP8GxwR/aM1Px5hLrdJJe",
-  render_errors: [view: Telephony.Web.ErrorView, accepts: ~w(html json)],
+  render_errors: [view: TelephonyWeb.ErrorView, accepts: ~w(html json)],
   pubsub: [name: Telephony.PubSub,
            adapter: Phoenix.PubSub.PG2]
 

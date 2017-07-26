@@ -6,10 +6,10 @@ A [Phoenix](http://www.phoenixframework.org/) application that serves the interf
 
 ### Front end
 
-- **[Single page application](lib/contact_centre/web/elm/App.elm)** An Elm application that contains most of the logic for the UI.
+- **[Single page application](lib/contact_centre_web/elm/App.elm)** An Elm application that contains most of the logic for the UI.
 - **[Application setup](assets/js/app.js)** The Javascript used to initiate the SPA and connect the Twilio device.
-- **[Page template](lib/contact_centre/web/templates/page/index.html.eex)** The html template for the SPA (not much to see here).
-- **[Websocket channels](lib/contact_centre/web/channels)** This is where actions from the client-side are turned into events.
+- **[Page template](lib/contact_centre_web/templates/page/index.html.eex)** The html template for the SPA (not much to see here).
+- **[Websocket channels](lib/contact_centre_web/channels)** This is where actions from the client-side are turned into events.
 
 ### Back end
 

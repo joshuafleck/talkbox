@@ -14,7 +14,7 @@ defmodule ContactCentre do
     # Define workers and child supervisors to be supervised
     children = [
       # Start the endpoint when the application starts
-      supervisor(ContactCentre.Web.Endpoint, []),
+      supervisor(ContactCentreWeb.Endpoint, []),
       supervisor(Registry, [:unique, ContactCentre.Conferencing.Registry]),
       # Start your own worker by calling: ContactCentre.Worker.start_link(arg1, arg2, arg3)
       # worker(ContactCentre.Worker, [arg1, arg2, arg3]),
