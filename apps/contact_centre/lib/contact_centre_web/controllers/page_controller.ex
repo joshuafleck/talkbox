@@ -1,5 +1,5 @@
-defmodule ContactCentre.Web.PageController do
-  use ContactCentre.Web, :controller
+defmodule ContactCentreWeb.PageController do
+  use ContactCentreWeb, :controller
 
   def index(conn, _params) do
     render conn, "index.html"

@@ -1,9 +1,9 @@
-defmodule ContactCentre.Web.UserChannel do
+defmodule ContactCentreWeb.UserChannel do
   @moduledoc """
   Channel through which we communicate with the SPA when no conference is in progress.
   Communication regarding a conference will occur over a conference-specific channel.
   """
-  use ContactCentre.Web, :channel
+  use ContactCentreWeb, :channel
 
   @doc """
   Called when the SPA is initially loaded, each client has its own channel

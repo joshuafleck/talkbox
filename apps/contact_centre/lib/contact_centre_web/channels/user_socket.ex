@@ -1,10 +1,10 @@
-defmodule ContactCentre.Web.UserSocket do
+defmodule ContactCentreWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
   # channel "room:*", ContactCentre.RoomChannel
-  channel "user:*", ContactCentre.Web.UserChannel
-  channel "conference:*", ContactCentre.Web.ConferenceChannel
+  channel "user:*", ContactCentreWeb.UserChannel
+  channel "conference:*", ContactCentreWeb.ConferenceChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

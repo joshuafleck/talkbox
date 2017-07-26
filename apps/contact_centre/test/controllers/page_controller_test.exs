@@ -1,5 +1,5 @@
-defmodule ContactCentre.Web.PageControllerTest do
-  use ContactCentre.Web.ConnCase
+defmodule ContactCentreWeb.PageControllerTest do
+  use ContactCentreWeb.ConnCase
 
   test "GET /", %{conn: conn} do
     conn = get conn, "/"

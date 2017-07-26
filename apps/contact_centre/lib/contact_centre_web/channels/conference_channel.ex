@@ -1,10 +1,10 @@
-defmodule ContactCentre.Web.ConferenceChannel do
+defmodule ContactCentreWeb.ConferenceChannel do
   @moduledoc """
   Channel through which we communicate with the SPA once a conference has
   been initiated. Communication on this channel will continue until the
   conference has ended.
   """
-  use ContactCentre.Web, :channel
+  use ContactCentreWeb, :channel
 
   @doc """
   Called when a conference is started, each conference has its own channel

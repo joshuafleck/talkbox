@@ -1,4 +1,4 @@
-defmodule ContactCentre.Web.ConnCase do
+defmodule ContactCentreWeb.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -20,10 +20,10 @@ defmodule ContactCentre.Web.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import ContactCentre.Web.Router.Helpers
+      import ContactCentreWeb.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint ContactCentre.Web.Endpoint
+      @endpoint ContactCentreWeb.Endpoint
     end
   end
 

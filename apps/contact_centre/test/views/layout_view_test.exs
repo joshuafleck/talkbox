@@ -1,3 +1,3 @@
 defmodule ContactCentre.LayoutViewTest do
-  use ContactCentre.Web.ConnCase, async: true
+  use ContactCentreWeb.ConnCase, async: true
 end
