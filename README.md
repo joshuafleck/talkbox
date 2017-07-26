@@ -40,6 +40,7 @@ Each of these components is implemented as a child-project under the `/apps` dir
 
     ```
     brew bundle
+    mix deps.get
     ```
     
 1. Install Node packages
