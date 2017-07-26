@@ -1,4 +1,4 @@
-defmodule Telephony.Web.ErrorHelpers do
+defmodule TelephonyWeb.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """

@@ -1,10 +1,10 @@
 apps/telephony/lib/telephony/provider/twilio.ex:77: The pattern 'ok' can never match the type {'ok',[map()]} | {'error',binary(),number()}
-apps/contact_centre/lib/contact_centre/web/channels/conference_channel.ex:14: Guard test 'or'('false','false') can never succeed
-apps/contact_centre/lib/contact_centre/web/channels/user_channel.ex:13: Guard test 'or'('false','false') can never succeed
+apps/contact_centre/lib/contact_centre_web/channels/conference_channel.ex:14: Guard test 'or'('false','false') can never succeed
+apps/contact_centre/lib/contact_centre_web/channels/user_channel.ex:13: Guard test 'or'('false','false') can never succeed
 apps/telephony/lib/telephony/provider/twilio.ex:39: The pattern #{'sid':=_@1} can never match the type [map()]
 apps/telephony/lib/telephony/provider/twilio.ex:58: The pattern #{'sid':=_@1} can never match the type [map()]
-apps/telephony/lib/telephony/web/controllers/twilio/call_controller.ex:8: Function 'MACRO-failed_to_connect'/2 will never be called
-apps/telephony/lib/telephony/web/controllers/twilio/call_controller.ex:12: Function 'MACRO-progressing'/2 will never be called
-apps/telephony/lib/telephony/web/controllers/twilio/conference_controller.ex:8: Function 'MACRO-participant_joined'/2 will never be called
-apps/telephony/lib/telephony/web/controllers/twilio/conference_controller.ex:12: Function 'MACRO-participant_left'/2 will never be called
-apps/telephony/lib/telephony/web/controllers/twilio/conference_controller.ex:16: Function 'MACRO-conference_ended'/2 will never be called
+apps/telephony/lib/telephony_web/controllers/twilio/call_controller.ex:8: Function 'MACRO-failed_to_connect'/2 will never be called
+apps/telephony/lib/telephony_web/controllers/twilio/call_controller.ex:12: Function 'MACRO-progressing'/2 will never be called
+apps/telephony/lib/telephony_web/controllers/twilio/conference_controller.ex:8: Function 'MACRO-participant_joined'/2 will never be called
+apps/telephony/lib/telephony_web/controllers/twilio/conference_controller.ex:12: Function 'MACRO-participant_left'/2 will never be called
+apps/telephony/lib/telephony_web/controllers/twilio/conference_controller.ex:16: Function 'MACRO-conference_ended'/2 will never be called

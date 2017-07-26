@@ -1,12 +1,12 @@
-defmodule Telephony.Web.Router do
-  use Telephony.Web, :router
+defmodule TelephonyWeb.Router do
+  use TelephonyWeb, :router
 
   pipeline :twilio do
     # TODO: assert the validity of the request from Twilio
     plug :accepts, ["html"]
   end
 
-  scope "/telephony", Telephony.Web do
+  scope "/telephony", TelephonyWeb do
     scope "/twilio", Twilio do
       pipe_through :twilio
       resources "/conferences", ConferenceController, only: [:status_changed] do

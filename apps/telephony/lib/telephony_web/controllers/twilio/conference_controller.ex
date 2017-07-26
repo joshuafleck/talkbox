@@ -1,9 +1,9 @@
-defmodule Telephony.Web.Twilio.ConferenceController do
+defmodule TelephonyWeb.Twilio.ConferenceController do
   @moduledoc """
   This controller is responsible for responding to requests from Twilio
   regarding the status of conferences.
   """
-  use Telephony.Web, :controller
+  use TelephonyWeb, :controller
 
   defmacrop participant_joined(event) do
     quote do: unquote(event) in ~w(participant-join)

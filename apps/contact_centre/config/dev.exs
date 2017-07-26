@@ -20,8 +20,8 @@ config :contact_centre, ContactCentreWeb.Endpoint,
     patterns: [
       ~r{priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$},
       ~r{priv/gettext/.*(po)$},
-      ~r{lib/contact_centre/web/views/.*(ex)$},
-      ~r{lib/contact_centre/web/templates/.*(eex)$}
+      ~r{lib/contact_centre_web/views/.*(ex)$},
+      ~r{lib/contact_centre_web/templates/.*(eex)$}
     ]
   ]
 

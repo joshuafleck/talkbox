@@ -57,7 +57,7 @@ exports.config = {
     elmBrunch: {
       elmFolder: "../lib/contact_centre_web/elm",
       mainModules: ["App.elm"],
-      outputFolder: "../../../../assets/vendor",
+      outputFolder: "../../../assets/vendor",
       makeParameters: ['--debug']
     },
     babel: {

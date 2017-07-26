@@ -1,4 +1,4 @@
-defmodule Telephony.Web.Gettext do
+defmodule TelephonyWeb.Gettext do
   @moduledoc """
   A module providing Internationalization with a gettext-based API.
 

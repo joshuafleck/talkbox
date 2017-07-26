@@ -1,4 +1,4 @@
-defmodule Telephony.Web.Endpoint do
+defmodule TelephonyWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :telephony
 
   # Serve at "/" the static files from "priv/static" directory.
@@ -28,5 +28,5 @@ defmodule Telephony.Web.Endpoint do
     key: "_callbacks_key",
     signing_salt: "9/zewwfV"
 
-  plug Telephony.Web.Router
+  plug TelephonyWeb.Router
 end

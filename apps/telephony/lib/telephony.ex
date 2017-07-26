@@ -15,7 +15,7 @@ defmodule Telephony do
     # Define workers and child supervisors to be supervised
     children = [
       # Start the endpoint when the application starts
-      supervisor(Telephony.Web.Endpoint, []),
+      supervisor(TelephonyWeb.Endpoint, []),
       # Start your own worker by calling: Telephony.Worker.start_link(arg1, arg2, arg3)
       # worker(Telephony.Worker, [arg1, arg2, arg3]),
       worker(Telephony.Consumer, []),

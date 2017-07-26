@@ -1,4 +1,4 @@
-defmodule Telephony.Web.ConnCase do
+defmodule TelephonyWeb.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -20,10 +20,10 @@ defmodule Telephony.Web.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import Telephony.Web.Router.Helpers
+      import TelephonyWeb.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint Telephony.Web.Endpoint
+      @endpoint TelephonyWeb.Endpoint
     end
   end
 

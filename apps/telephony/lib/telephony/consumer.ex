@@ -4,8 +4,8 @@ defmodule Telephony.Consumer do
   """
   @subscriptions [Events.CallRequested, Events.HangupRequested, Events.RemoveRequested]
   use Events.Handler
-  alias Telephony.Web.Router.Helpers
-  alias Telephony.Web.Endpoint
+  alias TelephonyWeb.Router.Helpers
+  alias TelephonyWeb.Endpoint
 
   require Logger
 
