@@ -27,7 +27,7 @@ defmodule ContactCentreWeb do
 
   def view do
     quote do
-      use Phoenix.View, root: "lib/contact_centre/web/templates",
+      use Phoenix.View, root: "lib/contact_centre_web/templates",
                         namespace: ContactCentreWeb
 
       # Import convenience functions from controllers
