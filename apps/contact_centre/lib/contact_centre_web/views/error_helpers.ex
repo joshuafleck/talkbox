@@ -1,4 +1,4 @@
-defmodule ContactCentre.Web.ErrorHelpers do
+defmodule ContactCentreWeb.ErrorHelpers do
   @moduledoc """
   Conveniences for translating and building error messages.
   """

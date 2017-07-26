@@ -1,4 +1,4 @@
-defmodule ContactCentre.Web.Gettext do
+defmodule ContactCentreWeb.Gettext do
   @moduledoc """
   A module providing Internationalization with a gettext-based API.
 

@@ -1,4 +1,4 @@
-defmodule ContactCentre.Web.Endpoint do
+defmodule ContactCentreWeb.Endpoint do
   @moduledoc """
   This is the endpoint through which other applications can
   broadcast events to clients. `Router.Web` uses this module
@@ -7,7 +7,7 @@ defmodule ContactCentre.Web.Endpoint do
   """
   use Phoenix.Endpoint, otp_app: :contact_centre
 
-  socket "/socket", ContactCentre.Web.UserSocket
+  socket "/socket", ContactCentreWeb.UserSocket
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -44,5 +44,5 @@ defmodule ContactCentre.Web.Endpoint do
     key: "_ui_key",
     signing_salt: "grJhKfsY"
 
-  plug ContactCentre.Web.Router
+  plug ContactCentreWeb.Router
 end

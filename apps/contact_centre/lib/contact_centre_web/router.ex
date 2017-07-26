@@ -1,5 +1,5 @@
-defmodule ContactCentre.Web.Router do
-  use ContactCentre.Web, :router
+defmodule ContactCentreWeb.Router do
+  use ContactCentreWeb, :router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -9,7 +9,7 @@ defmodule ContactCentre.Web.Router do
     plug :put_secure_browser_headers
   end
 
-  scope "/", ContactCentre.Web do
+  scope "/", ContactCentreWeb do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index

@@ -24,4 +24,4 @@ erl_crash.dump
 /config/prod.secret.exs
 
 # Elm's private data
-lib/contact_centre/web/elm/elm-stuff/
+lib/contact_centre_web/elm/elm-stuff/

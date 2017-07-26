@@ -1,5 +1,5 @@
-defmodule ContactCentre.Web.ErrorView do
-  use ContactCentre.Web, :view
+defmodule ContactCentreWeb.ErrorView do
+  use ContactCentreWeb, :view
 
   def render("404.html", _assigns) do
     "Page not found"
