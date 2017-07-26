@@ -11,17 +11,17 @@ defmodule Events do
   @typedoc """
   All of the possible events
   """
-  @type t :: CallFailedToJoinConference.t
-  | CallJoinedConference.t
-  | CallLeftConference.t
-  | CallRequested.t
-  | CallRequestedFailed.t
-  | CallStatusChanged.t
-  | ChairpersonRequestsToRemoveCall.t
-  | ConferenceEnded.t
-  | HangupRequested.t
-  | RemoveRequested.t
-  | UserRequestsCall.t
+  @type t :: Events.CallFailedToJoinConference.t
+  | Events.CallJoinedConference.t
+  | Events.CallLeftConference.t
+  | Events.CallRequested.t
+  | Events.CallRequestFailed.t
+  | Events.CallStatusChanged.t
+  | Events.ChairpersonRequestsToRemoveCall.t
+  | Events.ConferenceEnded.t
+  | Events.HangupRequested.t
+  | Events.RemoveRequested.t
+  | Events.UserRequestsCall.t
 
   @doc """
   Subscribe to events of a given event type.

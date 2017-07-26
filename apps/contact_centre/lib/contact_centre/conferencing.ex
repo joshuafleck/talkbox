@@ -37,7 +37,7 @@ defmodule ContactCentre.Conferencing do
   Called when we receive a notification from the telephony provider that the status of the
   call leg has changed.
   """
-  @spec update_status_of_call(ContactCentre.Conferencing.Intentifier.t, ContactCentre.Conferencing.Intentifier.t, String.t, String.t, non_neg_integer) :: response
+  @spec update_status_of_call(ContactCentre.Conferencing.Identifier.t, ContactCentre.Conferencing.Identifier.t, String.t, String.t, non_neg_integer) :: response
   def update_status_of_call(conference_identifier, call_identifier, providers_call_identifier, call_status, sequence_number) do
     GenServer.call(via_tuple(conference_identifier), {:update_status_of_call, call_identifier, providers_call_identifier, call_status, sequence_number})
   end
@@ -50,7 +50,7 @@ defmodule ContactCentre.Conferencing do
   will be a subsequent message from the telephony provider telling us that the leg has failed
   to connect, which will be handled in `remove_call`.
   """
-  @spec hangup_call(ContactCentre.Conferencing.Intentifier.t, ContactCentre.Conferencing.Intentifier.t) :: response
+  @spec hangup_call(ContactCentre.Conferencing.Identifier.t, ContactCentre.Conferencing.Identifier.t) :: response
   def hangup_call(conference_identifier, call_identifier) do
     GenServer.call(via_tuple(conference_identifier), {:hangup_call, call_identifier})
   end
@@ -60,7 +60,7 @@ defmodule ContactCentre.Conferencing do
 
   This will remove the call and may end the conference if the chairperson is all alone.
   """
-  @spec remove_call(ContactCentre.Conferencing.Intentifier.t, ContactCentre.Conferencing.Intentifier.t) :: response
+  @spec remove_call(ContactCentre.Conferencing.Identifier.t, ContactCentre.Conferencing.Identifier.t) :: response
   def remove_call(conference_identifier, call_identifier) do
     GenServer.call(via_tuple(conference_identifier), {:remove_call, call_identifier})
   end
@@ -72,7 +72,7 @@ defmodule ContactCentre.Conferencing do
   This is done because if the conference has ended then there is no way to
   salvage it and there is no path for reconnecting to it.
   """
-  @spec remove_conference(ContactCentre.Conferencing.Intentifier.t) :: response
+  @spec remove_conference(ContactCentre.Conferencing.Identifier.t) :: response
   def remove_conference(conference_identifier) do
     result = GenServer.call(via_tuple(conference_identifier), {:remove_conference})
     GenServer.stop(via_tuple(conference_identifier))
@@ -90,7 +90,7 @@ defmodule ContactCentre.Conferencing do
   chairperson remaining in the conference then their call leg will be hung up and the
   conference cleared.
   """
-  @spec acknowledge_call_left(ContactCentre.Conferencing.Intentifier.t, String.t) :: response
+  @spec acknowledge_call_left(ContactCentre.Conferencing.Identifier.t, String.t) :: response
   def acknowledge_call_left(conference_identifier, providers_call_identifier) do
     GenServer.call(via_tuple(conference_identifier), {:acknowledge_call_left, providers_call_identifier})
   end
@@ -102,7 +102,7 @@ defmodule ContactCentre.Conferencing do
   call leg details for the chairperson on the conference and will then initiate the
   participant's call.
   """
-  @spec acknowledge_call_joined(ContactCentre.Conferencing.Intentifier.t, String.t, String.t) :: response
+  @spec acknowledge_call_joined(ContactCentre.Conferencing.Identifier.t, String.t, String.t) :: response
   def acknowledge_call_joined(conference_identifier, providers_identifier, providers_call_identifier) do
     GenServer.call(via_tuple(conference_identifier), {:acknowledge_call_joined, providers_identifier, providers_call_identifier})
   end
@@ -238,7 +238,7 @@ defmodule ContactCentre.Conferencing do
     conference
   end
 
-  @spec with_call(ContactCentre.Conferencing.Conference.t, ContactCentre.Conferencing.Indentifier.t | String.t, ((ContactCentre.Conferencing.Call.t) -> response)) :: {:reply, response, ContactCentre.Conferencing.Conference.t}
+  @spec with_call(ContactCentre.Conferencing.Conference.t, ContactCentre.Conferencing.Identifier.t | String.t, ((ContactCentre.Conferencing.Call.t) -> response)) :: {:reply, response, ContactCentre.Conferencing.Conference.t}
   defp with_call(conference, call_identifier, block) do
     case ContactCentre.Conferencing.Conference.search_for_call(conference, call_identifier) do
       nil ->

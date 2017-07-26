@@ -24,10 +24,10 @@ defmodule ContactCentre.Conferencing.Conference do
     * `calls` - A map of call identifier to call leg information about the conference participants
   """
   @type t :: %__MODULE__{
-    identifier: ContactCentre.Conferencing.Indentifier.t,
-    chairpersons_call_identifier: ContactCentre.Conferencing.Indentifier.t,
+    identifier: ContactCentre.Conferencing.Identifier.t,
+    chairpersons_call_identifier: ContactCentre.Conferencing.Identifier.t,
     providers_identifier: String.t | nil,
-    calls: %{required(ContactCentre.Conferencing.Indentifier.t) => ContactCentre.Conferencing.Call.t}
+    calls: %{required(ContactCentre.Conferencing.Identifier.t) => ContactCentre.Conferencing.Call.t}
   }
 
   @type success :: {:ok, t}
@@ -47,7 +47,7 @@ defmodule ContactCentre.Conferencing.Conference do
   @doc """
   True, if the provided call identifier matches that of the chairperson
   """
-  @spec chairpersons_call?(t, ContactCentre.Conferencing.Indentifier.t) :: boolean
+  @spec chairpersons_call?(t, ContactCentre.Conferencing.Identifier.t) :: boolean
   def chairpersons_call?(conference, call_identifier) do
     conference.chairpersons_call_identifier == call_identifier
   end

@@ -33,7 +33,7 @@ defmodule ContactCentre.Conferencing.Web do
     }
   end
 
-  @spec call_leg_message(ContactCentre.Conferencing.Conference.Leg.t) :: nil | map
+  @spec call_leg_message(ContactCentre.Conferencing.Call.t) :: nil | map
   defp call_leg_message(call_leg) when is_nil(call_leg), do: nil
   defp call_leg_message(call_leg) do
     %{
