@@ -16,7 +16,7 @@ defmodule Telephony.Consumer do
     conference_status_callback = url_prefix <> Helpers.conference_status_changed_path(Endpoint, :status_changed, event.conference)
     url = url_prefix <> Helpers.conference_call_answered_path(Endpoint, :answered, event.conference, event.call, conference_status_callback: conference_status_callback)
     status_callback = url_prefix <> Helpers.conference_call_status_changed_path(Endpoint, :status_changed, event.conference, event.call)
-    result = log_api_call(:call, fn ->
+    result = make_api_call(:call, fn ->
       provider().call(
         to: event.destination,
         from: from,
@@ -35,14 +35,14 @@ defmodule Telephony.Consumer do
 
   @spec handle(Events.HangupRequested.t) :: any
   def handle(event = %Events.HangupRequested{}) do
-    log_api_call(:hangup, fn ->
+    make_api_call(:hangup, fn ->
       provider().hangup(event.providers_call_identifier)
     end)
   end
 
   @spec handle(Events.RemoveRequested.t) :: any
   def handle(event = %Events.RemoveRequested{}) do
-    log_api_call(:kick_participant_from_conference, fn ->
+    make_api_call(:kick_participant_from_conference, fn ->
       provider().kick_participant_from_conference(event.providers_identifier, event.providers_call_identifier)
     end)
   end
@@ -78,5 +78,24 @@ defmodule Telephony.Consumer do
     else
       setting
     end
+  end
+
+  @spec timeout(non_neg_integer, (() -> Telephony.Provider.result)) :: Telephony.Provider.result
+  defp timeout(seconds, function) do
+    task = Task.async(function)
+    timeout = seconds * 1000
+    case Task.yield(task, timeout) || Task.shutdown(task) do
+      {:ok, result} ->
+        result
+      nil ->
+        {:error, "Failed to get a result in #{seconds} seconds", 0}
+    end
+  end
+
+  @spec make_api_call(atom, (() -> Telephony.Provider.result), non_neg_integer) :: Telephony.Provider.result
+  defp make_api_call(description, api_call, timeout_in_seconds \\ 2) do
+    log_api_call(description, fn ->
+      timeout(timeout_in_seconds, api_call)
+    end)
   end
 end
