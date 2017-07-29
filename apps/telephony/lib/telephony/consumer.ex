@@ -25,8 +25,8 @@ defmodule Telephony.Consumer do
         status_callback_events: ~w(initiated ringing answered completed))
     end)
     case result do
-      {:error, _, _} ->
-        Events.publish(%Events.CallRequestFailed{conference: event.conference, call: event.call})
+      {:error, reason, _} ->
+        Events.publish(%Events.CallRequestFailed{conference: event.conference, call: event.call, reason: reason})
         result
       _ ->
         result

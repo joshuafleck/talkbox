@@ -5,7 +5,8 @@ defmodule Events.CallRequestFailed do
   @enforce_keys [:conference, :call]
   defstruct [
     conference: nil,
-    call: nil
+    call: nil,
+    reason: nil
   ]
 
   @typedoc """
@@ -14,6 +15,7 @@ defmodule Events.CallRequestFailed do
   """
   @type t :: %__MODULE__{
     conference: String.t,
-    call: String.t
+    call: String.t,
+    reason: String.t
   }
 end

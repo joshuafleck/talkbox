@@ -93,6 +93,14 @@ defmodule ContactCentre.Conferencing.Conference do
   end
 
   @doc """
+  Returns true if the conference has no calls
+  """
+  @spec empty?(t) :: boolean
+  def empty?(conference) do
+    Enum.empty?(conference.calls)
+  end
+
+  @doc """
   Creates a conference with the provided chairperson and destination.
   """
   @spec new(String.t, String.t) :: t

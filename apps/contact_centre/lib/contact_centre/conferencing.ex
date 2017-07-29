@@ -144,7 +144,8 @@ defmodule ContactCentre.Conferencing do
 
   def handle_call({:hangup_call, call_identifier}, _from, conference) do
     with_call(conference, call_identifier, fn (call) ->
-      request_to_hangup_or_remove_call(conference, call)
+      conference = conference
+      |> request_to_hangup_or_remove_call(call)
       {:reply, {:ok, conference}, conference}
     end)
   end
@@ -185,38 +186,47 @@ defmodule ContactCentre.Conferencing do
 
   @spec clear_pointless_conference(ContactCentre.Conferencing.Conference.t) :: ContactCentre.Conferencing.Conference.t
   defp clear_pointless_conference(conference) do
-    if ContactCentre.Conferencing.Conference.chairperson_is_alone?(conference) do
-      chairpersons_call = ContactCentre.Conferencing.Conference.chairpersons_call(conference)
-      request_to_hangup_or_remove_call(conference, chairpersons_call)
-    end
-    conference
+    cond do
+      ContactCentre.Conferencing.Conference.chairperson_is_alone?(conference) ->
+        chairpersons_call = ContactCentre.Conferencing.Conference.chairpersons_call(conference)
+        request_to_hangup_or_remove_call(conference, chairpersons_call)
+      Enum.empty?(ContactCentre.Conferencing.Conference.requested_calls(conference)) ->
+        Enum.reduce(ContactCentre.Conferencing.Conference.pending_calls(conference), conference, fn (call, conference) ->
+          request_to_hangup_or_remove_call(conference, call)
+        end)
+      true ->
+        conference
+      end
   end
 
   @spec hangup_requested_calls(ContactCentre.Conferencing.Conference.t) :: ContactCentre.Conferencing.Conference.t
   defp hangup_requested_calls(conference) do
     conference
     |> ContactCentre.Conferencing.Conference.requested_calls()
-    |> Enum.each(fn call ->
+    |> Enum.reduce(conference, fn (call, conference) ->
       request_to_hangup_or_remove_call(conference, call)
     end)
-    conference
   end
 
   @spec request_to_hangup_or_remove_call(ContactCentre.Conferencing.Conference.t, ContactCentre.Conferencing.Call.t) :: ContactCentre.Conferencing.Conference.t
   def request_to_hangup_or_remove_call(conference, call) do
-    if ContactCentre.Conferencing.Call.in_conference?(call) do
-      Events.publish(%Events.RemoveRequested{
-            conference: conference.identifier,
-            providers_identifier: conference.providers_identifier,
-            call: call.identifier,
-            providers_call_identifier: call.providers_identifier})
-    else
-      Events.publish(%Events.HangupRequested{
-            conference: conference.identifier,
-            call: call.identifier,
-            providers_call_identifier: call.providers_identifier})
+    cond do
+      ContactCentre.Conferencing.Call.in_conference?(call) ->
+        Events.publish(%Events.RemoveRequested{
+              conference: conference.identifier,
+              providers_identifier: conference.providers_identifier,
+              call: call.identifier,
+              providers_call_identifier: call.providers_identifier})
+        conference
+      ContactCentre.Conferencing.Call.requested?(call) ->
+        Events.publish(%Events.HangupRequested{
+              conference: conference.identifier,
+              call: call.identifier,
+              providers_call_identifier: call.providers_identifier})
+        conference
+      true ->
+        ContactCentre.Conferencing.Conference.remove_call(conference, call)
     end
-    conference
   end
 
   @spec call_pending_participants(ContactCentre.Conferencing.Conference.t) :: ContactCentre.Conferencing.Conference.t

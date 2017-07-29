@@ -27,6 +27,7 @@ defmodule ContactCentre.Consumer do
   def handle(event = %Events.CallFailedToJoinConference{}) do
     with {:ok, conference} <- ContactCentre.Conferencing.remove_call(event.conference, event.call) do
       ContactCentre.Conferencing.Web.broadcast_conference_changed("Failed to reach #{event.call}", conference)
+      if ContactCentre.Conferencing.Conference.empty?(conference), do: end_conference(event.conference)
     end
   end
 
@@ -34,6 +35,7 @@ defmodule ContactCentre.Consumer do
   def handle(event = %Events.CallRequestFailed{}) do
     with {:ok, conference} <- ContactCentre.Conferencing.remove_call(event.conference, event.call) do
       ContactCentre.Conferencing.Web.broadcast_conference_changed("Request for call #{event.call} failed", conference)
+      if ContactCentre.Conferencing.Conference.empty?(conference), do: end_conference(event.conference)
     end
   end
 
@@ -67,14 +69,13 @@ defmodule ContactCentre.Consumer do
   def handle(event = %Events.CallLeftConference{}) do
     with {:ok, conference} <- ContactCentre.Conferencing.acknowledge_call_left(event.conference, event.providers_call_identifier) do
       ContactCentre.Conferencing.Web.broadcast_conference_changed("Someone left", conference)
+      if ContactCentre.Conferencing.Conference.empty?(conference), do: end_conference(event.conference)
     end
   end
 
   @spec handle(Events.ConferenceEnded.t) :: any
   def handle(event = %Events.ConferenceEnded{}) do
-    with {:ok, conference} <- ContactCentre.Conferencing.remove_conference(event.conference) do
-      ContactCentre.Conferencing.Web.broadcast_conference_end("Call ended", conference)
-    end
+    end_conference(event.conference)
   end
 
   @spec handle(Events.ChairpersonRequestsToRemoveCall.t) :: any
@@ -82,5 +83,12 @@ defmodule ContactCentre.Consumer do
     ContactCentre.Conferencing.hangup_call(
       event.conference,
       event.call)
+  end
+
+  @spec end_conference(String.t) :: any
+  defp end_conference(conference) do
+    with {:ok, conference} <- ContactCentre.Conferencing.remove_conference(conference) do
+      ContactCentre.Conferencing.Web.broadcast_conference_end("Call ended", conference)
+    end
   end
 end
