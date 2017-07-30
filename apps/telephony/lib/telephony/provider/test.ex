@@ -59,6 +59,6 @@ defmodule Telephony.Provider.Test do
 
   @spec record_call(atom, any) :: any
   defp record_call(name, arguments) do
-    Agent.cast(__MODULE__, fn (calls) -> List.insert_at(calls, -1, {name, arguments}) end)
+    Agent.update(__MODULE__, &List.insert_at(&1, -1, {name, arguments}))
   end
 end
