@@ -27,7 +27,7 @@ defmodule TelephonyWeb.Twilio.CallControllerTest do
       "SequenceNumber" => "0"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.Persistence.published == [%Events.CallStatusChanged{call: "0", conference: "2", providers_call_identifier: "call_sid", sequence_number: 0, status: "ringing"}]
+    assert Enum.take(Events.Persistence.published, 1) == [%Events.CallStatusChanged{call: "0", conference: "2", providers_call_identifier: "call_sid", sequence_number: 0, status: "ringing"}]
   end
 
   test "POST /telephony/twilio/conferences/2/calls/0/status_changed when the call has failed", %{conn: conn} do
@@ -37,7 +37,7 @@ defmodule TelephonyWeb.Twilio.CallControllerTest do
       "SequenceNumber" => "0"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.Persistence.published == [%Events.CallFailedToJoinConference{call: "0", conference: "2", providers_call_identifier: "call_sid", reason: "no-answer"}]
+    assert Enum.take(Events.Persistence.published, 1) == [%Events.CallFailedToJoinConference{call: "0", conference: "2", providers_call_identifier: "call_sid", reason: "no-answer"}]
   end
 
   test "POST /telephony/twilio/conferences/2/calls/0/status_changed when the call status is not recognised", %{conn: conn} do

@@ -18,7 +18,10 @@ defmodule Events do
   | Events.CallRequestFailed.t
   | Events.CallStatusChanged.t
   | Events.ChairpersonRequestsToRemoveCall.t
+  | Events.ConferenceCreated.t
+  | Events.ConferenceDeleted.t
   | Events.ConferenceEnded.t
+  | Events.ConferenceUpdated.t
   | Events.HangupRequested.t
   | Events.RemoveRequested.t
   | Events.UserRequestsCall.t

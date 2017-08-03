@@ -6,76 +6,72 @@ defmodule ContactCentre.Consumer do
   @subscriptions [Events.CallFailedToJoinConference,
                   Events.CallJoinedConference,
                   Events.CallLeftConference,
+                  Events.CallRequestFailed,
                   Events.CallStatusChanged,
                   Events.ChairpersonRequestsToRemoveCall,
+                  Events.ConferenceCreated,
+                  Events.ConferenceDeleted,
                   Events.ConferenceEnded,
-                  Events.UserRequestsCall,
-                  Events.CallRequestFailed]
+                  Events.ConferenceUpdated,
+                  Events.UserRequestsCall]
   use Events.Handler
+
+  @spec handle(Events.ConferenceCreated.t) :: any
+  def handle(event = %Events.ConferenceCreated{}) do
+    ContactCentre.Conferencing.Web.broadcast_conference_created(event.user, event.conference)
+  end
+
+  @spec handle(Events.ConferenceUpdated.t) :: any
+  def handle(event = %Events.ConferenceUpdated{}) do
+    ContactCentre.Conferencing.Web.broadcast_conference_updated(event.reason, event.conference)
+  end
+
+  @spec handle(Events.ConferenceDeleted.t) :: any
+  def handle(event = %Events.ConferenceDeleted{}) do
+    ContactCentre.Conferencing.Web.broadcast_conference_deleted(event.conference)
+  end
 
   @spec handle(Events.UserRequestsCall.t) :: any
   def handle(event = %Events.UserRequestsCall{}) do
-    case ContactCentre.Conferencing.add_participant_or_initiate_conference(event.user, event.callee, event.conference) do
-      {:ok, conference} ->
-        ContactCentre.Conferencing.Web.broadcast_conference_start(event.user, "Starting call", conference)
-      {:error, message, conference} ->
-        ContactCentre.Conferencing.Web.broadcast_conference_start(event.user, "Error starting call: #{message}", conference)
-    end
+    ContactCentre.Conferencing.add_participant_or_initiate_conference(event.user, event.callee, event.conference)
   end
 
   @spec handle(Events.CallFailedToJoinConference.t) :: any
   def handle(event = %Events.CallFailedToJoinConference{}) do
-    with {:ok, conference} <- ContactCentre.Conferencing.remove_call(event.conference, event.call) do
-      ContactCentre.Conferencing.Web.broadcast_conference_changed("Failed to reach #{event.call}", conference)
-      if ContactCentre.Conferencing.Conference.empty?(conference), do: end_conference(event.conference)
-    end
+    ContactCentre.Conferencing.remove_call(event.conference, event.call)
   end
 
   @spec handle(Events.CallRequestFailed.t) :: any
   def handle(event = %Events.CallRequestFailed{}) do
-    with {:ok, conference} <- ContactCentre.Conferencing.remove_call(event.conference, event.call) do
-      ContactCentre.Conferencing.Web.broadcast_conference_changed("Request for call #{event.call} failed", conference)
-      if ContactCentre.Conferencing.Conference.empty?(conference), do: end_conference(event.conference)
-    end
+    ContactCentre.Conferencing.remove_call(event.conference, event.call, event.reason)
   end
 
   @spec handle(Events.CallStatusChanged.t) :: any
   def handle(event = %Events.CallStatusChanged{}) do
-    with {:ok, conference} <- ContactCentre.Conferencing.update_status_of_call(
+    ContactCentre.Conferencing.update_status_of_call(
            event.conference,
            event.call,
            event.providers_call_identifier,
            event.status,
-           event.sequence_number) do
-      ContactCentre.Conferencing.Web.broadcast_conference_changed("Call status changed for #{event.call}", conference)
-    end
+           event.sequence_number)
   end
 
   @spec handle(Events.CallJoinedConference.t) :: any
   def handle(event = %Events.CallJoinedConference{}) do
-    result = ContactCentre.Conferencing.acknowledge_call_joined(
+    ContactCentre.Conferencing.acknowledge_call_joined(
       event.conference,
       event.providers_identifier,
       event.providers_call_identifier)
-    case result do
-      {:ok, conference} ->
-        ContactCentre.Conferencing.Web.broadcast_conference_changed("Someone joined", conference)
-      {:error, message, conference} ->
-        ContactCentre.Conferencing.Web.broadcast_conference_changed("Failed to join participant to conference due to: #{message}", conference)
-    end
   end
 
   @spec handle(Events.CallLeftConference.t) :: any
   def handle(event = %Events.CallLeftConference{}) do
-    with {:ok, conference} <- ContactCentre.Conferencing.acknowledge_call_left(event.conference, event.providers_call_identifier) do
-      ContactCentre.Conferencing.Web.broadcast_conference_changed("Someone left", conference)
-      if ContactCentre.Conferencing.Conference.empty?(conference), do: end_conference(event.conference)
-    end
+    ContactCentre.Conferencing.acknowledge_call_left(event.conference, event.providers_call_identifier)
   end
 
   @spec handle(Events.ConferenceEnded.t) :: any
   def handle(event = %Events.ConferenceEnded{}) do
-    end_conference(event.conference)
+    ContactCentre.Conferencing.remove_conference(event.conference)
   end
 
   @spec handle(Events.ChairpersonRequestsToRemoveCall.t) :: any
@@ -83,12 +79,5 @@ defmodule ContactCentre.Consumer do
     ContactCentre.Conferencing.hangup_call(
       event.conference,
       event.call)
-  end
-
-  @spec end_conference(String.t) :: any
-  defp end_conference(conference) do
-    with {:ok, conference} <- ContactCentre.Conferencing.remove_conference(conference) do
-      ContactCentre.Conferencing.Web.broadcast_conference_end("Call ended", conference)
-    end
   end
 end

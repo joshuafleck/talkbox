@@ -27,6 +27,7 @@ defmodule ContactCentre.Conferencing do
       nil ->
         conference = initiate_conference(chairperson, destination)
         {:ok, _} = GenServer.start(__MODULE__, conference, name: via_tuple(conference.identifier))
+        Events.publish(%Events.ConferenceCreated{user: chairperson, conference: conference})
         {:ok, conference}
       conference_identifier ->
         GenServer.call(via_tuple(conference_identifier), {:add_participant, destination})
@@ -60,9 +61,9 @@ defmodule ContactCentre.Conferencing do
 
   This will remove the call and may end the conference if the chairperson is all alone.
   """
-  @spec remove_call(ContactCentre.Conferencing.Identifier.t, ContactCentre.Conferencing.Identifier.t) :: response
-  def remove_call(conference_identifier, call_identifier) do
-    GenServer.call(via_tuple(conference_identifier), {:remove_call, call_identifier})
+  @spec remove_call(ContactCentre.Conferencing.Identifier.t, ContactCentre.Conferencing.Identifier.t, String.t | nil) :: response
+  def remove_call(conference_identifier, call_identifier, reason \\ nil) do
+    GenServer.call(via_tuple(conference_identifier), {:remove_call, call_identifier, reason})
   end
 
   @doc """
@@ -111,6 +112,7 @@ defmodule ContactCentre.Conferencing do
 
   def handle_call({:add_participant, destination}, _from, conference) do
     conference = add_participant(conference, destination)
+    Events.publish(%Events.ConferenceUpdated{conference: conference})
     {:reply, {:ok, conference}, conference}
   end
 
@@ -120,6 +122,7 @@ defmodule ContactCentre.Conferencing do
       if ContactCentre.Conferencing.Conference.chairpersons_call?(conference, call.identifier) do
         call_pending_participants(conference)
       end
+      Events.publish(%Events.ConferenceUpdated{conference: conference})
       {:reply, {:ok, conference}, conference}
     end)
   end
@@ -128,16 +131,18 @@ defmodule ContactCentre.Conferencing do
     with_call(conference, providers_call_identifier, fn (call) ->
       conference = conference
       |> ContactCentre.Conferencing.Conference.remove_call(call)
-      |> clear_pointless_conference()
+      |> end_pointless_conference()
+      Events.publish(%Events.ConferenceUpdated{conference: conference})
       {:reply, {:ok, conference}, conference}
     end)
   end
 
-  def handle_call({:remove_call, call_identifier}, _from, conference) do
+  def handle_call({:remove_call, call_identifier, reason}, _from, conference) do
     with_call(conference, call_identifier, fn (call) ->
       conference = conference
       |> ContactCentre.Conferencing.Conference.remove_call(call)
-      |> clear_pointless_conference()
+      |> end_pointless_conference()
+      Events.publish(%Events.ConferenceUpdated{conference: conference, reason: reason})
       {:reply, {:ok, conference}, conference}
     end)
   end
@@ -146,6 +151,7 @@ defmodule ContactCentre.Conferencing do
     with_call(conference, call_identifier, fn (call) ->
       conference = conference
       |> request_to_hangup_or_remove_call(call)
+      Events.publish(%Events.ConferenceUpdated{conference: conference})
       {:reply, {:ok, conference}, conference}
     end)
   end
@@ -154,6 +160,7 @@ defmodule ContactCentre.Conferencing do
     with_call(conference, call_identifier, fn (call) ->
       with {:ok, conference, call} <- ContactCentre.Conferencing.Conference.set_providers_identifier_on_call(conference, call, providers_call_identifier),
       {:ok, conference, _} <- ContactCentre.Conferencing.Conference.update_status_of_call(conference, call, call_status, sequence_number) do
+        Events.publish(%Events.ConferenceUpdated{conference: conference})
         {:reply, {:ok, conference}, conference}
       else
         {:error, message} ->
@@ -164,7 +171,8 @@ defmodule ContactCentre.Conferencing do
 
   def handle_call({:remove_conference}, _from, conference) do
     conference = hangup_requested_calls(conference)
-    {:reply, {:ok, conference}, conference}
+    Events.publish(%Events.ConferenceDeleted{conference: conference})
+   {:reply, {:ok, conference}, conference}
   end
 
   # Internals
@@ -174,7 +182,6 @@ defmodule ContactCentre.Conferencing do
     conference = ContactCentre.Conferencing.Conference.new(chairperson, destination)
     chairpersons_call = ContactCentre.Conferencing.Conference.chairpersons_call(conference)
     request_call(chairpersons_call, conference)
-    conference
   end
 
   @spec add_participant(ContactCentre.Conferencing.Conference.t, String.t) :: ContactCentre.Conferencing.Conference.t
@@ -197,6 +204,15 @@ defmodule ContactCentre.Conferencing do
       true ->
         conference
       end
+  end
+
+  @spec end_pointless_conference(ContactCentre.Conferencing.Conference.t) :: ContactCentre.Conferencing.Conference.t
+  defp end_pointless_conference(conference) do
+    conference = clear_pointless_conference(conference)
+    if ContactCentre.Conferencing.Conference.empty?(conference) do
+      Events.publish(%Events.ConferenceEnded{conference: conference.identifier, providers_identifier: conference.providers_identifier})
+    end
+    conference
   end
 
   @spec hangup_requested_calls(ContactCentre.Conferencing.Conference.t) :: ContactCentre.Conferencing.Conference.t
@@ -233,10 +249,9 @@ defmodule ContactCentre.Conferencing do
   defp call_pending_participants(conference) do
     conference
     |> ContactCentre.Conferencing.Conference.pending_calls()
-    |> Enum.each(fn call ->
+    |> Enum.reduce(conference, fn (call, conference) ->
       request_call(call, conference)
     end)
-    conference
   end
 
   @spec request_call(ContactCentre.Conferencing.Call.t, ContactCentre.Conferencing.Conference.t) :: ContactCentre.Conferencing.Conference.t

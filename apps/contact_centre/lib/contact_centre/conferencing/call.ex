@@ -2,12 +2,13 @@ defmodule ContactCentre.Conferencing.Call do
   @moduledoc """
   The representation of a conference participant or chairperson's call leg.
   """
+
   @enforce_keys [:identifier, :destination]
   defstruct [
     identifier: nil,
     destination: nil,
     providers_identifier: nil,
-    status: {nil, -1}
+    status: %ContactCentre.Conferencing.CallStatus{name: nil, sequence: -1}
   ]
 
   @typedoc """
@@ -22,7 +23,7 @@ defmodule ContactCentre.Conferencing.Call do
     identifier: ContactCentre.Conferencing.Identifier.t,
     destination: String.t,
     providers_identifier: String.t | nil,
-    status: {String.t | nil, integer}
+    status: ContactCentre.Conferencing.CallStatus.t
   }
 
   @doc """
@@ -43,7 +44,7 @@ defmodule ContactCentre.Conferencing.Call do
   """
   @spec in_conference?(t) :: boolean
   def in_conference?(call) do
-    "in-progress" == elem(call.status, 0)
+    "in-progress" == call.status.name
   end
 
   @doc """
@@ -53,7 +54,7 @@ defmodule ContactCentre.Conferencing.Call do
   """
   @spec newer_status?(t, integer) :: boolean
   def newer_status?(call, sequence_number) do
-    elem(call.status, 1) < sequence_number
+    call.status.sequence < sequence_number
   end
 
   @doc """
