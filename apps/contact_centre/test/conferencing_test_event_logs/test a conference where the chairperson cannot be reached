@@ -1,0 +1,7 @@
+{"name":"Elixir.Events.UserRequestsCall","data":"{\"user\":\"Josh\",\"conference\":null,\"callee\":\"Amy\"}"}
+{"name":"Elixir.Events.CallRequested","data":"{\"destination\":\"Josh\",\"conference\":\"2\",\"call\":\"0\"}"}
+{"name":"Elixir.Events.ConferenceCreated","data":"{\"user\":\"Josh\",\"conference\":{\"providers_identifier\":null,\"identifier\":\"2\",\"chairpersons_call_identifier\":\"0\",\"calls\":{\"1\":{\"status\":{\"sequence\":-1,\"name\":null},\"providers_identifier\":null,\"identifier\":\"1\",\"destination\":\"Amy\"},\"0\":{\"status\":{\"sequence\":-1,\"name\":null},\"providers_identifier\":null,\"identifier\":\"0\",\"destination\":\"Josh\"}}}}"}
+{"name":"Elixir.Events.CallRequestFailed","data":"{\"reason\":\"Failed to get a result in 2 seconds\",\"conference\":\"2\",\"call\":\"0\"}"}
+{"name":"Elixir.Events.ConferenceEnded","data":"{\"providers_identifier\":null,\"conference\":\"2\"}"}
+{"name":"Elixir.Events.ConferenceUpdated","data":"{\"reason\":\"Failed to get a result in 2 seconds\",\"conference\":{\"providers_identifier\":null,\"identifier\":\"2\",\"chairpersons_call_identifier\":\"0\",\"calls\":{}}}"}
+{"name":"Elixir.Events.ConferenceDeleted","data":"{\"conference\":{\"providers_identifier\":null,\"identifier\":\"2\",\"chairpersons_call_identifier\":\"0\",\"calls\":{}}}"}

@@ -6,6 +6,10 @@ defmodule ContactCentre.Conferencing.Identifier do
 
   @type t :: String.t
 
+  def reset do
+    Agent.update(__MODULE__, fn _ -> 0 end)
+  end
+
   def start_link do
     Agent.start_link(fn -> 0 end, name: __MODULE__)
   end

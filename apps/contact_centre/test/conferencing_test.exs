@@ -3,6 +3,7 @@ defmodule ContactCentre.ConferencingTest do
 
   setup do
     Events.Persistence.init
+    ContactCentre.Conferencing.Identifier.reset
     Logger.metadata(application: :events)
     Logger.configure(level: :info)
     on_exit fn ->
@@ -12,6 +13,30 @@ defmodule ContactCentre.ConferencingTest do
   end
 
   test "a conference between two people", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
+  test "a conference between three people", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
+  test "two simultaneous conferences", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
+  test "a conference where the callee hangs up first", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
+  test "a conference where the callee's number is invalid", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
+  test "a conference where the callee cannot be reached", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
+  test "a conference where the chairperson cannot be reached", context do
     assert_recorded_event_logs_match_actual(context)
   end
 
@@ -26,6 +51,8 @@ defmodule ContactCentre.ConferencingTest do
     Events.UserRequestsCall]
   defp assert_recorded_event_logs_match_actual(context) do
     event_logs_path = "test/conferencing_test_event_logs/#{context.test}"
+
+    assert File.exists?(event_logs_path), "Missing test event logs file expected at: #{event_logs_path}"
 
     event_logs_path
     |> Events.Persistence.read()
