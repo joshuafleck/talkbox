@@ -18,7 +18,7 @@ defmodule TelephonyWeb.Twilio.ConferenceControllerTest do
       "StatusCallbackEvent" => "participant-join"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.Persistence.published == [%Events.CallJoinedConference{conference: "2", providers_call_identifier: "call_sid", providers_identifier: "conference_sid"}]
+    assert Enum.take(Events.Persistence.published, 1) == [%Events.CallJoinedConference{conference: "2", providers_call_identifier: "call_sid", providers_identifier: "conference_sid"}]
   end
 
   test "POST /telephony/twilio/conferences/2/status_changed when a participant has left", %{conn: conn} do
@@ -28,7 +28,7 @@ defmodule TelephonyWeb.Twilio.ConferenceControllerTest do
       "StatusCallbackEvent" => "participant-leave"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.Persistence.published == [%Events.CallLeftConference{conference: "2", providers_call_identifier: "call_sid", providers_identifier: "conference_sid"}]
+    assert Enum.take(Events.Persistence.published, 1) == [%Events.CallLeftConference{conference: "2", providers_call_identifier: "call_sid", providers_identifier: "conference_sid"}]
   end
 
   test "POST /telephony/twilio/conferences/2/status_changed when the conference has ended", %{conn: conn} do
@@ -37,7 +37,7 @@ defmodule TelephonyWeb.Twilio.ConferenceControllerTest do
       "StatusCallbackEvent" => "conference-end"
     }
     assert response(conn, 200) =~ "ok"
-    assert Events.Persistence.published == [%Events.ConferenceEnded{conference: "2", providers_identifier: "conference_sid"}]
+    assert Enum.take(Events.Persistence.published, 1) == [%Events.ConferenceEnded{conference: "2", providers_identifier: "conference_sid"}]
   end
 
   test "POST /telephony/twilio/conferences/2/status_changed for any other event", %{conn: conn} do
