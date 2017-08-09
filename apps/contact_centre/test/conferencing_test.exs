@@ -57,7 +57,7 @@ defmodule ContactCentre.ConferencingTest do
     event_logs_path
     |> Events.Persistence.read()
     |> Enum.filter(&external_event?(&1))
-    |> Enum.map(&Events.publish(&1))
+    |> Enum.each(&Events.publish(&1))
 
     expected_internal_events = event_logs_path
     |> Events.Persistence.read()
