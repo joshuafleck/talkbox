@@ -15,8 +15,8 @@ defmodule TelephonyWeb.Twilio.CallControllerTest do
     conn = post conn, "/telephony/twilio/conferences/2/calls/0/answered", %{
       "conference_status_callback" => "callback_url"
     }
-    assert response(conn, 200) =~ "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response><Dial><Conference beep=\"false\" statusCallback=\"callback_url\" " <>
-      "statusCallbackEvent=\"start end join leave mute hold\">2</Conference></Dial></Response>"
+    assert response(conn, 200) =~ ~s(<?xml version="1.0" encoding="UTF-8"?><Response><Dial><Conference beep="false" statusCallback="callback_url" ) <>
+      ~s(statusCallbackEvent="start end join leave mute hold">2</Conference></Dial></Response>)
     assert Events.Persistence.published == []
   end
 

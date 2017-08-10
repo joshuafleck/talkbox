@@ -2,7 +2,6 @@ defmodule TelephonyWeb.Router do
   use TelephonyWeb, :router
 
   pipeline :twilio do
-    # TODO: assert the validity of the request from Twilio
     plug :accepts, ["html"]
   end
 

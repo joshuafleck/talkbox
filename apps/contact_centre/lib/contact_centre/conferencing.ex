@@ -243,7 +243,10 @@ defmodule ContactCentre.Conferencing do
     conference
   end
 
-  @spec with_call(ContactCentre.Conferencing.Conference.t, ContactCentre.Conferencing.Identifier.t | String.t, ((ContactCentre.Conferencing.Call.t) -> {:noreply, ContactCentre.Conferencing.Conference.t})) :: {:noreply, ContactCentre.Conferencing.Conference.t}
+  @spec with_call(
+    ContactCentre.Conferencing.Conference.t,
+    ContactCentre.Conferencing.Identifier.t | String.t,
+    ((ContactCentre.Conferencing.Call.t) -> {:noreply, ContactCentre.Conferencing.Conference.t})) :: {:noreply, ContactCentre.Conferencing.Conference.t}
   defp with_call(conference, call_identifier, block) do
     case ContactCentre.Conferencing.Conference.search_for_call(conference, call_identifier) do
       nil ->

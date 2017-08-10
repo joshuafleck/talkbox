@@ -7,6 +7,7 @@ defmodule Telephony.Twiml do
   """
   import ExTwiml
 
+  # credo:disable-for-lines:8
   @doc ~S"""
   Places the call leg into the conference named with the provided conference identifier.
 

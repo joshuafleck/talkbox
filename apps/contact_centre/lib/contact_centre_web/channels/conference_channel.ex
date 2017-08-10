@@ -45,7 +45,6 @@ defmodule ContactCentreWeb.ConferenceChannel do
 
   # Add authorization logic here as required.
   defp authorized?(_payload) do
-    # TODO: implement authorisation
     true
   end
 end
