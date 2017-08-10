@@ -20,10 +20,6 @@ defmodule ContactCentre.ConferencingTest do
     assert_recorded_event_logs_match_actual(context)
   end
 
-  test "two simultaneous conferences", context do
-    assert_recorded_event_logs_match_actual(context)
-  end
-
   test "a conference where the callee hangs up first", context do
     assert_recorded_event_logs_match_actual(context)
   end
