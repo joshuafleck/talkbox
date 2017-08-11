@@ -48,25 +48,24 @@ defmodule ContactCentre.ConferencingTest do
   defp assert_recorded_event_logs_match_actual(context) do
     event_logs_path = "test/conferencing_test_event_logs/#{context.test}"
     assert File.exists?(event_logs_path), "Missing test event logs file expected at: #{event_logs_path}"
-    publish_external_events(event_logs_path)
+    expected_events = Events.Persistence.read(event_logs_path)
+    publish_external_events(expected_events)
     :timer.sleep(100) # Give the consumer time to process
-    assert expected_internal_events(event_logs_path) == actual_internal_events()
+    assert expected_internal_events(expected_events) == actual_internal_events()
   end
 
   defp external_event?(event) do
     Enum.member?(@events_published_externally, event.__struct__)
   end
 
-  defp publish_external_events(event_logs_path) do
-    event_logs_path
-    |> Events.Persistence.read()
+  defp publish_external_events(expected_events) do
+    expected_events
     |> Enum.filter(&external_event?(&1))
     |> Enum.each(&Events.publish(&1))
   end
 
-  defp expected_internal_events(event_logs_path) do
-    event_logs_path
-    |> Events.Persistence.read()
+  defp expected_internal_events(expected_events) do
+    expected_events
     |> Enum.reject(&external_event?(&1))
   end
 
