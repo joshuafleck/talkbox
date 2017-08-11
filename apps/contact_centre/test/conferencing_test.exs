@@ -36,6 +36,10 @@ defmodule ContactCentre.ConferencingTest do
     assert_recorded_event_logs_match_actual(context)
   end
 
+  test "a conference where the call is ended before it could be connected", context do
+    assert_recorded_event_logs_match_actual(context)
+  end
+
   @events_published_externally [
     Events.CallFailedToJoinConference,
     Events.CallJoinedConference,
