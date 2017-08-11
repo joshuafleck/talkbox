@@ -35,7 +35,7 @@ defmodule Telephony.ConsumerTest do
                                                         url: "http://test.com/telephony/twilio/conferences/conference_identifier/calls/call_identifier/answered?conference_status_callback=http%3A%2F%2Ftest.com%2Ftelephony%2Ftwilio%2Fconferences%2Fconference_identifier%2Fstatus_changed",
                                                         status_callback: "http://test.com/telephony/twilio/conferences/conference_identifier/calls/call_identifier/status_changed",
                                                         status_callback_events: ["initiated", "ringing", "answered", "completed"]]]
-    assert Events.Persistence.published() == [%Events.CallRequestFailed{call: "call_identifier", conference: "conference_identifier"}]
+    assert Events.Persistence.published() == [%Events.CallRequestFailed{call: "call_identifier", conference: "conference_identifier", reason: "call initiation failed"}]
   end
 
   test "ability to hangup a call" do

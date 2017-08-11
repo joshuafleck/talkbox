@@ -11,7 +11,6 @@ defmodule ContactCentreWeb.UserChannel do
   """
   def join("user:" <> client_name, payload, socket) do
     if authorized?(payload) do
-      # TODO: check if this client already has an existing conference
       send self(), {:after_join, client_name}
       {:ok, socket}
     else
@@ -54,7 +53,6 @@ defmodule ContactCentreWeb.UserChannel do
 
   # Add authorization logic here as required.
   defp authorized?(_payload) do
-    # TODO: implement authorisation
     true
   end
 

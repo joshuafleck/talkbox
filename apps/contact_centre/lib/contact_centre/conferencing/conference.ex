@@ -93,6 +93,14 @@ defmodule ContactCentre.Conferencing.Conference do
   end
 
   @doc """
+  Returns true if the conference has no calls
+  """
+  @spec empty?(t) :: boolean
+  def empty?(conference) do
+    Enum.empty?(conference.calls)
+  end
+
+  @doc """
   Creates a conference with the provided chairperson and destination.
   """
   @spec new(String.t, String.t) :: t
@@ -172,7 +180,7 @@ defmodule ContactCentre.Conferencing.Conference do
   @spec update_status_of_call(t, ContactCentre.Conferencing.Call.t, String.t, non_neg_integer) :: response_with_call
   def update_status_of_call(conference, call, status, sequence_number) do
     if ContactCentre.Conferencing.Call.newer_status?(call, sequence_number) do
-      call = %{call | status: {status, sequence_number}}
+      call = %{call | status: %ContactCentre.Conferencing.CallStatus{name: status, sequence: sequence_number}}
       calls = Map.put(conference.calls, call.identifier, call)
       conference = %{conference | calls: calls}
       {:ok, conference, call}

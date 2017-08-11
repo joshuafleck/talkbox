@@ -18,7 +18,7 @@ defmodule Telephony.Provider.Test do
   Pass a value of `error` as the `to` argument to simulate an error from the telephony provider
   """
   def call(opts) do
-    Agent.update(__MODULE__, &List.insert_at(&1, -1, {:call, opts}))
+    record_call(:call, opts)
     case opts[:to] do
       "error" ->
         {:error, "call initiation failed", 500}
@@ -33,7 +33,7 @@ defmodule Telephony.Provider.Test do
   Pass a value of `error` as the `call_sid` argument to simulate an error from the telephony provider
   """
   def hangup(call_sid) do
-    Agent.update(__MODULE__, &List.insert_at(&1, -1, {:hangup, call_sid}))
+    record_call(:hangup, call_sid)
     case call_sid do
       "error" ->
         {:error, "hangup failed", 500}
@@ -48,12 +48,17 @@ defmodule Telephony.Provider.Test do
   Pass a value of `error` as the `call_sid` argument to simulate an error from the telephony provider
   """
   def kick_participant_from_conference(_conference_sid, call_sid) do
-    Agent.update(__MODULE__, &List.insert_at(&1, -1, {:kick_participant_from_conference, call_sid}))
+    record_call(:kick_participant_from_conference, call_sid)
     case call_sid do
       "error" ->
         {:error, "kick from conference failed", 500}
       _ ->
         {:ok, call_sid}
     end
+  end
+
+  @spec record_call(atom, any) :: any
+  defp record_call(name, arguments) do
+    Agent.update(__MODULE__, &List.insert_at(&1, -1, {name, arguments}))
   end
 end

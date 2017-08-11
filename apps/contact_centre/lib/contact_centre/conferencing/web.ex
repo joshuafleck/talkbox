@@ -3,24 +3,27 @@ defmodule ContactCentre.Conferencing.Web do
   Responsible for encoding and sending messages in a format that can be handled by the
   client-side Javascript. This is where we trigger Websocket responses back to the clients.
   """
-  @spec broadcast_conference_start(String.t, String.t, ContactCentre.Conferencing.Conference.t) :: any
-  def broadcast_conference_start(user, message, conference) do
-    broadcast_conference("user:#{user}", "conference_started", message, conference)
+
+  @type result :: :ok | no_return
+
+  @spec broadcast_conference_created(String.t, ContactCentre.Conferencing.Conference.t) :: result
+  def broadcast_conference_created(user, conference) do
+    broadcast_conference("user:#{user}", "conference_started", "", conference)
   end
 
-  @spec broadcast_conference_end(String.t, ContactCentre.Conferencing.Conference.t) :: any
-  def broadcast_conference_end(message, conference) do
-    broadcast_conference("conference:#{conference.identifier}", "conference_ended", message, conference)
+  @spec broadcast_conference_deleted(ContactCentre.Conferencing.Conference.t) :: result
+  def broadcast_conference_deleted(conference) do
+    broadcast_conference("conference:#{conference.identifier}", "conference_ended", "", conference)
   end
 
-  @spec broadcast_conference_changed(String.t, ContactCentre.Conferencing.Conference.t) :: any
-  def broadcast_conference_changed(message, conference) do
-    broadcast_conference("conference:#{conference.identifier}", "conference_changed", message, conference)
+  @spec broadcast_conference_updated(String.t, ContactCentre.Conferencing.Conference.t) :: result
+  def broadcast_conference_updated(message, conference) do
+    broadcast_conference("conference:#{conference.identifier}", "conference_changed", message || "", conference)
   end
 
-  @spec broadcast_conference(String.t, String.t, String.t, ContactCentre.Conferencing.Conference.t) :: any
+  @spec broadcast_conference(String.t, String.t, String.t, ContactCentre.Conferencing.Conference.t) :: result
   defp broadcast_conference(channel, event, message, conference) do
-    ContactCentreWeb.Endpoint.broadcast(channel, event, %{message: message, conference: conference_message(conference)})
+    ContactCentreWeb.Endpoint.broadcast!(channel, event, %{message: message, conference: conference_message(conference)})
   end
 
   @spec conference_message(ContactCentre.Conferencing.Conference.t) :: nil | map
@@ -39,7 +42,7 @@ defmodule ContactCentre.Conferencing.Web do
     %{
       identifier: call_leg.identifier,
       destination: call_leg.destination,
-      call_status: elem(call_leg.status, 0),
+      call_status: call_leg.status.name,
       call_sid: call_leg.providers_identifier
     }
   end
