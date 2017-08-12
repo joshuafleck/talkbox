@@ -26,6 +26,7 @@ defmodule Talkbox.Mixfile do
   defp deps do
     [{:credo, "~> 0.8", only: [:dev, :test], runtime: false},
      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+     {:distillery, "~> 1.4", runtime: false},
      {:ex_doc, "~> 0.15", only: :dev, runtime: false}]
   end
 end
