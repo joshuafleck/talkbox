@@ -5,7 +5,7 @@
 **/doc
 **/elm-stuff
 **/node_modules
-**/priv/static
+**/priv/static/**.*
 **/test
 **/tmp
 **/erl_crash.dump
