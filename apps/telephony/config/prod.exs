@@ -13,8 +13,8 @@ use Mix.Config
 # which you typically run after static files are built.
 config :telephony, TelephonyWeb.Endpoint,
   http: [port: 4000],
-  url: [host: "example.com", port: 80],
-  cache_static_manifest: "priv/static/manifest.json",
+  url: [host: "localhost", port: 80],
+  cache_static_manifest: "priv/static/cache_manifest.json",
   secret_key_base: System.get_env("SECRET_KEY_BASE")
 
 # Do not print debug messages in production
@@ -49,7 +49,7 @@ config :logger, level: :info
 # If you are doing OTP releases, you need to instruct Phoenix
 # to start the server for all endpoints:
 #
-#     config :phoenix, :serve_endpoints, true
+config :phoenix, :serve_endpoints, true
 #
 # Alternatively, you can configure exactly which server to
 # start per endpoint:
@@ -60,3 +60,9 @@ config :logger, level: :info
 # Finally import the config/prod.secret.exs
 # which should be versioned separately.
 # import_config "prod.secret.exs"
+
+config :telephony,
+  cli: System.get_env("TELEPHONY_CLI"),
+  webhook_url: System.get_env("TELEPHONY_WEBHOOK_URL"),
+  provider: Telephony.Provider.Twilio,
+  provider_callback_url_prefix: "/telephony/twilio"
