@@ -99,7 +99,7 @@ To run Talkbox in a container:
     - `COOKIE` Erlang cookie
     - `TELEPHONY_CLI` Must be a verified phone number in Twilio
     - `TELEPHONY_WEBHOOK_URL` A public url that points to port 4000 on the docker container
-1. Build the container
+1. Build the image
 
     ```
     docker build -t talkbox --build-arg TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN} --build-arg TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --build-arg SECRET_KEY_BASE=${SECRET_KEY_BASE} --build-arg COOKIE=${COOKIE} --build-arg TELEPHONY_CLI=${TELEPHONY_CLI} --build-arg TELEPHONY_WEBHOOK_URL=${TELEPHONY_WEBHOOK_URL} .
