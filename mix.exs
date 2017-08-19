@@ -6,6 +6,7 @@ defmodule Talkbox.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
+     aliases: aliases(),
      dialyzer: [
        plt_add_deps: :project,
        ignore_warnings: "dialyzer.ignore-warnings"]]
@@ -28,5 +29,17 @@ defmodule Talkbox.Mixfile do
      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
      {:distillery, "~> 1.4", runtime: false},
      {:ex_doc, "~> 0.15", only: :dev, runtime: false}]
+  end
+
+  defp aliases do
+    [
+      build: ["compile", "dialyzer", "credo"],
+      package: ["compile", "phx.digest", "release --env=prod"],
+      package_ui: [&brunch/1]
+    ]
+  end
+
+  defp brunch(_) do
+    Mix.Shell.IO.cmd("pushd apps/contact_centre/assets && node_modules/brunch/bin/brunch build --production && popd")
   end
 end

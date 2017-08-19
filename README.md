@@ -75,6 +75,48 @@ Each of these components is implemented as a child-project under the `/apps` dir
     open http://localhost:5000/?client_name=yourname
     ```
 
+## Docker
+
+Talkbox can be built and run in a docker container with some limitations:
+
+- Configuration is compiled into the container
+- Secrets are compiled into the container (do not share or publish the container!)
+- Elm files will not be compiled
+
+To run Talkbox in a container:
+
+1. Ensure Docker is installed and running
+1. Compile Elm files
+
+    ```
+    mix package_ui
+    ```
+    
+1. Ensure the following environment variables are set
+  1. `TWILIO_AUTH_TOKEN`
+  1. `TWILIO_ACCOUNT_SID`
+  1. `SECRET_KEY_BASE` Secret key for Phoenix
+  1. `COOKIE` Erlang cookie
+  1. `TELEPHONY_CLI` Must be a verified phone number in Twilio
+  1. `TELEPHONY_WEBHOOK_URL` A public url that points to port 4000 on the docker container
+1. Build the container
+
+    ```
+    docker build -t talkbox --build-arg TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN} --build-arg TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --build-arg SECRET_KEY_BASE=${SECRET_KEY_BASE} --build-arg COOKIE=${COOKIE} --build-arg TELEPHONY_CLI=${TELEPHONY_CLI} --build-arg TELEPHONY_WEBHOOK_URL=${TELEPHONY_WEBHOOK_URL} .
+    ```
+    
+1. Run the container
+
+    ```
+    docker run -p 4000:4000 -p 5000:5000 talkbox
+    ```
+    
+1. Open the application
+
+    ```
+    open localhost:5000/?client_name=YourName
+    ```
+
 ## Proposed enhancements
 
 - [ ] Resilience to client crash (fetch state from server at load)
