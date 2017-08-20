@@ -2,8 +2,6 @@ FROM elixir:1.5.1 as builder
 
 WORKDIR /app
 
-ARG COOKIE
-
 ENV MIX_ENV=prod
 
 COPY . .
