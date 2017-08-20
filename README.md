@@ -95,20 +95,20 @@ To run Talkbox in a container:
 1. Ensure the following environment variables are set
     - `TWILIO_AUTH_TOKEN`
     - `TWILIO_ACCOUNT_SID`
-    - `SECRET_KEY_BASE` Secret key for Phoenix
+    - `SECRET_KEY_BASE` Secret key base for Phoenix
     - `COOKIE` Erlang cookie
     - `TELEPHONY_CLI` Must be a verified phone number in Twilio
     - `TELEPHONY_WEBHOOK_URL` A public url that points to port 4000 on the docker container
 1. Build the image
 
     ```
-    docker build -t talkbox --build-arg TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN} --build-arg TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID} --build-arg SECRET_KEY_BASE=${SECRET_KEY_BASE} --build-arg COOKIE=${COOKIE} --build-arg TELEPHONY_CLI=${TELEPHONY_CLI} --build-arg TELEPHONY_WEBHOOK_URL=${TELEPHONY_WEBHOOK_URL} .
+    docker build -t talkbox --build-arg COOKIE=${COOKIE} .
     ```
     
 1. Run the container
 
     ```
-    docker run -p 4000:4000 -p 5000:5000 talkbox
+    docker run -p 4000:4000 -p 5000:5000 --env TWILIO_ACCOUNT_SID --env TWILIO_AUTH_TOKEN --env SECRET_KEY_BASE --env TELEPHONY_CLI --env TELEPHONY_WEBHOOK_URL -it talkbox
     ```
     
 1. Open the application

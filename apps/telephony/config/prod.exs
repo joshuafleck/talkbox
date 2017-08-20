@@ -15,7 +15,7 @@ config :telephony, TelephonyWeb.Endpoint,
   http: [port: 4000],
   url: [host: "localhost", port: 80],
   cache_static_manifest: "priv/static/cache_manifest.json",
-  secret_key_base: System.get_env("SECRET_KEY_BASE")
+  secret_key_base: {:system, "SECRET_KEY_BASE"}
 
 # Do not print debug messages in production
 config :logger, level: :info
@@ -62,7 +62,11 @@ config :phoenix, :serve_endpoints, true
 # import_config "prod.secret.exs"
 
 config :telephony,
-  cli: System.get_env("TELEPHONY_CLI"),
-  webhook_url: System.get_env("TELEPHONY_WEBHOOK_URL"),
+  cli: {:system, "TELEPHONY_CLI"},
+  webhook_url: {:system, "TELEPHONY_WEBHOOK_URL"},
   provider: Telephony.Provider.Twilio,
   provider_callback_url_prefix: "/telephony/twilio"
+
+config :ex_twilio,
+  account_sid: {:system, "TWILIO_ACCOUNT_SID"},
+  auth_token: {:system, "TWILIO_AUTH_TOKEN"}
