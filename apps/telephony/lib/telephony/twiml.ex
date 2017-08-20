@@ -20,14 +20,8 @@ defmodule Telephony.Twiml do
   def join_conference(conference_identifier, status_callback \\ "") do
     twiml do
       dial do
-        conference conference_identifier, beep: false, status_callback: xml_safe(status_callback), status_callback_event: "start end join leave mute hold"
+        conference conference_identifier, beep: false, status_callback: status_callback, status_callback_event: "start end join leave mute hold"
       end
     end
-  end
-
-  @spec xml_safe(String.t) :: String.t
-  defp xml_safe(uri) do
-    uri
-    |> String.replace("&", "&amp;")
   end
 end

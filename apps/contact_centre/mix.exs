@@ -34,14 +34,14 @@ defmodule ContactCentre.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.3.0-rc"},
+      {:phoenix, "~> 1.3.0"},
       {:phoenix_pubsub, "~> 1.0"},
       {:phoenix_html, "~> 2.6"},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
       {:plug, "~> 1.0"}, # Resolved 'unknown function' dialyzer errors
-      {:ex_twilio, "~> 0.3.0"}, # For generating Twilio client tokens
+      {:ex_twilio, "~> 0.4.0"}, # For generating Twilio client tokens
       {:events, in_umbrella: true} # For communicating with other applications
     ]
   end

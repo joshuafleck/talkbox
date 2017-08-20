@@ -38,6 +38,6 @@ defmodule Events.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [{:logger_file_backend, github: "onkel-dirtus/logger_file_backend"},
-     {:poison, "~> 2.2"}]
+     {:poison, "~> 3.0"}]
   end
 end

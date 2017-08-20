@@ -34,13 +34,13 @@ defmodule Telephony.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.3.0-rc"},
+      {:phoenix, "~> 1.3.0"},
       {:phoenix_pubsub, "~> 1.0"},
       {:phoenix_html, "~> 2.6"},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
-      {:ex_twiml, github: "danielberkompas/ex_twiml"}, # For serving TwiML responses to Twilio
-      {:ex_twilio, "~> 0.3.0"}, # For making requests to Twilio
+      {:ex_twiml, "~> 2.1.3"}, # For serving TwiML responses to Twilio
+      {:ex_twilio, "~> 0.4.0"}, # For making requests to Twilio
       {:ex_ngrok, "~> 0.3.0", only: [:dev]}, # To allow webhook callbacks in dev
       {:ex_twilio_bootstrap, "~> 0.1.0", only: [:dev]}, # To bootstrap Twilio application in dev
       {:events, in_umbrella: true} # For communicating with other applications
