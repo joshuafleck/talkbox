@@ -1,0 +1,15 @@
+.env
+.git
+**/_build
+**/deps
+**/doc
+**/elm-stuff
+**/node_modules
+**/priv/static/**.*
+**/test
+**/tmp
+**/erl_crash.dump
+**/*.ez
+**/*.log
+**/*.gz
+

@@ -11,8 +11,8 @@ defmodule Telephony.Consumer do
 
   @spec handle(Events.CallRequested.t) :: any
   def handle(event = %Events.CallRequested{}) do
-    url_prefix = get_env(:webhook_url)
-    from = get_env(:cli)
+    url_prefix = from_env(:telephony, :webhook_url)
+    from = from_env(:telephony, :cli)
     conference_status_callback = url_prefix <> Helpers.conference_status_changed_path(Endpoint, :status_changed, event.conference)
     url = url_prefix <> Helpers.conference_call_answered_path(Endpoint, :answered, event.conference, event.call, conference_status_callback: conference_status_callback)
     status_callback = url_prefix <> Helpers.conference_call_status_changed_path(Endpoint, :status_changed, event.conference, event.call)
@@ -49,7 +49,7 @@ defmodule Telephony.Consumer do
 
   @spec provider :: module
   defp provider do
-    get_env(:provider)
+    from_env(:telephony, :provider)
   end
 
   @spec log_api_call(atom, (() -> Telephony.Provider.result)) :: Telephony.Provider.result
@@ -70,15 +70,22 @@ defmodule Telephony.Consumer do
     result
   end
 
-  @spec get_env(atom) :: term
-  defp get_env(key) do
-    setting = Application.get_env(:telephony, key)
-    if is_function(setting) do
-      setting.()
-    else
-      setting
-    end
+  @spec from_env(atom, atom) :: term
+  defp from_env(otp_app, key) do
+    otp_app
+    |> Application.get_env(key)
+    |> read_from_system()
+    |> raise_if_missing(otp_app, key)
   end
+
+  defp read_from_system({:system, env}), do: System.get_env(env)
+  defp read_from_system(value) when is_function(value), do: value.()
+  defp read_from_system(value), do: value
+
+  defp raise_if_missing(value, otp_app, key) when is_nil(value) or length(value) == 0 do
+    raise "The configuration setting `#{key}` in the `#{otp_app}` application is not set, unable to proceed."
+  end
+  defp raise_if_missing(value, _otp_app, _key), do: value
 
   @spec timeout(non_neg_integer, (() -> Telephony.Provider.result)) :: Telephony.Provider.result
   defp timeout(seconds, function) do
