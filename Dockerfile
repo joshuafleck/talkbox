@@ -4,8 +4,7 @@ WORKDIR /app
 
 ARG COOKIE
 
-ENV COOKIE=${COOKIE} \
-    MIX_ENV=prod
+ENV MIX_ENV=prod
 
 COPY . .
 
@@ -22,6 +21,6 @@ COPY --from=builder /app/_build .
 
 EXPOSE 4000 5000
 
-ENV MIX_ENV=prod
+ENV MIX_ENV=prod REPLACE_OS_VARS=true
 
 CMD ["prod/rel/talkbox/bin/talkbox", "foreground"]

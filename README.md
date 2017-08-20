@@ -77,19 +77,19 @@ Each of these components is implemented as a child-project under the `/apps` dir
 
 ## Docker
 
-Talkbox can be built and run in a docker container with some limitations:
-
-- Configuration is compiled into the container
-- Secrets are compiled into the container (do not share or publish the container!)
-- Elm files will not be compiled
-
 To run Talkbox in a container:
 
 1. Ensure Docker is installed and running
 1. Compile Elm files
 
     ```
-    mix package_ui
+    MIX_ENV=prod mix package_ui
+    ```
+
+1. Build the image
+
+    ```
+    docker build -t talkbox .
     ```
     
 1. Ensure the following environment variables are set
@@ -99,16 +99,10 @@ To run Talkbox in a container:
     - `COOKIE` Erlang cookie
     - `TELEPHONY_CLI` Must be a verified phone number in Twilio
     - `TELEPHONY_WEBHOOK_URL` A public url that points to port 4000 on the docker container
-1. Build the image
-
-    ```
-    docker build -t talkbox --build-arg COOKIE=${COOKIE} .
-    ```
-    
 1. Run the container
 
     ```
-    docker run -p 4000:4000 -p 5000:5000 --env TWILIO_ACCOUNT_SID --env TWILIO_AUTH_TOKEN --env SECRET_KEY_BASE --env TELEPHONY_CLI --env TELEPHONY_WEBHOOK_URL -it talkbox
+    docker run -p 4000:4000 -p 5000:5000 --env TWILIO_ACCOUNT_SID --env TWILIO_AUTH_TOKEN --env SECRET_KEY_BASE --env TELEPHONY_CLI --env TELEPHONY_WEBHOOK_URL --env COOKIE -it talkbox
     ```
     
 1. Open the application
