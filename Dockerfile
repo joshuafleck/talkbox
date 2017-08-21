@@ -21,4 +21,5 @@ EXPOSE 4000 5000
 
 ENV MIX_ENV=prod REPLACE_OS_VARS=true
 
-CMD ["prod/rel/talkbox/bin/talkbox", "foreground"]
+ENTRYPOINT ["prod/rel/talkbox/bin/talkbox"]
+CMD ["foreground"]
