@@ -1,0 +1,16 @@
+version: '3'
+services:  
+  app:
+    image: talkbox:latest
+    ports:
+      - "4000:4000"
+      - "5000:5000"
+    environment:
+      - TWILIO_ACCOUNT_SID
+      - TWILIO_AUTH_TOKEN
+      - SECRET_KEY_BASE
+      - TELEPHONY_CLI
+      - TELEPHONY_WEBHOOK_URL
+      - COOKIE
+    deploy:
+      replicas: 3
