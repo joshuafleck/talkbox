@@ -111,6 +111,41 @@ To run Talkbox in a container:
     open http://localhost:5000/?client_name=yourname
     ```
 
+### Clustering
+
+To run Talkbox in a cluster locally with Docker Swarm:
+
+1. Build the `talkbox` image per the instructions above
+1. Start Docker Swarm
+
+    ```
+    docker swarm init
+    ```
+
+1. Deploy the stack to Swarm
+
+    ```
+    docker stack deploy --compose-file docker-compose.yml talkbox
+    ```
+
+1. Check the service is running
+
+    ```
+    docker service ls
+    ```
+
+1. Check the tasks for the service
+
+    ```
+    docker service ps <service> --no-trunc
+    ```
+
+1. Tail the logs for all tasks in the service
+
+    ```
+    docker service logs --details --follow --timestamps <service>
+    ```
+
 ## Proposed enhancements
 
 - [ ] Resilience to client crash (fetch state from server at load)

@@ -5,6 +5,8 @@ services:
     ports:
       - "4000:4000"
       - "5000:5000"
+    networks:
+      - default
     environment:
       - TWILIO_ACCOUNT_SID
       - TWILIO_AUTH_TOKEN
@@ -13,4 +15,6 @@ services:
       - TELEPHONY_WEBHOOK_URL
       - COOKIE
     deploy:
+      restart_policy:
+        condition: none
       replicas: 3
